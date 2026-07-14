@@ -12,7 +12,7 @@ flowchart TB
         UC8[CreateCharacterVersion]:::missing
         UC9[ArchiveConversation]:::missing
         UC10[UpdateConversationSettings]:::missing
-        UC11[RegenerateReply]:::missing
+        UC11[RegenerateReply]:::doc
     end
 
     subgraph SystemInitiated["Casos de uso iniciados por el sistema"]
