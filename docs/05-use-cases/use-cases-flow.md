@@ -5,7 +5,7 @@ flowchart TB
         UC1[CreateCharacter]:::doc
         UC2[CreateConversation]:::doc
         UC3[SendMessage]:::doc
-        UC4[UpdateCharacter]:::missing
+        UC4[UpdateCharacter]:::doc
         UC5[EditMessage]:::doc
         UC6[RewindConversation]:::doc
         UC7[ApplyMemoryChanges]:::doc
