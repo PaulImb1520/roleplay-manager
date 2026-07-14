@@ -641,11 +641,7 @@ Su contenido debe centrarse exclusivamente en describir la evolución de la hist
 
 ### Edición
 
-Todos los resúmenes pueden ser editados manualmente por el usuario.
-
-La regeneración automática únicamente estará disponible inmediatamente después de su creación y antes de que la conversación continúe.
-
-Una vez que nuevos mensajes formen parte de la historia, el resumen se considerará consolidado y solo podrá modificarse mediante edición manual.
+Todos los resúmenes pueden ser editados manualmente por el usuario en cualquier momento.
 
 ---
 
@@ -711,7 +707,6 @@ Los resúmenes y las memorias dinámicas son conceptos independientes y no se mo
 * Los resúmenes son acumulativos, pero no crecientes.
 * La memoria dinámica nunca forma parte del contenido del resumen.
 * El usuario puede editar cualquier resumen.
-* La regeneración automática solo es posible inmediatamente después de la generación del resumen.
 
 ---
 

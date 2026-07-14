@@ -123,7 +123,7 @@ Mantener una base de conocimiento activa sobre la historia.
 * Crear memorias dinámicas.
 * Actualizar memorias existentes.
 * Eliminar memorias obsoletas.
-* Clasificar memorias por categorías.
+* Clasificar memorias por actor.
 * Asignar prioridades.
 * Permitir revisión y edición por parte del usuario.
 

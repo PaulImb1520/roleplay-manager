@@ -47,7 +47,7 @@ Ninguno.
 El usuario debe proporcionar, como mínimo:
 
 * Nombre del personaje.
-* Mensaje de presentación.
+* Subtítulo o descripción breve.
 * Mensaje inicial (Greeting).
 * Imagen de perfil.
 * Descripción general.

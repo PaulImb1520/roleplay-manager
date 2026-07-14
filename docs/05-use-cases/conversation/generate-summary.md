@@ -74,7 +74,9 @@ Cada nuevo resumen reemplaza al anterior como representación del estado narrati
    * La fecha de generación.
    * El modelo y proveedor utilizados.
 
-9. El nuevo resumen queda disponible para su uso en la construcción del contexto de siguientes mensajes.
+9. El sistema ejecuta `GenerateConversationTitle` para actualizar el título de la conversación basándose en el nuevo resumen.
+
+10. El nuevo resumen queda disponible para su uso en la construcción del contexto de siguientes mensajes.
 
 ---
 
@@ -119,7 +121,6 @@ Si el modelo devuelve una respuesta vacía o manifiestamente incoherente, el sis
 * El contenido del resumen es independiente de la memoria dinámica.
 * La generación de un resumen no modifica los mensajes ni el estado narrativo inmediato de la conversación.
 * El usuario puede editar manualmente cualquier resumen en cualquier momento.
-* La regeneración automática de un resumen solo es posible inmediatamente después de su creación y antes de que la conversación continúe.
 
 ---
 
@@ -128,6 +129,7 @@ Si el modelo devuelve una respuesta vacía o manifiestamente incoherente, el sis
 Al finalizar correctamente el caso de uso existirán las siguientes entidades nuevas:
 
 * Un nuevo `Summary` asociado a la conversación.
+* Puede actualizarse el título de la conversación mediante `GenerateConversationTitle`.
 
 No se modifica ninguna entidad previamente existente. Los resúmenes anteriores permanecen almacenados como parte del historial de la conversación.
 
@@ -139,6 +141,7 @@ No se modifica ninguna entidad previamente existente. Los resúmenes anteriores 
 * El resumen anterior permanece almacenado en el historial.
 * El nuevo resumen está disponible para ser utilizado en la construcción del contexto.
 * El nuevo resumen puede ser inspeccionado y editado por el usuario.
+* El título de la conversación puede haber sido actualizado para reflejar el nuevo estado narrativo.
 * La conversación no ha sufrido ninguna otra modificación.
 
 ---

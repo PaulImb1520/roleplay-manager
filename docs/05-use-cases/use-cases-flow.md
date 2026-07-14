@@ -10,7 +10,6 @@ flowchart TB
         UC5[EditMessage]:::doc
         UC6[RewindConversation]:::doc
         UC7[ApplyMemoryChanges]:::doc
-        UC8[CreateCharacterVersion]:::doc
         UC9[ArchiveConversation]:::doc
         UC10[UpdateConversationSettings]:::doc
         UC11[RegenerateReply]:::doc
@@ -21,6 +20,7 @@ flowchart TB
         UC12[BuildPromptContext]:::doc
         UC13[GenerateCharacterResponse]:::doc
         UC14[GenerateSummary]:::doc
+        UC8[CreateCharacterVersion]:::doc
         UC15[ProposeMemoryChanges]:::doc
         UC16[GenerateConversationTitle]:::doc
     end
@@ -57,6 +57,7 @@ flowchart TB
     UC3 -->|invoca| UC13
     UC3 -->|invoca| UC14
     UC3 -->|invoca| UC15
+    UC3 -->|invoca| UC16
 
     UC12 --> PromptContext
     UC12 --> CharVersion
@@ -69,6 +70,7 @@ flowchart TB
     UC13 --> GeneratedResponse
 
     UC14 --> Summary
+    UC14 -->|invoca| UC16
     UC15 --> Memory
     UC7 -->|aplica cambios| Memory
 

@@ -70,10 +70,14 @@ Ejemplos:
 
 * CreateCharacter
 * UpdateCharacter
+* DeleteCharacter
 * CreateConversation
 * SendMessage
+* RegenerateReply
 * EditMessage
 * RewindConversation
+* ArchiveConversation
+* UpdateConversationSettings
 * ApplyMemoryChanges
 
 ### Casos de uso iniciados por el sistema
@@ -82,6 +86,7 @@ Son procesos internos ejecutados automáticamente para mantener el funcionamient
 
 Ejemplos:
 
+* CreateCharacterVersion
 * BuildPromptContext
 * GenerateCharacterResponse
 * GenerateSummary

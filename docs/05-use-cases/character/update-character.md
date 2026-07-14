@@ -39,7 +39,7 @@ Las conversaciones nuevas utilizarán la versión más reciente, mientras que la
 ## Precondiciones
 
 * El personaje debe existir.
-* El usuario debe proporcionar al menos los mismos campos obligatorios definidos durante la creación (nombre, descripción, imagen de perfil, saludo inicial).
+* El usuario debe proporcionar al menos los mismos campos obligatorios definidos durante la creación (nombre, subtítulo o descripción breve, descripción general, imagen de perfil, saludo inicial).
 * Debe existir al menos un cambio respecto a la versión más reciente del personaje; si no hay cambios, la operación no tiene efecto.
 
 ---

@@ -66,15 +66,15 @@ Por este motivo, enviar un mensaje implica coordinar distintos procesos internos
    * Las memorias dinámicas seleccionadas.
    * Los mensajes recientes definidos por la configuración de la conversación.
 
-4. El sistema envía el contexto al proveedor de inteligencia artificial.
+4. El sistema envía el contexto al proveedor de inteligencia artificial y la respuesta se transmite al usuario mediante streaming a medida que el modelo la genera.
 
-5. El modelo genera una respuesta.
+5. Una vez completada la transmisión, el sistema almacena la respuesta completa como un nuevo mensaje del asistente.
 
-6. El sistema almacena la respuesta como un nuevo mensaje del asistente.
+6. Si es la primera interacción del usuario en la conversación (primer mensaje tras el saludo inicial), el sistema ejecuta `GenerateConversationTitle` para proponer un título descriptivo.
 
 7. El sistema evalúa si corresponde generar un nuevo resumen según la configuración de la conversación.
 
-8. Si corresponde, se ejecuta el caso de uso `GenerateSummary`.
+8. Si corresponde, se ejecuta el caso de uso `GenerateSummary`. Una vez completado, el sistema ejecuta `GenerateConversationTitle` para actualizar el título con el nuevo estado narrativo.
 
 9. El sistema solicita al modelo propuestas para crear, modificar o eliminar memorias dinámicas.
 
@@ -128,6 +128,7 @@ Al finalizar correctamente el caso de uso podrán producirse los siguientes camb
 * Se crea un nuevo `Message` correspondiente al usuario.
 * Se crea un nuevo `Message` correspondiente al asistente.
 * Puede generarse un nuevo `Summary`.
+* Puede generarse una propuesta de título para la conversación.
 * Pueden generarse propuestas de modificación para la memoria dinámica.
 
 Las modificaciones sobre la memoria dinámica no se aplican durante este caso de uso.
@@ -140,6 +141,7 @@ Las modificaciones sobre la memoria dinámica no se aplican durante este caso de
 * La respuesta del asistente queda almacenada.
 * La conversación mantiene su coherencia narrativa.
 * Si corresponde, existe un nuevo resumen.
+* Si corresponde, existe una propuesta de título para la conversación.
 * Si corresponde, existen nuevas propuestas de actualización para la memoria dinámica.
 * La conversación queda preparada para recibir el siguiente mensaje.
 
@@ -150,6 +152,7 @@ Las modificaciones sobre la memoria dinámica no se aplican durante este caso de
 * BuildPromptContext
 * GenerateCharacterResponse
 * GenerateSummary
+* GenerateConversationTitle
 * ProposeMemoryChanges
 * ApplyMemoryChanges
 * RegenerateReply

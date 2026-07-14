@@ -59,9 +59,9 @@ Ninguna.
 
 3. Transformar el `PromptContext` al formato requerido por el proveedor seleccionado.
 
-4. Enviar la solicitud de generación.
+4. Enviar la solicitud de generación. Si el proveedor lo soporta, la respuesta se recibe mediante streaming.
 
-5. Esperar la respuesta del proveedor.
+5. Esperar la respuesta completa del proveedor o ensamblar los fragmentos recibidos durante el streaming.
 
 6. Normalizar la respuesta recibida.
 
@@ -84,6 +84,16 @@ No se modificará ninguna entidad del dominio.
 ### Error durante la inferencia
 
 Si el proveedor devuelve un error durante la generación, el sistema devolverá una respuesta de error sin alterar el estado de la conversación.
+
+---
+
+### Generación mediante streaming
+
+Si el proveedor soporta streaming, el adaptador transmite fragmentos parciales de la respuesta al caso de uso solicitante a medida que el modelo los genera.
+
+El sistema ensambla los fragmentos hasta completar la respuesta y construye el `GeneratedResponse` al finalizar la transmisión.
+
+El resto del flujo permanece idéntico: la respuesta completa se almacena y los procesos posteriores se ejecutan con normalidad.
 
 ---
 
