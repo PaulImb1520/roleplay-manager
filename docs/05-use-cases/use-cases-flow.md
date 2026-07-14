@@ -6,12 +6,13 @@ flowchart TB
         UC2[CreateConversation]:::doc
         UC3[SendMessage]:::doc
         UC4[UpdateCharacter]:::doc
+        UC17[DeleteCharacter]:::doc
         UC5[EditMessage]:::doc
         UC6[RewindConversation]:::doc
         UC7[ApplyMemoryChanges]:::doc
-        UC8[CreateCharacterVersion]:::missing
-        UC9[ArchiveConversation]:::missing
-        UC10[UpdateConversationSettings]:::missing
+        UC8[CreateCharacterVersion]:::doc
+        UC9[ArchiveConversation]:::doc
+        UC10[UpdateConversationSettings]:::doc
         UC11[RegenerateReply]:::doc
     end
 
@@ -21,7 +22,7 @@ flowchart TB
         UC13[GenerateCharacterResponse]:::doc
         UC14[GenerateSummary]:::doc
         UC15[ProposeMemoryChanges]:::doc
-        UC16[GenerateConversationTitle]:::missing
+        UC16[GenerateConversationTitle]:::doc
     end
 
     subgraph Entities["Entidades del dominio"]
@@ -44,6 +45,10 @@ flowchart TB
 
     UC8 -->|nueva versión| CharVersion
     UC4 -->|modifica| Character
+    UC17 -->|elimina| Character
+    UC17 -->|elimina| Conversation
+    UC17 -->|elimina| Memory
+    UC17 -->|elimina| Summary
 
     UC2 --> Conversation
     UC2 --> Message
