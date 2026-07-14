@@ -80,11 +80,11 @@ La composición del contexto deberá ser completamente transparente para el usua
 
 ## Memoria dinámica
 
-Después de cada interacción, el sistema podrá proponer cambios sobre una memoria dinámica compuesta por hechos relevantes para la historia.
+Después de cada interacción, el sistema podrá proponer cambios sobre la memoria dinámica compuesta por hechos relevantes para la historia.
 
 Cada elemento de memoria deberá:
 
-* Pertenecer a una categoría.
+* Tener un nombre específico y único.
 * Poder modificarse.
 * Poder eliminarse.
 * Poder actualizarse.

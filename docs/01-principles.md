@@ -20,6 +20,10 @@ La aplicación valida.
 
 El usuario decide.
 
+La inteligencia artificial nunca modifica directamente el estado del dominio.
+
+Toda modificación persistente debe poder ser revisada, aceptada, modificada o rechazada por el usuario.
+
 ---
 
 # Todo debe ser transparente
@@ -163,6 +167,16 @@ Cada elemento de la aplicación debe ayudar al usuario a concentrarse en la hist
 Es preferible ofrecer pocas funcionalidades bien implementadas que muchas funcionalidades incompletas.
 
 Cada nueva característica debe integrarse de forma natural con el resto del sistema y respetar todos los principios definidos en este documento.
+
+---
+
+# Cada interacción con la IA debe perseguir un único objetivo
+
+Eso significa:
+
+* Una sola llamada genera el diálogo.
+* Otra llamada genera un resumen.
+* Y otra analiza y gestiona las memorias.
 
 ---
 
