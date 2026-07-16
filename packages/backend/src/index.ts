@@ -28,11 +28,15 @@ const main = (): void => {
     process.exit(1)
   }
 
-  const container = buildContainer({ logger, pino, database: db })
-  const app = buildServer({
+  const container = buildContainer({
     logger,
     pino,
-    healthCheck: container.healthCheck,
+    database: db,
+    ollamaBaseUrl: env.OLLAMA_BASE_URL,
+    providerTimeoutMs: env.PROVIDER_TIMEOUT_MS,
+  })
+  const app = buildServer({
+    container,
     corsOrigin: env.CORS_ORIGIN,
   })
 

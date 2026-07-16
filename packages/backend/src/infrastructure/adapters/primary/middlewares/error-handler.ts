@@ -49,6 +49,33 @@ export class InfrastructureError extends HttpError {
   }
 }
 
+export class ProviderError extends HttpError {
+  constructor(
+    code:
+      | "PROVIDER_CONNECTION_FAILED"
+      | "PROVIDER_GENERATION_FAILED"
+      | "PROVIDER_MODEL_NOT_FOUND",
+    message: string,
+  ) {
+    super(502, code, message)
+    this.name = "ProviderError"
+  }
+}
+
+export class ProviderUnavailableError extends ProviderError {
+  constructor(message = "The provider is not available.") {
+    super("PROVIDER_CONNECTION_FAILED", message)
+    this.name = "ProviderUnavailableError"
+  }
+}
+
+export class ProviderTimeoutError extends HttpError {
+  constructor(message = "The provider did not respond in time.") {
+    super(504, "PROVIDER_TIMEOUT", message)
+    this.name = "ProviderTimeoutError"
+  }
+}
+
 export const buildErrorHandler = (logger: Logger): ErrorRequestHandler => {
   return (err, _req, res, _next) => {
     if (err instanceof ZodError) {

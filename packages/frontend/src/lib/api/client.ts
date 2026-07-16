@@ -1,0 +1,58 @@
+const DEFAULT_BASE_URL = "http://localhost:3001"
+
+export interface ApiError {
+  code: string
+  message: string
+}
+
+export class ApiClientError extends Error {
+  readonly status: number
+  readonly code: string
+
+  constructor(status: number, code: string, message: string) {
+    super(message)
+    this.name = "ApiClientError"
+    this.status = status
+    this.code = code
+  }
+}
+
+const getBaseUrl = (): string => {
+  if (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_URL) {
+    return import.meta.env.PUBLIC_API_URL
+  }
+  return DEFAULT_BASE_URL
+}
+
+export const apiRequest = async <T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> => {
+  const url = `${getBaseUrl()}${path}`
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(init.headers ?? {}),
+    },
+  })
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+  const data = text.length > 0 ? (JSON.parse(text) as unknown) : undefined
+
+  if (!response.ok) {
+    const err = (data as { error?: ApiError } | undefined)?.error
+    throw new ApiClientError(
+      response.status,
+      err?.code ?? "UNKNOWN_ERROR",
+      err?.message ?? response.statusText,
+    )
+  }
+
+  return data as T
+}

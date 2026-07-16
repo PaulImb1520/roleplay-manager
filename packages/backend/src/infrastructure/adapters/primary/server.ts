@@ -1,26 +1,23 @@
 import cors from "cors"
 import express, { type Express } from "express"
 import pinoHttp from "pino-http"
-import type { Logger as PinoLogger } from "pino"
 
-import type { Logger } from "../../../domain/ports/logger.port"
-import type { HealthCheckUseCase } from "../../../application/use-cases/health/health-check.use-case"
+import type { AppContainer } from "../../../containers/app-container"
 import { buildErrorHandler } from "./middlewares/error-handler"
 import { buildHealthRouter } from "./routes/health.routes"
+import { buildProviderRouter } from "./routes/provider.routes"
+import { buildSettingsRouter } from "./routes/settings.routes"
 
 export interface BuildServerOptions {
-  logger: Logger
-  pino: PinoLogger
-  healthCheck: HealthCheckUseCase
+  container: AppContainer
   corsOrigin: string
 }
 
 export const buildServer = ({
-  logger,
-  pino,
-  healthCheck,
+  container,
   corsOrigin,
 }: BuildServerOptions): Express => {
+  const { logger, pino } = container
   const app = express()
 
   app.use(express.json({ limit: "1mb" }))
@@ -31,8 +28,6 @@ export const buildServer = ({
     }),
   )
 
-  // pino-http crea un child logger por request y lo expone en
-  // `req.log` con el `requestId` correspondiente.
   app.use(
     pinoHttp({
       logger: pino,
@@ -49,7 +44,16 @@ export const buildServer = ({
     }),
   )
 
-  app.use("/api", buildHealthRouter(healthCheck))
+  app.use("/api", buildHealthRouter(container.healthCheck))
+  app.use("/api", buildProviderRouter(container))
+  app.use(
+    "/api/settings",
+    buildSettingsRouter({
+      getDefaultProvider: container.getDefaultProvider,
+      configureDefaultProvider: container.configureDefaultProvider,
+      settings: container.settings,
+    }),
+  )
 
   app.use(buildErrorHandler(logger))
 
