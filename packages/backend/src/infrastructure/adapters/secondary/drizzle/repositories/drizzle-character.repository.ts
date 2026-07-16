@@ -36,15 +36,15 @@ export class DrizzleCharacterRepository implements CharacterRepository {
     character: Character,
     version: CharacterVersion,
   ): Promise<CreateCharacterWithVersionResult> {
-    await this.db.transaction(async (tx) => {
-      await tx.insert(characters).values({
+    this.db.transaction((tx) => {
+      tx.insert(characters).values({
         id: character.id,
         name: character.name,
         createdAt: character.createdAt,
         updatedAt: character.updatedAt,
-      })
+      }).run()
 
-      await tx.insert(characterVersions).values({
+      tx.insert(characterVersions).values({
         id: version.id,
         characterId: version.characterId,
         name: version.name,
@@ -55,10 +55,10 @@ export class DrizzleCharacterRepository implements CharacterRepository {
         greeting: version.greeting,
         versionNumber: version.versionNumber,
         createdAt: version.createdAt,
-      })
+      }).run()
 
       if (version.cards.length > 0) {
-        await tx.insert(characterCards).values(
+        tx.insert(characterCards).values(
           version.cards.map((c) => ({
             id: c.id,
             versionId: c.versionId,
@@ -67,7 +67,7 @@ export class DrizzleCharacterRepository implements CharacterRepository {
             position: c.position,
             active: c.active,
           })),
-        )
+        ).run()
       }
     })
 
@@ -216,8 +216,8 @@ export class DrizzleCharacterRepository implements CharacterRepository {
   }
 
   async saveVersion(version: CharacterVersion): Promise<CharacterVersion> {
-    await this.db.transaction(async (tx) => {
-      await tx.insert(characterVersions).values({
+    this.db.transaction((tx) => {
+      tx.insert(characterVersions).values({
         id: version.id,
         characterId: version.characterId,
         name: version.name,
@@ -228,10 +228,10 @@ export class DrizzleCharacterRepository implements CharacterRepository {
         greeting: version.greeting,
         versionNumber: version.versionNumber,
         createdAt: version.createdAt,
-      })
+      }).run()
 
       if (version.cards.length > 0) {
-        await tx.insert(characterCards).values(
+        tx.insert(characterCards).values(
           version.cards.map((c) => ({
             id: c.id,
             versionId: c.versionId,
@@ -240,7 +240,7 @@ export class DrizzleCharacterRepository implements CharacterRepository {
             position: c.position,
             active: c.active,
           })),
-        )
+        ).run()
       }
     })
 
