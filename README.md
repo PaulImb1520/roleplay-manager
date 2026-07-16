@@ -24,7 +24,7 @@ To use the components in your app, import them in an `.astro` file:
 import { Button } from "@workspace/ui/components/button"
 ---
 
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />

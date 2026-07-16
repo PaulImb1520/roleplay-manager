@@ -376,11 +376,13 @@ Cada controlador obtiene los casos de uso que necesita desde el contenedor y los
 ## API REST
 
 | Método | Ruta | Caso de uso | Notas |
-|---|---|---|---|
+|---|---|---|---|---|
 | `POST` | `/api/characters` | CreateCharacter | |
+| `GET` | `/api/characters` | ListCharacters | Lista todos los personajes |
 | `GET` | `/api/characters/:id` | — (consulta) | |
-| `PUT` | `/api/characters/:id` | UpdateCharacter | |
+| `PUT` | `/api/characters/:id` | UpdateCharacter | Crea nueva version inmutable |
 | `DELETE` | `/api/characters/:id` | DeleteCharacter | |
+| `GET` | `/api/characters/:id/versions` | — (consulta) | Lista historico de versiones |
 | `POST` | `/api/characters/:id/versions` | CreateCharacterVersion | |
 | `GET` | `/api/characters/:id/versions` | — (consulta) | |
 | `POST` | `/api/conversations` | CreateConversation | |

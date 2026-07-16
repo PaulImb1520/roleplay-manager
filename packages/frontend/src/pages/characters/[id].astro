@@ -1,0 +1,32 @@
+---
+import { CharacterForm } from "@/components/character/character-form"
+import { CharacterNotFound } from "@/components/character/character-not-found"
+import { getCharacter } from "@/lib/api/characters"
+import BaseLayout from "@/layouts/base.astro"
+import type { CharacterDetail } from "@workspace/shared/types/character"
+
+export const prerender = false
+
+const { id } = Astro.params
+
+let character: CharacterDetail | null = null
+let error: string | null = null
+
+if (id) {
+  try {
+    character = await getCharacter(id)
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Error desconocido"
+  }
+}
+---
+
+<BaseLayout title={character ? `${character.name} - Roleplay Manager` : "Personaje no encontrado"}>
+  {
+    character ? (
+      <CharacterForm client:load character={character} />
+    ) : (
+      <CharacterNotFound error={error} />
+    )
+  }
+</BaseLayout>

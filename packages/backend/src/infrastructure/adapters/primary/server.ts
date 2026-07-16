@@ -4,6 +4,7 @@ import pinoHttp from "pino-http"
 
 import type { AppContainer } from "../../../containers/app-container"
 import { buildErrorHandler } from "./middlewares/error-handler"
+import { buildCharacterRouter } from "./routes/character.routes"
 import { buildHealthRouter } from "./routes/health.routes"
 import { buildProviderRouter } from "./routes/provider.routes"
 import { buildSettingsRouter } from "./routes/settings.routes"
@@ -54,6 +55,7 @@ export const buildServer = ({
       settings: container.settings,
     }),
   )
+  app.use("/api", buildCharacterRouter(container))
 
   app.use(buildErrorHandler(logger))
 

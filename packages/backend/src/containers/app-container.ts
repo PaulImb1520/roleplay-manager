@@ -8,9 +8,17 @@ import { ListProviderModelsUseCase } from "../application/use-cases/provider/lis
 import { GetDefaultProviderUseCase } from "../application/use-cases/provider/get-default-provider.use-case"
 import { ConfigureDefaultProviderUseCase } from "../application/use-cases/provider/configure-default-provider.use-case"
 import { DrizzleSettingsRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-settings.repository"
+import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-character.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import type { ProviderRegistry } from "../domain/ports/provider.port"
 import type { SettingsRepository } from "../domain/ports/settings.repository"
+import type { CharacterRepository } from "../domain/ports/character.repository"
+import { CreateCharacterUseCase } from "../application/use-cases/character/create-character.use-case"
+import { GetCharacterUseCase } from "../application/use-cases/character/get-character.use-case"
+import { ListCharactersUseCase } from "../application/use-cases/character/list-characters.use-case"
+import { UpdateCharacterUseCase } from "../application/use-cases/character/update-character.use-case"
+import { DeleteCharacterUseCase } from "../application/use-cases/character/delete-character.use-case"
+import { ListCharacterVersionsUseCase } from "../application/use-cases/character/list-character-versions.use-case"
 
 export interface AppContainer {
   logger: Logger
@@ -24,6 +32,13 @@ export interface AppContainer {
   configureDefaultProvider: ConfigureDefaultProviderUseCase
   settings: SettingsRepository
   providerRegistry: ProviderRegistry
+  characterRepository: CharacterRepository
+  createCharacter: CreateCharacterUseCase
+  getCharacter: GetCharacterUseCase
+  listCharacters: ListCharactersUseCase
+  updateCharacter: UpdateCharacterUseCase
+  deleteCharacter: DeleteCharacterUseCase
+  listCharacterVersions: ListCharacterVersionsUseCase
 }
 
 export interface BuildContainerOptions {
@@ -48,6 +63,7 @@ export const buildContainer = ({
     timeoutMs: providerTimeoutMs,
     logger,
   })
+  const characterRepository: CharacterRepository = new DrizzleCharacterRepository(database)
 
   return {
     logger,
@@ -71,5 +87,12 @@ export const buildContainer = ({
     ),
     settings,
     providerRegistry,
+    characterRepository,
+    createCharacter: new CreateCharacterUseCase(characterRepository),
+    getCharacter: new GetCharacterUseCase(characterRepository),
+    listCharacters: new ListCharactersUseCase(characterRepository),
+    updateCharacter: new UpdateCharacterUseCase(characterRepository),
+    deleteCharacter: new DeleteCharacterUseCase(characterRepository),
+    listCharacterVersions: new ListCharacterVersionsUseCase(characterRepository),
   }
 }

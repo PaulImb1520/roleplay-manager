@@ -6,6 +6,8 @@ Crear un nuevo personaje junto con su primera versión y preparar todo lo necesa
 
 Este caso de uso representa el punto de entrada principal del sistema.
 
+> **Nota S2:** En la versión S2, este caso de uso solo crea `Character` + `CharacterVersion` + `CharacterCard`. Los pasos 6-8 (Conversación y Message) están diferidos a **S3**. Marcar 6-8 como "pendiente de implementar" debajo.
+
 ---
 
 ## Motivación

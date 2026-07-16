@@ -42,6 +42,34 @@ export class DomainError extends HttpError {
   }
 }
 
+export class CharacterNotFoundError extends NotFoundError {
+  constructor(id: string) {
+    super("CHARACTER_NOT_FOUND", `Character with id '${id}' not found.`)
+    this.name = "CharacterNotFoundError"
+  }
+}
+
+export class CharacterVersionNotFoundError extends NotFoundError {
+  constructor(id: string) {
+    super("CHARACTER_VERSION_NOT_FOUND", `Character version with id '${id}' not found.`)
+    this.name = "CharacterVersionNotFoundError"
+  }
+}
+
+export class NoChangesDetectedError extends DomainError {
+  constructor(message = "No changes detected for the character.") {
+    super("NO_CHANGES_DETECTED", message)
+    this.name = "NoChangesDetectedError"
+  }
+}
+
+export class CharacterValidationError extends DomainError {
+  constructor(message: string) {
+    super("CHARACTER_VALIDATION_ERROR", message)
+    this.name = "CharacterValidationError"
+  }
+}
+
 export class InfrastructureError extends HttpError {
   constructor(message = "Internal server error") {
     super(500, "INTERNAL_ERROR", message)
