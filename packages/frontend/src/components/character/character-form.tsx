@@ -2,6 +2,7 @@ import { useState } from "react"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  MessageSquarePlusIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -48,6 +49,7 @@ import {
   createCharacter,
   updateCharacter,
 } from "@/lib/api/characters"
+import { createConversation } from "@/lib/api/conversations"
 
 interface CardEntry {
   id: string
@@ -210,27 +212,45 @@ export function CharacterForm({ character }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {isEditing ? (
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <DialogTrigger render={<Button variant="destructive" />}>
-                  Eliminar
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Eliminar personaje</DialogTitle>
-                  <DialogDescription>
-                    ¿Estás seguro de eliminar "{character?.name}"? Esta acción no se puede deshacer.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={() => void handleDelete()} disabled={saving}>
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={async () => {
+                  if (!character) return
+                  try {
+                    const conv = await createConversation({ characterId: character.id })
+                    location.href = `/conversations/${conv.id}`
+                  } catch {
+                    toast.error("Error al crear la conversación")
+                  }
+                }}
+              >
+                <MessageSquarePlusIcon />
+                Iniciar conversación
+              </Button>
+              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogTrigger render={<Button variant="destructive" />}>
                     Eliminar
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Eliminar personaje</DialogTitle>
+                    <DialogDescription>
+                      ¿Estás seguro de eliminar "{character?.name}"? Esta acción no se puede deshacer.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={() => void handleDelete()} disabled={saving}>
+                      Eliminar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           ) : null}
           <Button type="submit" disabled={saving}>
             {isEditing ? "Guardar cambios" : "Crear personaje"}

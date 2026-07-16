@@ -1,4 +1,20 @@
-// Stub de puerto para ConversationRepository.
-// Se implementa en el slice S3 (Conversaciones).
+import type { Conversation } from "../entities/conversation.entity"
+import type { Message } from "../entities/message.entity"
+import type { ConversationStatus } from "@workspace/shared/types/conversation"
 
-export type ConversationRepository = unknown
+export interface ConversationWithMessages {
+  conversation: Conversation
+  messages: Message[]
+}
+
+export interface ConversationRepository {
+  create(conversation: Conversation): Promise<Conversation>
+
+  findById(id: string): Promise<Conversation | null>
+
+  findByIdWithMessages(id: string): Promise<ConversationWithMessages | null>
+
+  list(status?: ConversationStatus): Promise<Conversation[]>
+
+  update(conversation: Conversation): Promise<Conversation>
+}

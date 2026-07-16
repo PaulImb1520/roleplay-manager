@@ -90,6 +90,27 @@ export class ProviderError extends HttpError {
   }
 }
 
+export class ConversationNotFoundError extends NotFoundError {
+  constructor(id: string) {
+    super("CONVERSATION_NOT_FOUND", `Conversation with id '${id}' not found.`)
+    this.name = "ConversationNotFoundError"
+  }
+}
+
+export class ConversationArchivedError extends DomainError {
+  constructor(id: string) {
+    super("CONVERSATION_ARCHIVED", `Conversation '${id}' is already archived.`)
+    this.name = "ConversationArchivedError"
+  }
+}
+
+export class ConversationAlreadyActiveError extends DomainError {
+  constructor(id: string) {
+    super("CONVERSATION_ALREADY_ACTIVE", `Conversation '${id}' is already active.`)
+    this.name = "ConversationAlreadyActiveError"
+  }
+}
+
 export class ProviderUnavailableError extends ProviderError {
   constructor(message = "The provider is not available.") {
     super("PROVIDER_CONNECTION_FAILED", message)
