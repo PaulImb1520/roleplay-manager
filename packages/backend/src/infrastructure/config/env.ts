@@ -1,0 +1,29 @@
+import { z } from "zod"
+
+const envSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  PORT: z.coerce.number().int().positive().default(3001),
+  DATABASE_PATH: z.string().min(1).default("./data/roleplay.db"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("debug"),
+  CORS_ORIGIN: z.string().url().default("http://localhost:4321"),
+  PROVIDER_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
+})
+
+export type Env = z.infer<typeof envSchema>
+
+let cached: Env | undefined
+
+export const loadEnv = (): Env => {
+  if (cached) return cached
+  const parsed = envSchema.safeParse(process.env)
+  if (!parsed.success) {
+    const formatted = parsed.error.issues
+      .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+      .join("\n")
+    throw new Error(`Invalid environment variables:\n${formatted}`)
+  }
+  cached = parsed.data
+  return cached
+}
