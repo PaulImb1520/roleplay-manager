@@ -15,7 +15,7 @@ export function CharacterNotFound({ error }: { error?: string | null }) {
           </p>
         )}
       </div>
-      <Button render={<a href="/" />} variant="outline">
+      <Button render={<a href="/" />} variant="outline" nativeButton={false}>
         Volver a mis personajes
       </Button>
     </div>

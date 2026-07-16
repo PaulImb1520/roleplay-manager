@@ -40,7 +40,7 @@ export function CharacterList() {
             {characters.length} personaje{characters.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button render={<a href="/characters/new" />}>
+        <Button render={<a href="/characters/new" />} nativeButton={false}>
           <PlusIcon />
           Crear personaje
         </Button>
@@ -51,7 +51,7 @@ export function CharacterList() {
           <p className="text-muted-foreground text-sm">
             Aún no tienes personajes. ¡Crea tu primer personaje para empezar!
           </p>
-          <Button render={<a href="/characters/new" />} variant="outline">
+          <Button render={<a href="/characters/new" />} variant="outline" nativeButton={false}>
               <PlusIcon />
               Crear personaje
           </Button>
