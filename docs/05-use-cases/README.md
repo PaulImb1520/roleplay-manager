@@ -24,6 +24,26 @@ No debe responder cómo se implementa internamente dicha operación.
 
 ---
 
+## Organización de la documentación
+
+Los casos de uso se agrupan en subcarpetas **por dominio** (entidad principal que gobiernan), no por el flujo desde el cual se invocan. Esta organización espeja la estructura del backend en `packages/backend/src/application/use-cases/` y permite localizar rápidamente toda la lógica relacionada con una entidad del dominio.
+
+| Subcarpeta | Casos de uso contenidos | Entidad principal |
+|---|---|---|
+| `character/` | `CreateCharacter`, `CreateCharacterVersion`, `UpdateCharacter`, `DeleteCharacter` | `Character`, `CharacterVersion`, `CharacterCard` |
+| `conversation/` | `CreateConversation`, `SendMessage`, `RegenerateReply`, `EditMessage`, `RewindConversation`, `ArchiveConversation`, `UpdateConversationSettings`, `GenerateConversationTitle` | `Conversation`, `Message` |
+| `memory/` | `ProposeMemoryChanges`, `ApplyMemoryChanges`, `CreateMemory`, `UpdateMemory`, `DeleteMemory` | `Memory`, `MemoryChangeProposal` |
+| `summary/` | `GenerateSummary`, `UpdateSummary`, `DeleteSummary` | `Summary` |
+| `provider/` | `PromptContextBuilder`, `GenerateCharacterResponse`, `ConfigureDefaultProvider` | `ProviderPort`, `PromptContext`, `InferenceConfig` |
+
+Esta organización se eligió porque:
+
+* Refleja la arquitectura hexagonal del backend: cada subcarpeta corresponde a una entidad del dominio descrita en `04-domain.md`.
+* Es ampliable: añadir futuros casos de uso (p. ej. recuperación selectiva de memoria) cae naturalmente en `memory/` sin alterar el resto.
+* Desacopla la ubicación del caso de uso del flujo que lo invoca: aunque `ProposeMemoryChanges` se ejecuta durante `SendMessage`, su responsabilidad recae sobre la entidad `Memory` y por tanto vive en `memory/`.
+
+---
+
 ## Estructura
 
 Todos los casos de uso deberán seguir la misma estructura para mantener una documentación consistente.
@@ -79,6 +99,12 @@ Ejemplos:
 * ArchiveConversation
 * UpdateConversationSettings
 * ApplyMemoryChanges
+* ConfigureDefaultProvider
+* CreateMemory
+* UpdateMemory
+* DeleteMemory
+* UpdateSummary
+* DeleteSummary
 
 ### Casos de uso iniciados por el sistema
 
@@ -87,7 +113,7 @@ Son procesos internos ejecutados automáticamente para mantener el funcionamient
 Ejemplos:
 
 * CreateCharacterVersion
-* BuildPromptContext
+* PromptContextBuilder
 * GenerateCharacterResponse
 * GenerateSummary
 * ProposeMemoryChanges

@@ -132,11 +132,11 @@ Se priorizará una arquitectura extensible antes que una arquitectura sobreingen
 
 # Offline First
 
-La aplicación debe poder funcionar completamente sin conexión a Internet.
+Los datos del usuario —personajes, conversaciones, memorias, resúmenes y configuraciones— se almacenan localmente y permanecen disponibles sin conexión a Internet.
 
-Todos los datos pertenecen al usuario.
+La inferencia, por el contrario, puede ejecutarse en un proveedor local o remoto, a elección del usuario. El sistema no obliga a depender de un servicio externo, pero tampoco impide utilizarlo: la capa de abstracción de proveedores permite conectar modelos locales (Ollama, LM Studio) o remotos (OpenAI u otros compatibles) sin modificar la lógica de negocio.
 
-El acceso a servicios externos debe ser siempre opcional.
+Lo que nunca sale del control del usuario, bajo ninguna circunstancia, es su información.
 
 ---
 

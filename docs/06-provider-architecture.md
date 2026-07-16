@@ -127,14 +127,49 @@ El sistema mantiene un registro central de proveedores disponibles.
 
 * **Registro**: los adaptadores se registran con un identificador único (por ejemplo, `ollama`, `openai-compatible`).
 * **Selección por conversación**: cada conversación almacena el proveedor y modelo que debe utilizar. Si no se especifica, se utiliza el proveedor por defecto del sistema.
-* **Proveedor por defecto**: el sistema define un proveedor por defecto que se asigna a las nuevas conversaciones.
+* **Proveedor por defecto**: el sistema define un proveedor y modelo por defecto que se asignan a las nuevas conversaciones. Esta configuración es global y es definida por el usuario.
 * **Estado del proveedor**: el registro puede consultar el estado de cada proveedor (disponible, no disponible, no configurado).
+
+### Configuración global de proveedores
+
+El proveedor por defecto del sistema no es un valor жестido en código, sino una **configuración global** definida y modificable por el usuario.
+
+Su definición reside en `packages/backend/src/infrastructure/config/provider.config.ts`, que persiste la preferencia del usuario en SQLite (tabla `settings`, clave `default_provider`). El archivo expone un servicio de lectura/escritura que los casos de uso consumen sin conocer su implementación concreta.
+
+La configuración global contiene:
+
+* `defaultProvider`: identificador del proveedor por defecto (p. ej. `ollama`, `openai-compatible`).
+* `defaultModel`: identificador del modelo por defecto dentro del proveedor seleccionado.
+
+Si el usuario no ha establecido ninguna preferencia, el campo `defaultProvider` permanece vacío y el sistema carece de proveedor por defecto hasta que el usuario lo configure.
+
+### Gestor de proveedores
+
+El sistema proporciona un **gestor de proveedores** accesible desde la interfaz de usuario que permite:
+
+* Listar los proveedores disponibles y su estado.
+* Ver los modelos ofrecidos por cada proveedor.
+* Seleccionar el proveedor y modelo por defecto del sistema.
+* Modificar la selección en cualquier momento.
+
+### Flujo de primera configuración
+
+Dado que el sistema no asume ningún proveedor por defecto, el usuario debe configurarlo antes de poder generar su primera respuesta:
+
+1. Cuando el usuario intenta crear o continuar una conversación y el sistema detecta que no existe proveedor por defecto configurado, el caso de uso **devuelve un error controlado** indicando que no hay proveedor disponible.
+2. El frontend, ante este error, presenta al usuario el **gestor de proveedores**.
+3. El usuario selecciona un proveedor y un modelo de la lista de disponibles.
+4. El sistema persiste la selección como configuración global.
+5. La operación interrumpida (creación de conversación o envío de mensaje) puede reintentarse automáticamente o requerir una acción explícita del usuario, según se decida en la implementación de la interfaz.
+
+Este flujo garantiza que el usuario conserve la libertad de elegir y cambiar de proveedor en cualquier momento, respetando el principio de que los modelos son intercambiables.
 
 ### Flujo de selección
 
 1. El caso de uso `GenerateCharacterResponse` solicita el proveedor configurado en la conversación.
 2. Si la conversación no tiene proveedor configurado, se utiliza el proveedor por defecto del sistema.
-3. Si el proveedor seleccionado no está disponible, el caso de uso devuelve un error controlado sin modificar el estado de la conversación.
+3. Si no existe proveedor por defecto configurado en el sistema, se ejecuta el **flujo de primera configuración** descrito anteriormente.
+4. Si el proveedor seleccionado no está disponible, el caso de uso devuelve un error controlado sin modificar el estado de la conversación.
 
 ---
 
@@ -198,7 +233,7 @@ La arquitectura de proveedores es utilizada directamente por los siguientes caso
 * **GenerateCharacterResponse**: orquesta la llamada al proveedor, coordinando el `ProviderPort` con la configuración de la conversación.
 * **GenerateSummary**: utiliza el mismo mecanismo para generar resúmenes narrativos a partir del contexto de la conversación.
 * **ProposeMemoryChanges**: utiliza el mismo mecanismo para solicitar al modelo propuestas de modificación de memoria.
-* **BuildPromptContext**: construye el `PromptContext` que será enviado al proveedor, pero no interactúa directamente con él.
+* **PromptContextBuilder**: construye el `PromptContext` que será enviado al proveedor, pero no interactúa directamente con él.
 * **GenerateConversationTitle**: utiliza el mismo mecanismo para generar títulos descriptivos.
 
 ---

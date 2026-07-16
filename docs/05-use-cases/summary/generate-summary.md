@@ -149,7 +149,7 @@ No se modifica ninguna entidad previamente existente. Los resúmenes anteriores 
 ## Casos de uso relacionados
 
 * SendMessage (invoca este caso de uso cuando se alcanza el umbral de mensajes).
-* BuildPromptContext (consume el resumen más reciente para construir el contexto).
+* PromptContextBuilder (consume el resumen más reciente para construir el contexto).
 * ProposeMemoryChanges (se ejecuta después de este caso de uso dentro del flujo de SendMessage).
 * EditMessage (puede provocar la necesidad de regenerar resúmenes).
 * RewindConversation (puede provocar la eliminación de resúmenes cuyo alcance quede fuera de la nueva línea temporal).

@@ -1,5 +1,19 @@
 # Entidades
 
+## Glosario
+
+Antes de describir las entidades del dominio, se definen algunos términos que se utilizan de forma recurrente en todo el sistema y cuya distinción es importante para evitar ambigüedades.
+
+* **Entidad**: objeto del dominio con identidad propia, ciclo de vida independiente y capacidad de persistirse en la base de datos.
+* **Value Object**: objeto de dominio sin identidad propia ni ciclo de vida independiente. Transporta información entre servicios y no se persiste como entidad.
+* **Greeting**: saludo definido por el usuario dentro de una `CharacterVersion`. Corresponde al mensaje inicial con rol `assistant` de toda conversación creada a partir de esa versión. Su función es dar entrada a la primera interacción del usuario con el personaje.
+* **Memory**: entidad individual que representa un único hecho relevante de la historia.
+* **Memoria dinámica**: colección de todas las entidades `Memory` pertenecientes a una misma conversación. No es una entidad por sí misma, sino una agrupación lógica utilizada para referirse al conjunto de hechos activos que el sistema utiliza para construir el contexto.
+* **PromptContext**: value object que reúne toda la información enviada al modelo en una generación concreta. No se persiste.
+* **Proveedor**: adaptador concreto que implementa el contrato `ProviderPort` y permite comunicarse con un modelo de IA local o remoto (Ollama, LM Studio, OpenAI, etc.).
+
+---
+
 ## Character
 
 ### Descripción
@@ -128,7 +142,7 @@ Cada tarjeta contiene:
 
 El orden de las tarjetas es significativo.
 
-Las tarjetas situadas en posiciones superiores tendrán mayor prioridad al construir el contexto enviado al modelo.
+Las tarjetas se organizan como una lista vertical descendente. La tarjeta situada en el **índice 0** (la más arriba de la lista) tiene la **mayor prioridad** al construir el contexto enviado al modelo. Las tarjetas siguientes descienden en prioridad conforme aumenta su índice. De este modo, el orden visual de la lista coincide con el orden de relevancia que el `PromptContextBuilder` otorga a cada tarjeta.
 
 Las tarjetas desactivadas permanecerán almacenadas, pero no participarán en la construcción del contexto.
 
@@ -722,6 +736,8 @@ Además de las entidades principales, el sistema utiliza una serie de objetos de
 
 Estos objetos no poseen identidad propia ni ciclo de vida independiente. Su función consiste en transportar información entre los distintos servicios de aplicación y representar conceptos importantes del dominio sin necesidad de persistirlos como entidades.
 
+> **Nota sobre `MemoryChangeProposal`**: aunque se documenta dentro de este bloque por afinidad temática con la memoria dinámica, `MemoryChangeProposal` constituye una excepción: posee identidad propia, ciclo de vida (`pending` → `applied`/`discarded`) y se persiste en SQLite asociada a la conversación que la originó. Su inclusión aquí obedece únicamente a criterios de organización documental y no implica que sea un value object en sentido estricto.
+
 ---
 
 # PromptContext
@@ -730,7 +746,7 @@ Estos objetos no poseen identidad propia ni ciclo de vida independiente. Su func
 
 Representa el contexto completo que será enviado al proveedor de inteligencia artificial para generar la siguiente respuesta del personaje.
 
-Su construcción corresponde al caso de uso `BuildPromptContext`.
+Su construcción corresponde al caso de uso `PromptContextBuilder`.
 
 No se almacena en la base de datos.
 
@@ -806,6 +822,25 @@ Cada propuesta puede contener:
 * Descripción.
 * Prioridad propuesta.
 * Motivo de la propuesta (opcional).
+* Identificador de la memoria objetivo (solo para UPDATE y DELETE; vacío en CREATE).
+* Estado actual de la propuesta (`pending`, `applied`, `discarded`).
+* Fecha de creación y fecha de procesado.
+* Autor del procesado (usuario o sistema).
+
+---
+
+## Ciclo de vida
+
+Una propuesta nace en estado `pending` cuando la IA la genera durante `ProposeMemoryChanges`.
+
+Permanece almacenada asociada a la conversación hasta que el usuario la revisa mediante `ApplyMemoryChanges` o hasta que un evento las descarte automáticamente (por ejemplo, durante un `RewindConversation`).
+
+Al ser revisada por el usuario, la propuesta transita a uno de los siguientes estados:
+
+* `applied` — la propuesta fue aceptada (tal cual o modificada) y los cambios correspondientes se aplicaron sobre la memoria dinámica.
+* `discarded` — la propuesta fue descartada por el usuario o por el sistema sin aplicar ningún cambio.
+
+Una vez procesada, la propuesta conserva su estado final a efectos de auditoría y no puede volver al estado `pending`.
 
 ---
 
@@ -815,6 +850,10 @@ Cada propuesta puede contener:
 * Varias propuestas pueden referirse a una misma memoria.
 * El usuario tiene siempre la decisión final.
 * Una propuesta puede ser aceptada, modificada o descartada.
+* Las propuestas se persisten asociadas a la conversación que las originó.
+* Las propuestas pendientes se conservan entre sesiones hasta ser revisadas o descartadas.
+* Las propuestas aplicadas o descartadas permanecen almacenadas como historial de auditoría.
+* Si una propuesta UPDATE o DELETE hace referencia a una memoria que ya no existe, se descarta automáticamente sin generar error.
 
 ---
 

@@ -167,7 +167,7 @@ Las memorias activas de la conversación permanecen inalteradas.
 * SendMessage (invoca este caso de uso tras la generación de la respuesta y el resumen).
 * GenerateSummary (se ejecuta antes de este caso de uso dentro del flujo de SendMessage).
 * ApplyMemoryChanges (caso de uso iniciado por el usuario para aplicar o descartar las propuestas generadas).
-* BuildPromptContext (consume las memorias activas para construir el contexto).
+* PromptContextBuilder (consume las memorias activas para construir el contexto).
 * GenerateCharacterResponse (genera la respuesta del asistente que este caso de uso analiza).
 
 ---

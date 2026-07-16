@@ -31,7 +31,7 @@ La primera versión del proyecto busca demostrar que es posible mantener convers
 * Memoria dinámica editable.
 * Resúmenes automáticos de la historia.
 * Compatibilidad con distintos proveedores de modelos de IA.
-* Ejecución completamente local.
+* Ejecución completamente local de los datos del usuario, con opción de utilizar proveedores de inferencia locales o remotos.
 
 Cada uno de estos componentes debe trabajar conjuntamente para reducir el impacto de la ventana de contexto de los modelos de lenguaje sin sacrificar la calidad narrativa de la conversación.
 
@@ -43,9 +43,9 @@ El proyecto se construye sobre los siguientes principios.
 
 ## Offline First
 
-La aplicación debe poder funcionar completamente sin conexión a Internet.
+La aplicación almacena toda la información del usuario localmente: personajes, conversaciones, memorias, resúmenes y configuraciones. Estos datos nunca salen del equipo del usuario sin su consentimiento explícito y permanecen disponibles aunque no haya conexión a Internet.
 
-Los personajes, conversaciones, memorias y configuraciones pertenecen al usuario y deben permanecer bajo su control.
+El proveedor de inferencia, por el contrario, puede ser local o remoto a elección del usuario. La arquitectura no impone un proveedor concreto: el usuario puede ejecutar modelos en su propio equipo (Ollama, LM Studio) o conectar con proveedores en línea (OpenAI, Azure OpenAI, etc.) si dispone de conexión y así lo decide. El sistema funciona completamente aislado con un proveedor local, pero no se cierra al uso de proveedores remotos cuando el usuario lo considere oportuno.
 
 ---
 

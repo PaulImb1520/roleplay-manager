@@ -17,7 +17,7 @@ flowchart TB
 
     subgraph SystemInitiated["Casos de uso iniciados por el sistema"]
         direction TB
-        UC12[BuildPromptContext]:::doc
+        UC12[PromptContextBuilder]:::doc
         UC13[GenerateCharacterResponse]:::doc
         UC14[GenerateSummary]:::doc
         UC8[CreateCharacterVersion]:::doc

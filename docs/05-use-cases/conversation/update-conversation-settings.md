@@ -131,7 +131,7 @@ No se crea ni elimina ninguna entidad. El contenido narrativo de la conversació
 
 * CreateConversation (inicializa la configuración con valores por defecto).
 * SendMessage (utiliza la configuración actual para determinar el comportamiento de la generación).
-* BuildPromptContext (consume la configuración de mensajes recientes y otros parámetros).
+* PromptContextBuilder (consume la configuración de mensajes recientes y otros parámetros).
 * GenerateCharacterResponse (consume la configuración de inferencia).
 * GenerateSummary (consume la frecuencia de generación definida en la configuración).
 * ArchiveConversation (bloquea la modificación de la configuración mientras la conversación esté archivada).

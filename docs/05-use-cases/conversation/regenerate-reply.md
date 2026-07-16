@@ -73,7 +73,7 @@ Cada regeneración conserva la versión anterior en un historial temporal asocia
 
 7. El mensaje queda disponible para su revisión por parte del usuario.
 
-8. Las propuestas de modificación de memoria pendientes asociadas a este ciclo se conservan, aunque el sistema notifica al usuario de que pueden no reflejar con precisión la nueva respuesta.
+8. Las propuestas de modificación de memoria pendientes se conservan sin alteraciones. No se notifica al usuario sobre su posible desactualización ni se regeneran; el usuario puede revisarlas cuando lo considere oportuno.
 
 ---
 
@@ -156,10 +156,8 @@ Las memorias, resúmenes y propuestas de memoria permanecen inalterados.
 * SendMessage (crea el mensaje del asistente que este caso de uso regenera).
 * EditMessage (alternativa para modificar manualmente la respuesta sin regenerarla).
 * RewindConversation (alternativa más drástica que elimina mensajes posteriores).
-* BuildPromptContext (invocado internamente para construir el contexto de la regeneración).
+* PromptContextBuilder (invocado internamente para construir el contexto de la regeneración).
 * GenerateCharacterResponse (invocado internamente para generar la nueva respuesta).
-* GenerateSummary (puede ser necesario regenerar el resumen si la nueva respuesta altera significativamente la narrativa).
-* ProposeMemoryChanges (puede ejecutarse después si se desean nuevas propuestas basadas en la respuesta regenerada).
 
 ---
 

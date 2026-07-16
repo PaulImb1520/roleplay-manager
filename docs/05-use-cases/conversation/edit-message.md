@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Permitir al usuario modificar el contenido de un mensaje existente dentro de una conversación, ya sea propio o generado por el asistente, manteniendo la coherencia narrativa y notificando los efectos secundarios que el cambio pueda provocar sobre resúmenes y propuestas de memoria pendientes.
+Permitir al usuario modificar el contenido de un mensaje existente dentro de una conversación, ya sea propio o generado por el asistente, manteniendo la coherencia narrativa sin desencadenar efectos secundarios automáticos sobre otras entidades del dominio.
 
 ---
 
@@ -12,9 +12,7 @@ Durante una conversación de roleplay el usuario puede necesitar corregir errore
 
 El principio fundamental del sistema establece que toda información almacenada debe ser editable por el usuario. Los mensajes no son una excepción.
 
-Sin embargo, modificar un mensaje no es una operación aislada. Los resúmenes narrativos pueden quedar desactualizados si el mensaje editado forma parte del rango que describen, y las propuestas de memoria pendientes pueden basarse en información que ha cambiado.
-
-Este caso de uso permite la edición manteniendo la transparencia sobre dichos efectos secundarios, pero sin aplicar cambios automáticos sobre entidades dependientes.
+En la versión 1.0, la edición de un mensaje es una operación simple: únicamente modifica el contenido textual del mensaje. No regenera la respuesta posterior, no invalida resúmenes ni propuestas de memoria pendientes, ni desencadena ningún proceso automático. El usuario conserva el control total para decidir si, tras una edición, desea regenerar manualmente una respuesta o revisar las propuestas existentes.
 
 ---
 
@@ -60,17 +58,9 @@ Este caso de uso permite la edición manteniendo la transparencia sobre dichos e
 
 5. El sistema actualiza el contenido del mensaje con el nuevo texto.
 
-6. El sistema conserva la fecha de edición y la registra como metadato del mensaje.
+6. El sistema registra la fecha de edición como metadato del mensaje (`editedAt`).
 
-7. El sistema verifica si el mensaje editado se encuentra dentro del rango del resumen más reciente de la conversación.
-
-8. Si es así, el sistema marca el resumen como potencialmente desactualizado e informa al usuario de que el resumen puede no reflejar con precisión la historia editada.
-
-9. El sistema verifica si existen propuestas de modificación de memoria pendientes que pudieran haberse basado en el mensaje editado.
-
-10. Si existen, el sistema informa al usuario de que las propuestas pendientes podrían no ser coherentes con el mensaje modificado.
-
-11. El sistema confirma que la edición se ha completado y muestra el mensaje actualizado.
+7. El sistema confirma que la edición se ha completado y muestra el mensaje actualizado.
 
 ---
 
@@ -96,13 +86,7 @@ Si la conversación se encuentra archivada, el sistema impide la edición e info
 
 ### Edición sin cambios
 
-Si el usuario abre el editor y confirma sin realizar ninguna modificación, el sistema finaliza sin aplicar cambios ni generar notificaciones.
-
----
-
-### Múltiples resúmenes afectados
-
-Si la conversación posee varios resúmenes cuyo rango incluye el mensaje editado, todos ellos se marcan como potencialmente desactualizados.
+Si el usuario abre el editor y confirma sin realizar ninguna modificación, el sistema finaliza sin aplicar cambios.
 
 ---
 
@@ -112,9 +96,9 @@ Si la conversación posee varios resúmenes cuyo rango incluye el mensaje editad
 * El contenido del mensaje no puede estar vacío tras la edición.
 * La edición de un mensaje no modifica su autor, su fecha de creación original ni su posición dentro de la conversación.
 * La edición de un mensaje no desencadena una nueva generación de respuesta del asistente.
-* El resumen más reciente pasa a considerarse potencialmente desactualizado si el mensaje editado forma parte de su rango.
-* Las propuestas de memoria pendientes se notifican como potencialmente incoherentes, pero no se descartan automáticamente.
-* Este caso de uso no modifica resúmenes, memorias ni propuestas de memoria.
+* La edición de un mensaje no invalida ni descarta las propuestas de modificación de memoria pendientes.
+* La edición de un mensaje no modifica resúmenes, memorias ni propuestas de memoria.
+* El usuario puede editar un mensaje aunque existan propuestas pendientes.
 * El sistema conserva la fecha de la última edición como metadato del mensaje con fines de auditoría.
 
 ---
@@ -128,7 +112,7 @@ Al finalizar correctamente el caso de uso pueden producirse los siguientes cambi
 
 No se crea ni elimina ninguna entidad.
 
-Los resúmenes, las memorias y las propuestas de memoria permanecen inalterados, aunque algunos puedan quedar marcados como potencialmente desactualizados.
+Los resúmenes, las memorias y las propuestas de memoria permanecen inalterados.
 
 ---
 
@@ -138,8 +122,8 @@ Los resúmenes, las memorias y las propuestas de memoria permanecen inalterados,
 * La fecha de última edición del mensaje ha sido actualizada.
 * La posición del mensaje dentro de la conversación no ha cambiado.
 * El resto de la conversación permanece intacto.
-* Si el mensaje editado estaba dentro del rango del resumen más reciente, dicho resumen está marcado como potencialmente desactualizado.
-* Si existían propuestas de memoria pendientes, el usuario ha sido informado de la posible incoherencia.
+* Las propuestas de modificación de memoria pendientes, si existían, se conservan sin alteraciones.
+* Los resúmenes no han sido modificados.
 
 ---
 
@@ -147,9 +131,8 @@ Los resúmenes, las memorias y las propuestas de memoria permanecen inalterados,
 
 * SendMessage (el mensaje que se edita fue creado durante el envío de un mensaje o recepción de una respuesta).
 * RewindConversation (alternativa a la edición para modificar el rumbo de la historia).
-* RegenerateReply (puede ejecutarse después de editar un mensaje del usuario para obtener una nueva respuesta).
-* GenerateSummary (puede ser necesario regenerar el resumen si ha quedado desactualizado tras la edición).
-* ApplyMemoryChanges (las propuestas pendientes pueden requerir revisión adicional tras la edición).
+* RegenerateReply (puede ejecutarse manualmente después de editar un mensaje del usuario para obtener una nueva respuesta; la edición no lo desencadena automáticamente).
+* ApplyMemoryChanges (el usuario puede revisar propuestas pendientes de forma independiente a la edición).
 
 ---
 
@@ -157,6 +140,7 @@ Los resúmenes, las memorias y las propuestas de memoria permanecen inalterados,
 
 En versiones posteriores este caso de uso podrá ampliarse para soportar:
 
+* Marca automática de resúmenes como potencialmente desactualizados cuando el mensaje editado forme parte de su rango.
 * Regeneración automática del resumen más reciente cuando un mensaje editado afecte a su rango.
 * Historial de versiones del mensaje permitiendo consultar y restaurar ediciones anteriores.
 * Notificación proactiva al usuario de todas las consecuencias narrativas de la edición.

@@ -169,7 +169,7 @@ No se modifica ninguna otra entidad del dominio.
 
 * ProposeMemoryChanges (genera las propuestas que este caso de uso procesa).
 * SendMessage (durante su ejecución se generan las propuestas que posteriormente revisa el usuario).
-* BuildPromptContext (consume las memorias activas después de ser actualizadas).
+* PromptContextBuilder (consume las memorias activas después de ser actualizadas).
 * EditMessage (puede generar inconsistencias con propuestas pendientes).
 * RewindConversation (puede invalidar propuestas pendientes al retroceder el estado de la conversación).
 

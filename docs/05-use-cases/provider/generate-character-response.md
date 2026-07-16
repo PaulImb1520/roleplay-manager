@@ -131,7 +131,7 @@ Su única responsabilidad consiste en transformar un `PromptContext` en un `Gene
 
 ## Casos de uso relacionados
 
-* BuildPromptContext
+* PromptContextBuilder
 * SendMessage
 * GenerateSummary
 * ProposeMemoryChanges

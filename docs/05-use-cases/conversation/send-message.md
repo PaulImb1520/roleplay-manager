@@ -149,7 +149,7 @@ Las modificaciones sobre la memoria dinámica no se aplican durante este caso de
 
 ## Casos de uso relacionados
 
-* BuildPromptContext
+* PromptContextBuilder
 * GenerateCharacterResponse
 * GenerateSummary
 * GenerateConversationTitle
