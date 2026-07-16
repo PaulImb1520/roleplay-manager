@@ -39,12 +39,14 @@ export class ArchiveConversationUseCase {
 
     await this.conversationRepository.update(conversation)
 
-    const result = await this.characterRepository.findById(conversation.versionId)
+    const version = await this.characterRepository.findVersionById(conversation.versionId)
+    const characterId = version?.characterId ?? ""
+    const result = characterId ? await this.characterRepository.findById(characterId) : null
 
     return {
       id: conversation.id,
-      characterId: result?.character.id ?? "",
-      characterName: result?.currentVersion.name ?? "Unknown",
+      characterId,
+      characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
       characterProfileImage: result?.currentVersion.profileImage ?? "",
       title: conversation.title,
       status: conversation.status,

@@ -65,7 +65,7 @@ const buildCharacterRepo = (): CharacterRepository => ({
   list: async () => [],
   update: async (c) => c,
   delete: async () => {},
-  findVersionById: async () => null,
+  findVersionById: async () => version,
   findVersionsByCharacterId: async () => [],
   findMaxVersionNumber: async () => 0,
   saveVersion: async (v) => v,

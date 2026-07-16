@@ -19,11 +19,11 @@ export class GetConversationUseCase {
       throw new ConversationNotFoundError(id)
     }
 
-    const result = await this.characterRepository.findById(convWithMessages.conversation.versionId)
-
-    const characterName = result?.currentVersion.name ?? "Unknown"
+    const version = await this.characterRepository.findVersionById(convWithMessages.conversation.versionId)
+    const characterId = version?.characterId ?? ""
+    const result = characterId ? await this.characterRepository.findById(characterId) : null
+    const characterName = result?.currentVersion.name ?? version?.name ?? "Unknown"
     const characterProfileImage = result?.currentVersion.profileImage ?? ""
-    const characterId = result?.character.id ?? ""
 
     return {
       id: convWithMessages.conversation.id,

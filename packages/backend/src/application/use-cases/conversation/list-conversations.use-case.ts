@@ -17,11 +17,13 @@ export class ListConversationsUseCase {
 
     for (const conv of conversations) {
       const messages = await this.messageRepository.findByConversationId(conv.id)
-      const result = await this.characterRepository.findById(conv.versionId)
+      const version = await this.characterRepository.findVersionById(conv.versionId)
+      const characterId = version?.characterId ?? ""
+      const result = characterId ? await this.characterRepository.findById(characterId) : null
 
       summaries.push({
         id: conv.id,
-        characterName: result?.currentVersion.name ?? "Unknown",
+        characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
         characterProfileImage: result?.currentVersion.profileImage ?? "",
         title: conv.title,
         status: conv.status,
