@@ -34,7 +34,7 @@ Los casos de uso se agrupan en subcarpetas **por dominio** (entidad principal qu
 | `conversation/` | `CreateConversation`, `SendMessage`, `RegenerateReply`, `EditMessage`, `RewindConversation`, `ArchiveConversation`, `UpdateConversationSettings`, `GenerateConversationTitle` | `Conversation`, `Message` |
 | `memory/` | `ProposeMemoryChanges`, `ApplyMemoryChanges`, `CreateMemory`, `UpdateMemory`, `DeleteMemory` | `Memory`, `MemoryChangeProposal` |
 | `summary/` | `GenerateSummary`, `UpdateSummary`, `DeleteSummary` | `Summary` |
-| `provider/` | `PromptContextBuilder`, `GenerateCharacterResponse`, `ConfigureDefaultProvider` | `ProviderPort`, `PromptContext`, `InferenceConfig` |
+| `provider/` | `PromptContextBuilder`, `GenerateCharacterResponse`, `ConfigureDefaultProvider`, `ValidateProviderConnection`, `ListProviderModels` | `ProviderPort`, `PromptContext`, `InferenceConfig` |
 
 Esta organización se eligió porque:
 
@@ -100,6 +100,8 @@ Ejemplos:
 * UpdateConversationSettings
 * ApplyMemoryChanges
 * ConfigureDefaultProvider
+* ValidateProviderConnection
+* ListProviderModels
 * CreateMemory
 * UpdateMemory
 * DeleteMemory

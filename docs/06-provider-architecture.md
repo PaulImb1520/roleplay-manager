@@ -211,9 +211,17 @@ Cada adaptador define un tiempo máximo de espera para la generación. Si se sup
 
 ### Reintentos
 
-El adaptador puede implementar reintentos automáticos ante errores transitorios (timeouts de red, sobrecarga del servidor), pero nunca ante errores de validación (modelo inexistente, configuración inválida).
+En la versión 1.0 **no se implementan reintentos automáticos** ante errores transitorios del proveedor. Esta decisión es deliberada y coherente con el principio de transparencia establecido en `docs/07-technical-architecture.md`:
 
-La política de reintentos debe ser configurable por proveedor.
+* Si el proveedor no responde dentro del timeout configurado, el adaptador lanza un `ProviderTimeoutError` que el caso de uso solicitante captura **sin modificar el estado de la conversación**.
+* El frontend muestra un mensaje informativo en el propio chat indicando que el modelo no respondió a tiempo y dejando al usuario reintentar manualmente.
+* No se introducen reintentos en segundo plano que podrían enmascarar problemas subyacentes (modelo cargado, hardware insuficiente, proveedor caído) ni duplicar peticiones contra un backend local ya de por sí limitado.
+
+El usuario conserva el control sobre cuándo reintentar la operación, ya sea reenviando el mensaje, solicitando una nueva regeneración, o regenerando el título/resumen bajo demanda mediante los endpoints manuales correspondientes.
+
+### Evolución futura
+
+La política de reintentos automáticos (configurable por proveedor, solo ante errores transitorios y nunca ante errores de validación) queda **fuera del alcance de la versión 1.0**, pero se recoge como posible evolución futura cuando se disponga de telemetría real que justifique su introducción. Cualquier reintento automático futuro deberá respetar el principio de transparencia: el usuario debe poder inspeccionar y desactivar dicha política desde la configuración.
 
 ---
 

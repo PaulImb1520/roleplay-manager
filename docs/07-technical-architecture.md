@@ -14,7 +14,11 @@ Definir la estructura del proyecto, la organización de capas, los flujos de dat
 | ORM | Drizzle ORM | Adaptador de persistencia |
 | Base de datos | SQLite | Almacenamiento local (Offline First) |
 | Frontend | Astro + React | SSR con componentes interactivos |
-| UI | shadcn/ui | Librería de componentes de interfaz |
+| UI | shadcn/ui (preset `base-nova`, `@base-ui/react`) | Librería de componentes de interfaz |
+| Estilos | Tailwind CSS v4 | Utilidades de estilos (config-less, vía `@tailwindcss/vite` + `@import`) |
+| Estado (frontend) | Zustand | Gestión de estado de UI y servidor |
+| Validación | Zod | Schemas declarativos en adaptadores primarios |
+| Identificadores | UUID v7 (`uuid`) | Generación de IDs en la capa de aplicación |
 | Paquete | pnpm workspaces | Monorepo |
 | Orquestación | Turborepo | Gestión de tareas del monorepo (`turbo.json`) |
 
@@ -142,7 +146,6 @@ roleplay-manager/
         components/
           provider/
             provider-manager.tsx
-          ui/          (shadcn components)
           character/
             character-form.tsx
             character-card.tsx
@@ -171,13 +174,23 @@ roleplay-manager/
         layouts/
           base.astro
           sidebar.astro
-        styles/
-          globals.css
 
       astro.config.mjs
-      tailwind.config.ts
       components.json
       package.json
+      tsconfig.json
+
+    ui/                      (paquete compartido de componentes shadcn)
+      src/
+        components/          (button.tsx, dialog.tsx, ...)
+        lib/
+          utils.ts           (cn())
+        hooks/
+        styles/
+          globals.css        (Tailwind v4 + design tokens shadcn)
+
+      components.json        (preset base-nova, @base-ui/react)
+      package.json           (name: @workspace/ui)
       tsconfig.json
 
     shared/
@@ -393,8 +406,8 @@ Cada controlador obtiene los casos de uso que necesita desde el contenedor y los
 | `PUT` | `/api/conversations/:id/summaries/:summaryId` | UpdateSummary | Edición manual de resumen |
 | `DELETE` | `/api/conversations/:id/summaries/:summaryId` | DeleteSummary | Eliminación manual de resumen |
 | `GET` | `/api/providers` | — (lista proveedores disponibles) | |
-| `GET` | `/api/providers/:id/status` | — (verifica conexión) | |
-| `GET` | `/api/providers/:id/models` | — (lista modelos del proveedor) | |
+| `GET` | `/api/providers/:id/status` | ValidateProviderConnection | Verifica que el proveedor esté accesible; no modifica estado |
+| `GET` | `/api/providers/:id/models` | ListProviderModels | Lista modelos disponibles; vacío con `manualEntryRequired` si no soporta descubrimiento |
 | `GET` | `/api/settings/default-provider` | — (consulta proveedor por defecto) | |
 | `PUT` | `/api/settings/default-provider` | ConfigureDefaultProvider | Establece proveedor y modelo por defecto |
 
@@ -549,6 +562,16 @@ export const settings = sqliteTable('settings', {
 ---
 
 ## Frontend
+
+### Paquete de componentes y estilos
+
+Los componentes shadcn y los estilos globales residen en un paquete compartido `@workspace/ui` (`packages/ui`), no dentro del paquete `frontend`. El frontend los consume mediante el alias `@workspace/ui/*`:
+
+* `@workspace/ui/components/*` — componentes shadcn (preset `base-nova`, construidos sobre `@base-ui/react`).
+* `@workspace/ui/lib/utils` — helper `cn()`.
+* `@workspace/ui/globals.css` — hoja de estilos global con Tailwind v4 y design tokens (importada por los layouts de Astro).
+
+Tailwind CSS v4 se configura **sin archivo `tailwind.config.ts`**: las directivas `@import "tailwindcss"` y `@theme inline` viven en `packages/ui/src/styles/globals.css`, y el plugin `@tailwindcss/vite` se registra en `astro.config.mjs`. El escaneo de clases se controla mediante `@source` dentro del propio CSS.
 
 ### Comunicación con el backend
 

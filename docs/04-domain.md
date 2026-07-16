@@ -6,6 +6,7 @@ Antes de describir las entidades del dominio, se definen algunos términos que s
 
 * **Entidad**: objeto del dominio con identidad propia, ciclo de vida independiente y capacidad de persistirse en la base de datos.
 * **Value Object**: objeto de dominio sin identidad propia ni ciclo de vida independiente. Transporta información entre servicios y no se persiste como entidad.
+* **MemoryChangeProposal**: entidad individual que representa una propuesta de modificación sobre la memoria dinámica generada por la IA, pendiente de revisión por el usuario. Se documenta junto a las entidades principales por poseer identidad, ciclo de vida (`pending → applied | discarded`) y persistencia propia.
 * **Greeting**: saludo definido por el usuario dentro de una `CharacterVersion`. Corresponde al mensaje inicial con rol `assistant` de toda conversación creada a partir de esa versión. Su función es dar entrada a la primera interacción del usuario con el personaje.
 * **Memory**: entidad individual que representa un único hecho relevante de la historia.
 * **Memoria dinámica**: colección de todas las entidades `Memory` pertenecientes a una misma conversación. No es una entidad por sí misma, sino una agrupación lógica utilizada para referirse al conjunto de hechos activos que el sistema utiliza para construir el contexto.
@@ -730,13 +731,122 @@ En futuras versiones podrán incorporarse estrategias más sofisticadas de compr
 
 La primera versión del sistema adopta un modelo lineal y acumulativo, priorizando la simplicidad, la transparencia y el control del usuario.
 
+## MemoryChangeProposal
+
+### Descripción
+
+`MemoryChangeProposal` representa una propuesta de modificación sobre la memoria dinámica generada por el modelo de inteligencia artificial.
+
+No modifica directamente el estado del dominio.
+
+Su aplicación depende siempre de la aprobación del usuario.
+
+A diferencia de los value objects documentados más adelante, `MemoryChangeProposal` es una **entidad**: posee identidad propia (identificador único), ciclo de vida observable (`pending → applied | discarded`), se persiste en SQLite asociada a la conversación que la originó y se conserva como historial de auditoría tras ser procesada.
+
+---
+
+### Responsabilidades
+
+* Permitir que la IA sugiera cambios sobre la memoria dinámica sin alterar automáticamente la historia.
+* Registrar de forma trazable qué cambios propuso la IA, sobre qué memoria y por qué motivo.
+* Mantenerse disponible entre sesiones hasta que el usuario los revise o un evento del sistema los descarte.
+
+---
+
+### No es responsabilidad de MemoryChangeProposal
+
+Una propuesta no debe:
+
+* Aplicar cambios sobre la memoria dinámica por sí misma.
+* Modificar el contenido de los mensajes.
+* Construir prompts o invocar al proveedor.
+* Decidir su propio estado final sin intervención del usuario o de una regla explícita del sistema.
+
+---
+
+### Estructura
+
+Cada propuesta puede contener:
+
+* **id**: identificador único de la propuesta.
+* **conversationId**: conversación a la que pertenece.
+* **operation**: acción que representa (`CREATE`, `UPDATE`, `DELETE`).
+* **targetMemoryId**: identificador de la memoria objetivo (solo para `UPDATE` y `DELETE`; vacío en `CREATE`).
+* **actor**: actor al que pertenece la memoria propuesta.
+* **title**: título propuesto para la memoria.
+* **description**: descripción propuesta para la memoria.
+* **priority**: prioridad propuesta (1–10).
+* **reason**: motivo de la propuesta (opcional, generado por la IA).
+* **status**: estado actual (`pending`, `applied`, `discarded`).
+* **createdAt**: fecha y hora de generación de la propuesta.
+* **processedAt**: fecha y hora en la que fue revisada (aceptada o descartada).
+* **processedBy**: autor del procesado (`user` o `system`).
+
+---
+
+### Operaciones posibles
+
+Una propuesta representa una de las siguientes acciones:
+
+* **CREATE**: propone la creación de una nueva memoria.
+* **UPDATE**: propone la modificación de una memoria existente.
+* **DELETE**: propone la eliminación de una memoria existente.
+
+---
+
+### Ciclo de vida
+
+Una propuesta nace en estado `pending` cuando la IA la genera durante `ProposeMemoryChanges`.
+
+Permanece almacenada asociada a la conversación hasta que el usuario la revisa mediante `ApplyMemoryChanges` o hasta que un evento del sistema la descarte automáticamente (por ejemplo, durante un `RewindConversation`).
+
+Al ser revisada por el usuario, la propuesta transita a uno de los siguientes estados:
+
+* `applied` — la propuesta fue aceptada (tal cual o modificada) y los cambios correspondientes se aplicaron sobre la memoria dinámica.
+* `discarded` — la propuesta fue descartada por el usuario o por el sistema sin aplicar ningún cambio.
+
+Una vez procesada, la propuesta conserva su estado final a efectos de auditoría y no puede volver al estado `pending`.
+
+---
+
+### Relaciones
+
+Toda `MemoryChangeProposal` pertenece exactamente a una `Conversation`.
+
+Una propuesta `UPDATE` o `DELETE` referencia opcionalmente una `Memory` existente mediante `targetMemoryId`. Si dicha memoria desaparece (por edición manual o por retroceso), el `targetMemoryId` queda nulo y la propuesta se descarta automáticamente al procesarse, sin generar error.
+
+Varias propuestas pueden referirse a una misma memoria, y varias propuestas pueden coexistir en estado `pending` sobre una misma conversación.
+
+---
+
+### Invariantes
+
+* Toda propuesta pertenece exactamente a una conversación.
+* Toda propuesta posee una operación válida (`CREATE`, `UPDATE`, `DELETE`).
+* Toda propuesta posee un estado válido (`pending`, `applied`, `discarded`).
+* Las propuestas nunca modifican directamente las memorias.
+* El usuario tiene siempre la decisión final sobre una propuesta `pending`.
+* Una propuesta procesada no puede volver al estado `pending`.
+* Las propuestas aplicadas o descartadas permanecen almacenadas como historial de auditoría.
+* Si una propuesta `UPDATE` o `DELETE` hace referencia a una memoria que ya no existe, se descarta automáticamente sin generar error.
+
+---
+
+### Observaciones futuras
+
+En futuras versiones podrán incorporarse mecanismos de agrupación de propuestas, resolución automática de conflictos entre propuestas contradictorias, o notificaciones proactivas al usuario cuando existan propuestas pendientes acumuladas.
+
+La versión inicial prioriza la transparencia y el control manual del usuario sobre cada propuesta individual.
+
+---
+
 # Objetos del Dominio (Value Objects)
 
 Además de las entidades principales, el sistema utiliza una serie de objetos de dominio que representan información temporal o estructurada durante la ejecución de los casos de uso.
 
 Estos objetos no poseen identidad propia ni ciclo de vida independiente. Su función consiste en transportar información entre los distintos servicios de aplicación y representar conceptos importantes del dominio sin necesidad de persistirlos como entidades.
 
-> **Nota sobre `MemoryChangeProposal`**: aunque se documenta dentro de este bloque por afinidad temática con la memoria dinámica, `MemoryChangeProposal` constituye una excepción: posee identidad propia, ciclo de vida (`pending` → `applied`/`discarded`) y se persiste en SQLite asociada a la conversación que la originó. Su inclusión aquí obedece únicamente a criterios de organización documental y no implica que sea un value object en sentido estricto.
+> `MemoryChangeProposal` se documenta como entidad en la sección anterior. Su inclusión en este bloque se debe únicamente a su afinidad temática con la memoria dinámica, pero arquitectónicamente es una entidad del dominio con persistencia propia.
 
 ---
 
@@ -781,79 +891,6 @@ Un `PromptContext` puede estar compuesto por:
 * Nunca se persiste.
 * Debe ser independiente del proveedor de inferencia.
 * Debe contener únicamente la información necesaria para la generación actual.
-
----
-
-# MemoryChangeProposal
-
-## Propósito
-
-Representa una propuesta de modificación sobre la memoria dinámica generada por el modelo de inteligencia artificial.
-
-No modifica directamente el estado del dominio.
-
-Su aplicación depende siempre de la aprobación del usuario.
-
----
-
-## Responsabilidades
-
-Permitir que la IA sugiera cambios sobre la memoria dinámica sin alterar automáticamente la historia.
-
----
-
-## Operaciones posibles
-
-Una propuesta puede representar una de las siguientes acciones:
-
-* CREATE
-* UPDATE
-* DELETE
-
----
-
-## Información
-
-Cada propuesta puede contener:
-
-* Operación.
-* Actor al que pertenece la memoria.
-* Título.
-* Descripción.
-* Prioridad propuesta.
-* Motivo de la propuesta (opcional).
-* Identificador de la memoria objetivo (solo para UPDATE y DELETE; vacío en CREATE).
-* Estado actual de la propuesta (`pending`, `applied`, `discarded`).
-* Fecha de creación y fecha de procesado.
-* Autor del procesado (usuario o sistema).
-
----
-
-## Ciclo de vida
-
-Una propuesta nace en estado `pending` cuando la IA la genera durante `ProposeMemoryChanges`.
-
-Permanece almacenada asociada a la conversación hasta que el usuario la revisa mediante `ApplyMemoryChanges` o hasta que un evento las descarte automáticamente (por ejemplo, durante un `RewindConversation`).
-
-Al ser revisada por el usuario, la propuesta transita a uno de los siguientes estados:
-
-* `applied` — la propuesta fue aceptada (tal cual o modificada) y los cambios correspondientes se aplicaron sobre la memoria dinámica.
-* `discarded` — la propuesta fue descartada por el usuario o por el sistema sin aplicar ningún cambio.
-
-Una vez procesada, la propuesta conserva su estado final a efectos de auditoría y no puede volver al estado `pending`.
-
----
-
-## Reglas
-
-* Las propuestas nunca modifican directamente las memorias.
-* Varias propuestas pueden referirse a una misma memoria.
-* El usuario tiene siempre la decisión final.
-* Una propuesta puede ser aceptada, modificada o descartada.
-* Las propuestas se persisten asociadas a la conversación que las originó.
-* Las propuestas pendientes se conservan entre sesiones hasta ser revisadas o descartadas.
-* Las propuestas aplicadas o descartadas permanecen almacenadas como historial de auditoría.
-* Si una propuesta UPDATE o DELETE hace referencia a una memoria que ya no existe, se descarta automáticamente sin generar error.
 
 ---
 
