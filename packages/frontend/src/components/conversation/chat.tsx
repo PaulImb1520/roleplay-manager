@@ -84,7 +84,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         </div>
       </header>
 
-      <MessageScrollerProvider autoScroll={isStreaming}>
+      <MessageScrollerProvider autoScroll={isStreaming} defaultScrollPosition="start">
         <MessageScroller className="flex-1">
           <MessageScrollerViewport>
             <MessageScrollerContent>
