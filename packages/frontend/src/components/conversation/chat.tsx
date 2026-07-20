@@ -62,7 +62,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   }
 
   return (
-    <MessageScrollerProvider autoScroll>
+    <MessageScrollerProvider autoScroll={isStreaming}>
       <div className="flex h-full flex-col">
         <header className="flex items-center gap-3 border-b px-4 py-3">
           <div className="size-8 overflow-hidden rounded-full bg-muted">
@@ -85,7 +85,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           </div>
         </header>
 
-        <MessageScroller className="flex-1">
+        <MessageScroller className="flex-1 pt-4">
           <MessageScrollerViewport>
             <MessageScrollerContent>
               {messages.length === 0 && !streamingContent ? (

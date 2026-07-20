@@ -18,7 +18,7 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
   }
 
   return (
-    <MessageScrollerProvider autoScroll>
+    <MessageScrollerProvider>
       <MessageScroller className="flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent>
