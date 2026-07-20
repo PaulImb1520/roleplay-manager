@@ -1,5 +1,5 @@
 ---
-import { ChatView } from "@/components/conversation/chat-view"
+import { Chat } from "@/components/conversation/chat"
 import { getConversation } from "@/lib/api/conversations"
 import BaseLayout from "@/layouts/base.astro"
 import type { ConversationDetail } from "@workspace/shared/types/conversation"
@@ -30,7 +30,7 @@ if (id) {
   {
     conversation ? (
       <div className="flex h-[calc(100vh-8rem)] flex-col rounded-lg border">
-        <ChatView client:load conversation={conversation} />
+        <Chat client:load conversation={conversation} />
       </div>
     ) : (
       <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">

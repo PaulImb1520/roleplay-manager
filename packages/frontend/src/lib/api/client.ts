@@ -17,7 +17,7 @@ export class ApiClientError extends Error {
   }
 }
 
-const getBaseUrl = (): string => {
+export const getBaseUrl = (): string => {
   if (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_URL) {
     return import.meta.env.PUBLIC_API_URL
   }
