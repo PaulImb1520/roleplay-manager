@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Send } from "lucide-react"
@@ -12,7 +12,7 @@ export function MessageInput({
 }) {
   const [content, setContent] = useState("")
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault()
     const trimmed = content.trim()
     if (!trimmed || disabled) return
@@ -26,7 +26,7 @@ export function MessageInput({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Escribe un mensaje..."
-        className="min-h-[44px] max-h-[200px] resize-none"
+        className="min-h-11 max-h-50 resize-none"
         rows={1}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {

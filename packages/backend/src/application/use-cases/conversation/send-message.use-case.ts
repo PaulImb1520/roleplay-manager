@@ -89,15 +89,29 @@ export class SendMessageUseCase {
       message: toMessageDTO(userMessage),
     }
 
-    const characterResult = await this.characterRepository.findById(
+    const version = await this.characterRepository.findVersionById(
       conversation.versionId,
     )
-    if (!characterResult) {
+    if (!version) {
       yield {
         type: "error",
         error: {
           code: "CHARACTER_VERSION_NOT_FOUND",
           message: `Character version '${conversation.versionId}' not found.`,
+        },
+      }
+      return
+    }
+
+    const characterResult = await this.characterRepository.findById(
+      version.characterId,
+    )
+    if (!characterResult) {
+      yield {
+        type: "error",
+        error: {
+          code: "CHARACTER_NOT_FOUND",
+          message: `Character '${version.characterId}' not found.`,
         },
       }
       return
