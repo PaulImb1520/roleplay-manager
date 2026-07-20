@@ -19,7 +19,7 @@ export function MessageList({ messages }: { messages: MessageDTO[] }) {
 
   return (
     <MessageScrollerProvider autoScroll>
-      <MessageScroller>
+      <MessageScroller className="flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent>
             {messages.map((msg, i) => (
