@@ -164,8 +164,9 @@ export function CharacterForm({ character }: Props) {
             .map((c) => ({ title: c.title, content: c.content, active: c.active })),
         }
         const result = await createCharacter(input)
+        const conv = await createConversation({ characterId: result.id })
         toast.success("Personaje creado")
-        location.href = `/characters/${result.id}`
+        location.href = `/conversations/${conv.id}`
         return
       }
     } catch (e) {
