@@ -7,6 +7,7 @@ import type { CharacterRepository } from "../../../domain/ports/character.reposi
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { Logger } from "../../../domain/ports/logger.port"
+import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import { Character } from "../../../domain/entities/character.entity"
@@ -152,6 +153,12 @@ const buildProviderRegistry = (shouldFail = false): ProviderRegistry => ({
   },
 })
 
+const buildDefaultProvider = (
+  provider: string | null = "ollama",
+  model: string | null = null,
+): GetDefaultProviderUseCase =>
+  ({ execute: async () => ({ provider, model }) }) as unknown as GetDefaultProviderUseCase
+
 const buildLogger = (): Logger => ({
   debug: () => {},
   info: () => {},
@@ -173,6 +180,7 @@ describe("SendMessageUseCase", () => {
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
+      buildDefaultProvider(),
     )
 
     await expect(
@@ -194,6 +202,7 @@ describe("SendMessageUseCase", () => {
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
+      buildDefaultProvider(),
     )
 
     await expect(
@@ -214,6 +223,7 @@ describe("SendMessageUseCase", () => {
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
+      buildDefaultProvider(),
     )
 
     const events: string[] = []
@@ -238,6 +248,7 @@ describe("SendMessageUseCase", () => {
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
+      buildDefaultProvider(),
     )
 
     const chunks: string[] = []
@@ -267,6 +278,7 @@ describe("SendMessageUseCase", () => {
       buildPromptContextBuilder(),
       buildProviderRegistry(true), // will return null
       buildLogger(),
+      buildDefaultProvider(),
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })

@@ -2,12 +2,14 @@ import { v7 as randomUUIDv7 } from "uuid"
 
 import type { ConversationDetail, CreateConversationInput } from "@workspace/shared/types/conversation"
 import type { MessageDTO } from "@workspace/shared/types/message"
+import type { DefaultProviderConfig } from "@workspace/shared/types/provider"
 
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import { CharacterNotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
 
 export class CreateConversationUseCase {
@@ -15,6 +17,7 @@ export class CreateConversationUseCase {
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly getDefaultProvider: GetDefaultProviderUseCase,
   ) {}
 
   async execute(input: CreateConversationInput): Promise<ConversationDetail> {
@@ -26,14 +29,16 @@ export class CreateConversationUseCase {
 
     const now = new Date()
     const conversationId = randomUUIDv7()
+    const defaultConfig: DefaultProviderConfig =
+      await this.getDefaultProvider.execute()
 
     const conversation = Conversation.create({
       id: conversationId,
       versionId: result.currentVersion.id,
       title: null,
       status: "active",
-      model: null,
-      provider: null,
+      model: defaultConfig.model,
+      provider: defaultConfig.provider,
       recentMessageCount: 15,
       summaryFrequency: 15,
       temperature: 0.7,

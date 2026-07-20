@@ -4,8 +4,15 @@ import { CreateConversationUseCase } from "./create-conversation.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
+
+const buildDefaultProvider = (
+  provider: string | null = "openai-compatible",
+  model: string | null = "gpt-4o-mini",
+): GetDefaultProviderUseCase =>
+  ({ execute: async () => ({ provider, model }) }) as unknown as GetDefaultProviderUseCase
 
 const now = new Date()
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
@@ -48,6 +55,7 @@ describe("CreateConversationUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildDefaultProvider(),
     )
 
     const result = await useCase.execute({ characterId: "char-1" })
@@ -58,6 +66,8 @@ describe("CreateConversationUseCase", () => {
     expect(result.messages[0].role).toBe("assistant")
     expect(result.messages[0].content).toBe("Hello!")
     expect(result.messages[0].position).toBe(0)
+    expect(result.provider).toBe("openai-compatible")
+    expect(result.model).toBe("gpt-4o-mini")
   })
 
   it("lanza CharacterNotFoundError si el personaje no existe", async () => {
@@ -68,6 +78,7 @@ describe("CreateConversationUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       repo,
+      buildDefaultProvider(),
     )
 
     await expect(

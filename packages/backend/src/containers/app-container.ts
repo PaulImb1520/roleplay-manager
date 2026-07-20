@@ -89,6 +89,7 @@ export const buildContainer = ({
   const conversationRepository: ConversationRepository = new DrizzleConversationRepository(database)
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
+  const getDefaultProvider = new GetDefaultProviderUseCase(settings)
 
   const sendMessage = new SendMessageUseCase(
     conversationRepository,
@@ -97,6 +98,7 @@ export const buildContainer = ({
     promptContextBuilder,
     providerRegistry,
     logger,
+    getDefaultProvider,
   )
 
   return {
@@ -113,7 +115,7 @@ export const buildContainer = ({
       providerRegistry,
       logger,
     ),
-    getDefaultProvider: new GetDefaultProviderUseCase(settings),
+    getDefaultProvider,
     configureDefaultProvider: new ConfigureDefaultProviderUseCase(
       providerRegistry,
       settings,
@@ -135,6 +137,7 @@ export const buildContainer = ({
       conversationRepository,
       messageRepository,
       characterRepository,
+      getDefaultProvider,
     ),
     getConversation: new GetConversationUseCase(
       conversationRepository,

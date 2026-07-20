@@ -1,6 +1,7 @@
 import { v7 as randomUUIDv7 } from "uuid"
 
 import type { MessageDTO } from "@workspace/shared/types/message"
+import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
 
 import { Message } from "../../../domain/entities/message.entity"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
@@ -9,11 +10,11 @@ import type { MessageRepository } from "../../../domain/ports/message.repository
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
+import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
 } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
-import type { ProviderId } from "@workspace/shared/types/provider"
 
 export interface SendMessageInput {
   conversationId: string
@@ -54,6 +55,7 @@ export class SendMessageUseCase {
     private readonly promptContextBuilder: PromptContextBuilder,
     private readonly providerRegistry: ProviderRegistry,
     private readonly logger: Logger,
+    private readonly getDefaultProvider: GetDefaultProviderUseCase,
   ) {}
 
   async *execute(input: SendMessageInput): AsyncGenerator<SendMessageEvent> {
@@ -125,7 +127,24 @@ export class SendMessageUseCase {
       recentMessageCount: conversation.recentMessageCount,
     })
 
-    const providerId = (conversation.provider ?? "ollama") as ProviderId
+    let providerId = conversation.provider as ProviderId | null
+    let resolvedModel = conversation.model
+    if (!providerId) {
+      const defaultConfig: DefaultProviderConfig =
+        await this.getDefaultProvider.execute()
+      providerId = defaultConfig.provider
+      resolvedModel ??= defaultConfig.model
+    }
+    if (!providerId) {
+      yield {
+        type: "error",
+        error: {
+          code: "PROVIDER_NOT_CONFIGURED",
+          message: "No se ha configurado un proveedor por defecto.",
+        },
+      }
+      return
+    }
     const adapter = await this.providerRegistry.getAdapter(providerId)
     if (!adapter) {
       yield {
@@ -138,7 +157,7 @@ export class SendMessageUseCase {
       return
     }
 
-    const model = conversation.model ?? undefined
+    const model = resolvedModel ?? undefined
     let fullContent = ""
 
     try {
