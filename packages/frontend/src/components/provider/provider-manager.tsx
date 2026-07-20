@@ -180,10 +180,28 @@ export function ProviderManager() {
   }, [selected, defaultConfig.provider, defaultConfig.model])
 
   const handleVerify = async () => {
+    if (selected === "openai-compatible" && openaiCfg.url === "") {
+      toast.error("Guarda primero la configuracion del proveedor", {
+        description:
+          "La URL base debe estar guardada antes de verificar la conexion.",
+      })
+      return
+    }
     setStatuses((prev) => ({ ...prev, [selected]: "loading" }))
     try {
       const r = await validateProvider(selected)
       setStatuses((prev) => ({ ...prev, [selected]: r.status }))
+      if (r.status === "available") {
+        toast.success("Conexion exitosa", {
+          description: `El proveedor ${selected} esta disponible.`,
+        })
+      } else {
+        toast.warning("Proveedor no disponible", {
+          description:
+            r.message ??
+            `El proveedor ${selected} respondio pero no esta operativo.`,
+        })
+      }
     } catch (e) {
       setStatuses((prev) => ({ ...prev, [selected]: "unavailable" }))
       toast.error("No se pudo verificar la conexion", {
