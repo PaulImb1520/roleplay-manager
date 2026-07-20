@@ -34,6 +34,7 @@ const main = (): void => {
     database: db,
     ollamaBaseUrl: env.OLLAMA_BASE_URL,
     providerTimeoutMs: env.PROVIDER_TIMEOUT_MS,
+    providerStreamingTimeoutMs: env.PROVIDER_STREAMING_TIMEOUT_MS,
   })
   const app = buildServer({
     container,

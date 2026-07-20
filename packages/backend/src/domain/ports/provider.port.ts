@@ -5,9 +5,15 @@ import type {
   ProviderStatus,
 } from "@workspace/shared/types/provider"
 
+import type { GenerateOptions, PromptContext, StreamChunk } from "../value-objects/prompt-context"
+
 export interface ProviderPort {
   validateConnection(): Promise<ProviderStatus>
   listModels(): Promise<{ models: ProviderModel[]; manualEntryRequired: boolean }>
+  generateStreaming(
+    context: PromptContext,
+    options?: GenerateOptions,
+  ): AsyncIterable<StreamChunk>
 }
 
 export type { ListModelsResult, ProviderId, ProviderModel, ProviderStatus }

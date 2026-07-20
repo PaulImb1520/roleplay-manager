@@ -1,0 +1,196 @@
+import { describe, it, expect } from "vitest"
+
+import { CharacterVersion } from "../../../../domain/entities/character-version.entity"
+import { CharacterCard } from "../../../../domain/entities/character-card.entity"
+import { Message } from "../../../../domain/entities/message.entity"
+import { PromptContextBuilderImpl } from "./prompt-context-builder.impl"
+
+const now = new Date()
+
+const baseVersionProps = {
+  id: "ver-1",
+  characterId: "char-1",
+  name: "Test Character",
+  subtitle: null as string | null,
+  profileImage: "https://example.com/avatar.png",
+  description: "A mysterious character.",
+  instructions: null as string | null,
+  greeting: "Hello!",
+  versionNumber: 1,
+  createdAt: now,
+  cards: [] as CharacterCard[],
+}
+
+const baseVersion = CharacterVersion.create(baseVersionProps)
+
+const card1 = CharacterCard.create({
+  id: "card-1",
+  versionId: "ver-1",
+  title: "Historia",
+  content: "Vivio en las montañas.",
+  position: 0,
+  active: true,
+})
+
+const card2 = CharacterCard.create({
+  id: "card-2",
+  versionId: "ver-1",
+  title: "Personalidad",
+  content: "Es reservado pero amable.",
+  position: 1,
+  active: true,
+})
+
+const inactiveCard = CharacterCard.create({
+  id: "card-3",
+  versionId: "ver-1",
+  title: "Secreto",
+  content: "No se debe revelar.",
+  position: 2,
+  active: false,
+})
+
+const createMessage = (role: "user" | "assistant", content: string, position: number) =>
+  Message.create({
+    id: `msg-${position}`,
+    conversationId: "conv-1",
+    role,
+    content,
+    position,
+    alternatives: [],
+    createdAt: now,
+    editedAt: null,
+  })
+
+const cloneVersionProps = (overrides: Partial<typeof baseVersionProps>): typeof baseVersionProps =>
+  ({ ...baseVersionProps, ...overrides })
+
+describe("PromptContextBuilderImpl", () => {
+  it("construye systemPrompt con nombre y descripcion", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("Eres Test Character.")
+    expect(result.systemPrompt).toContain("A mysterious character.")
+    expect(result.messages).toHaveLength(0)
+  })
+
+  it("incluye instrucciones cuando existen", async () => {
+    const version = CharacterVersion.create(
+      cloneVersionProps({ id: "ver-2", instructions: "Responde en español." }),
+    )
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: version,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("Responde en español.")
+  })
+
+  it("incluye tarjetas activas en systemPrompt", async () => {
+    const version = CharacterVersion.create(
+      cloneVersionProps({ id: "ver-3", cards: [card1, card2, inactiveCard] }),
+    )
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: version,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("[Historia]")
+    expect(result.systemPrompt).toContain("[Personalidad]")
+    expect(result.systemPrompt).not.toContain("[Secreto]")
+  })
+
+  it("incluye solo los ultimos recentMessageCount mensajes", async () => {
+    const messages = [
+      createMessage("user", "Mensaje 1", 0),
+      createMessage("assistant", "Respuesta 1", 1),
+      createMessage("user", "Mensaje 2", 2),
+      createMessage("assistant", "Respuesta 2", 3),
+      createMessage("user", "Mensaje 3", 4),
+    ]
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages,
+      recentMessageCount: 2,
+    })
+
+    expect(result.messages).toHaveLength(2)
+    expect(result.messages[0].content).toBe("Respuesta 2")
+    expect(result.messages[1].content).toBe("Mensaje 3")
+  })
+
+  it("incluye subtitle cuando existe", async () => {
+    const version = CharacterVersion.create(
+      cloneVersionProps({ id: "ver-4", subtitle: "El guardián del bosque" }),
+    )
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: version,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("El guardián del bosque")
+  })
+
+  it("incluye greeting como ejemplo de estilo", async () => {
+    const version = CharacterVersion.create(
+      cloneVersionProps({ id: "ver-5", greeting: "¡Bienvenido, forastero!" }),
+    )
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: version,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("¡Bienvenido, forastero!")
+    expect(result.systemPrompt).toContain("Ejemplo del estilo")
+  })
+
+  it("incluye seccion de Estilo de respuesta", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("## Estilo de respuesta")
+    expect(result.systemPrompt).toContain("tono y estilo de Test Character")
+  })
+
+  it("asigna roles correctamente a los mensajes", async () => {
+    const messages = [
+      createMessage("user", "Hola", 0),
+      createMessage("assistant", "Adios", 1),
+    ]
+
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages,
+      recentMessageCount: 10,
+    })
+
+    expect(result.messages[0].role).toBe("user")
+    expect(result.messages[0].content).toBe("Hola")
+    expect(result.messages[1].role).toBe("assistant")
+    expect(result.messages[1].content).toBe("Adios")
+  })
+})

@@ -11,6 +11,7 @@ export interface ProviderRegistryOptions {
   settings: SettingsRepository
   ollamaBaseUrl: string
   timeoutMs: number
+  streamingTimeoutMs: number
   logger: Logger
 }
 
@@ -33,6 +34,7 @@ export class ProviderRegistryImpl implements ProviderRegistry {
       return new OllamaAdapter({
         baseUrl: this.options.ollamaBaseUrl,
         timeoutMs: this.options.timeoutMs,
+        streamingTimeoutMs: this.options.streamingTimeoutMs,
         logger: this.options.logger,
       })
     }
@@ -47,6 +49,7 @@ export class ProviderRegistryImpl implements ProviderRegistry {
         baseUrl: url,
         apiKey: cfg[SETTINGS_KEYS.openaiApiKey],
         timeoutMs: this.options.timeoutMs,
+        streamingTimeoutMs: this.options.streamingTimeoutMs,
         logger: this.options.logger,
       })
     }

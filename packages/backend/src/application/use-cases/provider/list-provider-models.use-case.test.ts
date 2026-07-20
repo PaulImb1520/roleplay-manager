@@ -20,6 +20,7 @@ describe("ListProviderModelsUseCase", () => {
         models: [{ id: "llama3:latest" }, { id: "qwen2:7b" }],
         manualEntryRequired: false,
       })),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
@@ -61,6 +62,7 @@ describe("ListProviderModelsUseCase", () => {
       listModels: vi.fn(async () => {
         throw new Error("network down")
       }),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],

@@ -12,11 +12,13 @@ import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary
 import { DrizzleConversationRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-conversation.repository"
 import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-message.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
+import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
 import type { ProviderRegistry } from "../domain/ports/provider.port"
 import type { SettingsRepository } from "../domain/ports/settings.repository"
 import type { CharacterRepository } from "../domain/ports/character.repository"
 import type { ConversationRepository } from "../domain/ports/conversation.repository"
 import type { MessageRepository } from "../domain/ports/message.repository"
+import type { PromptContextBuilder } from "../domain/ports/prompt-context-builder"
 import { CreateCharacterUseCase } from "../application/use-cases/character/create-character.use-case"
 import { GetCharacterUseCase } from "../application/use-cases/character/get-character.use-case"
 import { ListCharactersUseCase } from "../application/use-cases/character/list-characters.use-case"
@@ -27,6 +29,7 @@ import { CreateConversationUseCase } from "../application/use-cases/conversation
 import { GetConversationUseCase } from "../application/use-cases/conversation/get-conversation.use-case"
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
 import { ArchiveConversationUseCase } from "../application/use-cases/conversation/archive-conversation.use-case"
+import { SendMessageUseCase } from "../application/use-cases/conversation/send-message.use-case"
 
 export interface AppContainer {
   logger: Logger
@@ -43,6 +46,7 @@ export interface AppContainer {
   characterRepository: CharacterRepository
   conversationRepository: ConversationRepository
   messageRepository: MessageRepository
+  promptContextBuilder: PromptContextBuilder
   createCharacter: CreateCharacterUseCase
   getCharacter: GetCharacterUseCase
   listCharacters: ListCharactersUseCase
@@ -53,6 +57,7 @@ export interface AppContainer {
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
   archiveConversation: ArchiveConversationUseCase
+  sendMessage: SendMessageUseCase
 }
 
 export interface BuildContainerOptions {
@@ -61,6 +66,7 @@ export interface BuildContainerOptions {
   database: Database
   ollamaBaseUrl: string
   providerTimeoutMs: number
+  providerStreamingTimeoutMs: number
 }
 
 export const buildContainer = ({
@@ -69,17 +75,29 @@ export const buildContainer = ({
   database,
   ollamaBaseUrl,
   providerTimeoutMs,
+  providerStreamingTimeoutMs,
 }: BuildContainerOptions): AppContainer => {
   const settings: SettingsRepository = new DrizzleSettingsRepository(database)
   const providerRegistry: ProviderRegistry = new ProviderRegistryImpl({
     settings,
     ollamaBaseUrl,
     timeoutMs: providerTimeoutMs,
+    streamingTimeoutMs: providerStreamingTimeoutMs,
     logger,
   })
   const characterRepository: CharacterRepository = new DrizzleCharacterRepository(database)
   const conversationRepository: ConversationRepository = new DrizzleConversationRepository(database)
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
+  const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
+
+  const sendMessage = new SendMessageUseCase(
+    conversationRepository,
+    messageRepository,
+    characterRepository,
+    promptContextBuilder,
+    providerRegistry,
+    logger,
+  )
 
   return {
     logger,
@@ -106,6 +124,7 @@ export const buildContainer = ({
     characterRepository,
     conversationRepository,
     messageRepository,
+    promptContextBuilder,
     createCharacter: new CreateCharacterUseCase(characterRepository),
     getCharacter: new GetCharacterUseCase(characterRepository),
     listCharacters: new ListCharactersUseCase(characterRepository),
@@ -130,5 +149,6 @@ export const buildContainer = ({
       conversationRepository,
       characterRepository,
     ),
+    sendMessage,
   }
 }

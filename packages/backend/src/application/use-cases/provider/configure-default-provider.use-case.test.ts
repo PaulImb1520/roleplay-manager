@@ -17,6 +17,7 @@ const buildSilentLogger = (): Logger => ({
 const buildAvailableAdapter = (): ProviderPort => ({
   validateConnection: vi.fn(async () => "available" as ProviderStatus),
   listModels: vi.fn(),
+  async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
 })
 
 const buildRegistry = (adapter: ProviderPort | null): ProviderRegistry => ({
@@ -71,6 +72,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const adapter: ProviderPort = {
       validateConnection: vi.fn(async () => "unavailable" as ProviderStatus),
       listModels: vi.fn(),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const settings = buildSettings()
     const useCase = new ConfigureDefaultProviderUseCase(
@@ -90,6 +92,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const adapter: ProviderPort = {
       validateConnection: vi.fn(async () => "unavailable" as ProviderStatus),
       listModels: vi.fn(),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const settings = buildSettings()
     const useCase = new ConfigureDefaultProviderUseCase(

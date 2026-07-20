@@ -6,10 +6,12 @@ import {
 } from "../../primary/middlewares/error-handler"
 import type { Logger } from "../../../../domain/ports/logger.port"
 import type { ProviderPort } from "../../../../domain/ports/provider.port"
+import type { GenerateOptions, PromptContext, StreamChunk } from "../../../../domain/value-objects/prompt-context"
 
 export interface OllamaAdapterOptions {
   baseUrl: string
   timeoutMs: number
+  streamingTimeoutMs: number
   logger: Logger
 }
 
@@ -54,6 +56,24 @@ export class OllamaAdapter implements ProviderPort {
     } finally {
       clearTimeout(timer)
     }
+  }
+
+  private toOllamaMessages(context: PromptContext): Array<{ role: string; content: string }> {
+    return [
+      { role: "system", content: context.systemPrompt },
+      ...context.messages.map((m) => ({ role: m.role, content: m.content })),
+    ]
+  }
+
+  private toOllamaOptions(options?: GenerateOptions): Record<string, unknown> {
+    const opts: Record<string, unknown> = {}
+    if (options?.temperature !== undefined) opts.temperature = options.temperature
+    if (options?.maxTokens !== undefined) opts.num_predict = options.maxTokens
+    if (options?.topP !== undefined) opts.top_p = options.topP
+    if (options?.frequencyPenalty !== undefined) opts.frequency_penalty = options.frequencyPenalty
+    if (options?.presencePenalty !== undefined) opts.presence_penalty = options.presencePenalty
+    if (options?.stopSequences !== undefined && options.stopSequences.length > 0) opts.stop = options.stopSequences
+    return opts
   }
 
   async validateConnection(): Promise<ProviderStatus> {
@@ -108,6 +128,98 @@ export class OllamaAdapter implements ProviderPort {
         "PROVIDER_CONNECTION_FAILED",
         `Failed to list Ollama models: ${(error as Error).message}`,
       )
+    }
+  }
+
+  async *generateStreaming(
+    context: PromptContext,
+    options?: GenerateOptions,
+  ): AsyncIterable<StreamChunk> {
+    const controller = new AbortController()
+    const timer = setTimeout(
+      () => controller.abort(),
+      this.options.streamingTimeoutMs,
+    )
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: options?.model ?? "llama3",
+          messages: this.toOllamaMessages(context),
+          stream: true,
+          options: this.toOllamaOptions(options),
+        }),
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "")
+        throw new ProviderError(
+          "PROVIDER_GENERATION_FAILED",
+          `Ollama /api/chat returned ${response.status}: ${text}`,
+        )
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new ProviderError(
+          "PROVIDER_GENERATION_FAILED",
+          "Ollama returned no response body.",
+        )
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+
+          try {
+            const parsed = JSON.parse(trimmed) as {
+              message?: { content?: string }
+              done?: boolean
+              error?: string
+            }
+
+            if (parsed.error) {
+              throw new ProviderError(
+                "PROVIDER_GENERATION_FAILED",
+                parsed.error,
+              )
+            }
+
+            if (parsed.message?.content) {
+              yield { content: parsed.message.content }
+            }
+          } catch (error) {
+            if (error instanceof ProviderError) throw error
+          }
+        }
+      }
+    } catch (error) {
+      if ((error as Error).name === "AbortError") {
+        throw new ProviderTimeoutError(
+          `Ollama streaming did not respond within ${this.options.streamingTimeoutMs}ms.`,
+        )
+      }
+      if (error instanceof ProviderError) throw error
+      throw new ProviderError(
+        "PROVIDER_GENERATION_FAILED",
+        `Ollama streaming failed: ${(error as Error).message}`,
+      )
+    } finally {
+      clearTimeout(timer)
     }
   }
 }

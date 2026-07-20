@@ -18,6 +18,7 @@ describe("ValidateProviderConnectionUseCase", () => {
     const adapter: ProviderPort = {
       validateConnection: vi.fn(async () => "available" as ProviderStatus),
       listModels: vi.fn(),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
@@ -54,6 +55,7 @@ describe("ValidateProviderConnectionUseCase", () => {
         throw new Error("ECONNREFUSED")
       }),
       listModels: vi.fn(),
+      async *generateStreaming(_context?: any, _options?: any): AsyncIterable<any> {},
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],

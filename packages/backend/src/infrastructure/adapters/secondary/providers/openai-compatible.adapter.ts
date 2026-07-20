@@ -11,11 +11,13 @@ import {
 } from "../../primary/middlewares/error-handler"
 import type { Logger } from "../../../../domain/ports/logger.port"
 import type { ProviderPort } from "../../../../domain/ports/provider.port"
+import type { GenerateOptions, PromptContext, StreamChunk } from "../../../../domain/value-objects/prompt-context"
 
 export interface OpenAICompatibleAdapterOptions {
   baseUrl: string
   apiKey: string | null
   timeoutMs: number
+  streamingTimeoutMs: number
   logger: Logger
 }
 
@@ -94,5 +96,44 @@ export class OpenAICompatibleAdapter implements ProviderPort {
     if (typeof error !== "object" || error === null) return undefined
     const e = error as { status?: number; response?: { status?: number } }
     return e.status ?? e.response?.status
+  }
+
+  async *generateStreaming(
+    context: PromptContext,
+    options?: GenerateOptions,
+  ): AsyncIterable<StreamChunk> {
+    const model = options?.model ?? "gpt-4o-mini"
+
+    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+      { role: "system", content: context.systemPrompt },
+      ...context.messages,
+    ]
+
+    try {
+      const stream = await this.client.chat.completions.create({
+        model: model as string,
+        messages,
+        stream: true,
+        temperature: options?.temperature,
+        max_tokens: options?.maxTokens,
+        top_p: options?.topP,
+        frequency_penalty: options?.frequencyPenalty,
+        presence_penalty: options?.presencePenalty,
+        stop: options?.stopSequences,
+      })
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices?.[0]?.delta?.content
+        if (delta) {
+          yield { content: delta }
+        }
+      }
+    } catch (error) {
+      if (error instanceof ProviderError) throw error
+      throw new ProviderError(
+        "PROVIDER_GENERATION_FAILED",
+        `OpenAI-compatible streaming failed: ${(error as Error).message}`,
+      )
+    }
   }
 }
