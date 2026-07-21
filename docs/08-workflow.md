@@ -151,9 +151,9 @@ El orden está pensado para maximizar el feedback temprano: lo que se entrega pr
 
 **Capas tocadas:** casos de uso `SendMessage`, `PromptContextBuilder`, `GenerateCharacterResponse`; `OllamaAdapter.generateStreaming` real; `POST /api/conversations/:id/messages` con SSE; `lib/api/conversations.ts` con `sendMessageStreaming`; `lib/stores/chat.store.ts` (Zustand); componentes `chat.tsx`, `message.tsx`, `message-input.tsx`.
 
-### S5 — Regenerar, editar, retroceder
+### S5 — Regenerar, editar, retroceder, eliminar
 
-**Entregable:** el usuario puede regenerar la última respuesta del asistente, editar manualmente cualquier mensaje, y retroceder la conversación hasta un mensaje anterior. El historial de regeneraciones se mantiene hasta que el usuario envía un nuevo mensaje.
+**Entregable:** el usuario puede regenerar la última respuesta del asistente, editar manualmente cualquier mensaje, eliminar un mensaje ya, ya sea suyo o del asistente y retroceder la conversación hasta un mensaje anterior. El historial de regeneraciones se mantiene hasta que el usuario envía un nuevo mensaje.
 
 **Capas tocadas:** casos de uso `RegenerateReply`, `EditMessage`, `RewindConversation`; gestión de `alternatives`; descarte de propuestas `pending` en rewind; componentes `message-actions.tsx` y `rewind-dialog.tsx`.
 
