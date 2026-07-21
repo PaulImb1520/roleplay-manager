@@ -85,7 +85,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
       </header>
 
       <MessageScrollerProvider autoScroll={isStreaming}>
-        <MessageScroller className="flex-1">
+        <MessageScroller className="flex-1 p-2 pr-0">
           <MessageScrollerViewport>
             <MessageScrollerContent>
               {messages.length === 0 && !streamingContent ? (
