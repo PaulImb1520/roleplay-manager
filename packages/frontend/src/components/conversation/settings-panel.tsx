@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, type ReactElement } from "react"
 import { Toaster, toast } from "@workspace/ui/components/sonner"
 import {
   Sheet,
@@ -12,18 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import { Empty } from "@workspace/ui/components/empty"
+import { Empty, EmptyMedia, EmptyHeader, EmptyTitle, EmptyDescription } from "@workspace/ui/components/empty"
 import { Separator } from "@workspace/ui/components/separator"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Slider } from "@workspace/ui/components/slider"
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
   Select,
@@ -32,26 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@workspace/ui/components/dialog"
-import {
-  BookOpenIcon,
-  SettingsIcon,
-  CheckCircle2Icon,
-  AlertCircleIcon,
-  RefreshCwIcon,
-  PlusIcon,
-  PencilIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@workspace/ui/components/dialog"
+import { BookOpenIcon, CheckCircle2Icon, RefreshCwIcon, PlusIcon, PencilIcon, Trash2Icon } from "lucide-react"
 
 import type {
   ConversationDetail,
@@ -60,10 +35,7 @@ import type {
 import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 import type { ProviderId } from "@workspace/shared/types/provider"
 
-import {
-  updateConversationSettings,
-  getConversation,
-} from "@/lib/api/conversations"
+import { updateConversationSettings } from "@/lib/api/conversations"
 import {
   listProviderInstances,
   createProviderInstance,
@@ -72,7 +44,6 @@ import {
   validateProviderInstance,
 } from "@/lib/api/provider-instances"
 import { listProviderModels } from "@/lib/api/providers"
-import { configureDefaultProvider, getDefaultProvider } from "@/lib/api/settings"
 import { ApiClientError } from "@/lib/api/client"
 
 interface SettingsPanelProps {
@@ -100,12 +71,6 @@ const STATUS_VARIANT: Record<ProviderStatus, "default" | "secondary" | "destruct
   loading: "secondary",
 }
 
-type ProviderOption = {
-  id: ProviderId | string
-  label: string
-  instanceId?: string
-}
-
 export function SettingsPanel({
   conversationId,
   current,
@@ -114,7 +79,7 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
 
-  const [provider, setProvider] = useState<ProviderId | string>(current.provider ?? "ollama")
+  const [provider, setProvider] = useState<ProviderId | string | null>(current.provider ?? "ollama")
   const [providerInstanceId, setProviderInstanceId] = useState<string | null>(current.providerInstanceId ?? null)
   const [model, setModel] = useState<string | null>(current.model)
   const [temperature, setTemperature] = useState(current.temperature ?? 0.7)
@@ -211,8 +176,7 @@ export function SettingsPanel({
 
   useEffect(() => {
     if (!open) return
-    const kind = provider as ProviderId | string
-    loadModels(kind, providerInstanceId)
+    loadModels(provider ?? "ollama", providerInstanceId)
     verifyConnection()
   }, [open, provider, providerInstanceId, loadModels, verifyConnection])
 
@@ -226,7 +190,7 @@ export function SettingsPanel({
     setSaving(true)
     const settings: ConversationSettingsUpdate = {}
     if (provider !== (current.provider ?? "ollama")) {
-      settings.provider = provider as ProviderId
+      settings.provider = provider ?? undefined
     }
     if (providerInstanceId !== current.providerInstanceId) {
       settings.providerInstanceId = providerInstanceId
@@ -326,183 +290,180 @@ export function SettingsPanel({
     }
   }
 
-  const providerOptions: ProviderOption[] = [
-    { id: "ollama", label: "Ollama (local)" },
-    ...instances.map((inst) => ({
-      id: `openai-compatible`,
-      label: inst.name,
-      instanceId: inst.id,
-    })),
-  ]
-
-  const selectedInstance = instances.find((i) => i.id === providerInstanceId)
-
   return (
     <>
       <Toaster richColors position="top-right" />
       <Sheet open={open} onOpenChange={setOpen}>
-        {children ? (
-          <SheetTrigger asChild>{children}</SheetTrigger>
-        ) : null}
-        <SheetContent side="right" className="w-full max-w-md sm:max-w-lg">
-          <SheetHeader>
+        {children ? <SheetTrigger render={children as ReactElement} /> : null}
+        <SheetContent side="right" className="flex h-full flex-col w-full max-w-md sm:max-w-lg">
+          <SheetHeader className="shrink-0 px-4 pt-4">
             <SheetTitle>Configuracion del chat</SheetTitle>
             <SheetDescription>
               Ajusta los parametros de la conversacion y del modelo.
             </SheetDescription>
           </SheetHeader>
 
-          <Tabs defaultValue="modelo" className="mt-4 flex flex-col gap-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="historia">Historia</TabsTrigger>
-              <TabsTrigger value="modelo">Modelo</TabsTrigger>
-            </TabsList>
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+            <Tabs defaultValue="modelo" className="mt-4 flex flex-col gap-4">
+              <TabsList className="grid w-full grid-cols-2 shrink-0">
+                <TabsTrigger value="historia">Historia</TabsTrigger>
+                <TabsTrigger value="modelo">Modelo</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="historia" className="flex flex-col gap-4">
-              <Empty
-                icon={BookOpenIcon}
-                title="Proximamente"
-                description="Aqui podras gestionar las memorias y resumenes de esta conversacion."
-              />
-            </TabsContent>
+              <TabsContent value="historia" className="flex flex-col gap-4">
+                <Empty>
+                  <EmptyMedia>
+                    <BookOpenIcon />
+                  </EmptyMedia>
+                  <EmptyHeader>
+                    <EmptyTitle>Proximamente</EmptyTitle>
+                    <EmptyDescription>
+                      Aqui podras gestionar las memorias y resumenes de esta conversacion.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </TabsContent>
 
-            <TabsContent value="modelo" className="flex flex-col gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Proveedor
-                    <Badge variant={STATUS_VARIANT[providerStatus]}>
-                      {providerStatus === "available" ? (
-                        <CheckCircle2Icon className="size-3" />
-                      ) : providerStatus === "loading" ? (
-                        <Spinner />
-                      ) : null}
-                      {STATUS_LABELS[providerStatus]}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Selecciona el proveedor de IA para esta conversacion.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="provider-select">Proveedor</FieldLabel>
-                      <Select
-                        value={provider}
-                        onValueChange={(v) => {
-                          setProvider(v)
-                          if (v === "ollama") {
-                            setProviderInstanceId(null)
-                          }
-                        }}
-                      >
-                        <SelectTrigger id="provider-select">
-                          <SelectValue placeholder="Selecciona un proveedor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ollama">Ollama (local)</SelectItem>
-                          {instances.length > 0 ? (
-                            <SelectItem value="openai-compatible" disabled>
-                              --- Instancias OpenAI-compatible ---
-                            </SelectItem>
-                          ) : null}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </FieldGroup>
+              <TabsContent value="modelo" className="flex flex-col gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      Proveedor
+                      <Badge variant={STATUS_VARIANT[providerStatus]}>
+                        {providerStatus === "available" ? (
+                          <CheckCircle2Icon className="size-3" />
+                        ) : providerStatus === "loading" ? (
+                          <Spinner />
+                        ) : null}
+                        {STATUS_LABELS[providerStatus]}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Selecciona el proveedor de IA para esta conversación.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3">
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel htmlFor="provider-select">Proveedor</FieldLabel>
+                        <Select
+                          value={provider === "openai-compatible" && providerInstanceId ? providerInstanceId : provider}
+                          onValueChange={(v) => {
+                            if (v === "ollama") {
+                              setProvider("ollama")
+                              setProviderInstanceId(null)
+                            } else {
+                              setProvider("openai-compatible")
+                              setProviderInstanceId(v)
+                            }
+                          }}
+                        >
+                          <SelectTrigger id="provider-select">
+                            <SelectValue placeholder="Selecciona un proveedor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ollama">Ollama (local)</SelectItem>
+                            {instances.map((inst) => (
+                              <SelectItem key={inst.id} value={inst.id}>
+                                {inst.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </FieldGroup>
 
-                  {provider === "openai-compatible" ? (
-                    <div className="flex flex-col gap-2">
-                      <Separator />
-                      <p className="text-sm font-medium">Instancias disponibles</p>
-                      {instancesLoading ? (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Spinner /> Cargando instancias...
-                        </div>
-                      ) : instances.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No hay instancias configuradas. Crea una nueva.
-                        </p>
-                      ) : (
-                        <div className="flex flex-col gap-2">
-                          {instances.map((inst) => (
-                            <div
-                              key={inst.id}
-                              className={`flex items-center justify-between rounded-lg border p-2 cursor-pointer transition-colors ${
-                                providerInstanceId === inst.id
-                                  ? "border-primary bg-primary/5"
-                                  : "hover:bg-muted/50"
-                              }`}
-                              onClick={() => {
-                                setProvider("openai-compatible")
-                                setProviderInstanceId(inst.id)
-                              }}
-                            >
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium">{inst.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {inst.url || "Sin URL"}
-                                </span>
+                    {provider === "openai-compatible" ? (
+                      <div className="flex flex-col gap-2">
+                        <Separator />
+                        <p className="text-sm font-medium">Instancias disponibles</p>
+                        {instancesLoading ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Spinner /> Cargando instancias...
+                          </div>
+                        ) : instances.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No hay instancias configuradas. Crea una nueva.
+                          </p>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {instances.map((inst) => (
+                              <div
+                                key={inst.id}
+                                className={`flex items-center justify-between rounded-lg border p-2 cursor-pointer transition-colors ${
+                                  providerInstanceId === inst.id
+                                    ? "border-primary bg-primary/5"
+                                    : "hover:bg-muted/50"
+                                }`}
+                                onClick={() => {
+                                  setProvider("openai-compatible")
+                                  setProviderInstanceId(inst.id)
+                                }}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium">{inst.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {inst.url || "Sin URL"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditInstanceId(inst.id)
+                                      setInstanceFormName(inst.name)
+                                      setInstanceFormUrl(inst.url)
+                                      setInstanceFormApiKey("")
+                                    }}
+                                  >
+                                    <PencilIcon className="size-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteInstance(inst.id)
+                                    }}
+                                  >
+                                    <Trash2Icon className="size-3" />
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setEditInstanceId(inst.id)
-                                    setInstanceFormName(inst.name)
-                                    setInstanceFormUrl(inst.url)
-                                    setInstanceFormApiKey("")
-                                  }}
-                                >
-                                  <PencilIcon className="size-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7 text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDeleteInstance(inst.id)
-                                  }}
-                                >
-                                  <Trash2Icon className="size-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditInstanceId(null)
+                            setInstanceFormName("")
+                            setInstanceFormUrl("")
+                            setInstanceFormApiKey("")
+                            setNewInstanceDialogOpen(true)
+                          }}
+                        >
+                          <PlusIcon /> Nueva instancia
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setEditInstanceId(null)
-                          setInstanceFormName("")
-                          setInstanceFormUrl("")
-                          setInstanceFormApiKey("")
-                          setNewInstanceDialogOpen(true)
-                        }}
+                        onClick={verifyConnection}
                       >
-                        <PlusIcon /> Nueva instancia
+                        <RefreshCwIcon /> Verificar conexion
                       </Button>
                     </div>
-                  ) : null}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={verifyConnection}
-                    >
-                      <RefreshCwIcon /> Verificar conexion
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
               <Card>
                 <CardHeader>
@@ -535,7 +496,7 @@ export function SettingsPanel({
                         />
                         {modelsManualEntry ? (
                           <FieldDescription>
-                            El proveedor no soporta descubrimiento automatico.
+                            El proveedor no soporta descubrimiento automático.
                           </FieldDescription>
                         ) : null}
                       </Field>
@@ -568,7 +529,7 @@ export function SettingsPanel({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Parametros de inferencia</CardTitle>
+                  <CardTitle>Parámetros de inferencia</CardTitle>
                   <CardDescription>
                     Ajusta como el modelo genera las respuestas.
                   </CardDescription>
@@ -579,7 +540,7 @@ export function SettingsPanel({
                       <FieldLabel>Temperature ({temperature.toFixed(1)})</FieldLabel>
                       <Slider
                         value={[temperature]}
-                        onValueChange={([v]) => setTemperature(v)}
+                        onValueChange={(v) => setTemperature(Array.isArray(v) ? v[0] : v)}
                         min={0}
                         max={2}
                         step={0.1}
@@ -591,7 +552,7 @@ export function SettingsPanel({
                       <FieldLabel>Top P ({topP.toFixed(2)})</FieldLabel>
                       <Slider
                         value={[topP]}
-                        onValueChange={([v]) => setTopP(v)}
+                        onValueChange={(v) => setTopP(Array.isArray(v) ? v[0] : v)}
                         min={0}
                         max={1}
                         step={0.05}
@@ -603,7 +564,7 @@ export function SettingsPanel({
                       <FieldLabel>Freq. Penalty ({frequencyPenalty.toFixed(1)})</FieldLabel>
                       <Slider
                         value={[frequencyPenalty]}
-                        onValueChange={([v]) => setFrequencyPenalty(v)}
+                        onValueChange={(v) => setFrequencyPenalty(Array.isArray(v) ? v[0] : v)}
                         min={-2}
                         max={2}
                         step={0.1}
@@ -615,7 +576,7 @@ export function SettingsPanel({
                       <FieldLabel>Pres. Penalty ({presencePenalty.toFixed(1)})</FieldLabel>
                       <Slider
                         value={[presencePenalty]}
-                        onValueChange={([v]) => setPresencePenalty(v)}
+                        onValueChange={(v) => setPresencePenalty(Array.isArray(v) ? v[0] : v)}
                         min={-2}
                         max={2}
                         step={0.1}
@@ -688,21 +649,22 @@ export function SettingsPanel({
               </Card>
             </TabsContent>
           </Tabs>
+        </div>
 
-          <div className="mt-4 flex items-center justify-between border-t pt-4">
-            <Button
-              variant="outline"
-              onClick={handleResetDefaults}
-              disabled={saving}
-            >
-              Restablecer valores
-            </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || saving}>
-              {saving ? <Spinner /> : null}
-              Aplicar cambios
-            </Button>
-          </div>
-        </SheetContent>
+        <div className="shrink-0 border-t px-4 py-3 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={handleResetDefaults}
+            disabled={saving}
+          >
+            Restablecer valores
+          </Button>
+          <Button onClick={handleSave} disabled={!hasChanges || saving}>
+            {saving ? <Spinner /> : null}
+            Aplicar cambios
+          </Button>
+        </div>
+      </SheetContent>
       </Sheet>
 
       <Dialog open={newInstanceDialogOpen} onOpenChange={setNewInstanceDialogOpen}>
@@ -745,9 +707,7 @@ export function SettingsPanel({
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
             <Button onClick={handleCreateInstance}>Crear instancia</Button>
           </div>
         </DialogContent>
@@ -791,9 +751,7 @@ export function SettingsPanel({
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
             <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
           </div>
         </DialogContent>

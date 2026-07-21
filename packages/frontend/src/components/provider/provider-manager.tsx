@@ -113,7 +113,7 @@ export function ProviderManager() {
     "openai-compatible": "unknown",
   })
   const [defaultConfig, setDefaultConfig] =
-    useState<DefaultProviderConfig>({ provider: null, model: null })
+    useState<DefaultProviderConfig>({ provider: null, providerInstanceId: null, model: null })
   const [selected, setSelected] = useState<ProviderId>("ollama")
   const [models, setModels] = useState<ListModelsResult | null>(null)
   const [modelsLoading, setModelsLoading] = useState(false)
@@ -640,9 +640,7 @@ export function ProviderManager() {
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
             <Button onClick={handleCreateInstance}>Crear instancia</Button>
           </div>
         </DialogContent>
@@ -686,9 +684,7 @@ export function ProviderManager() {
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
             <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
           </div>
         </DialogContent>
