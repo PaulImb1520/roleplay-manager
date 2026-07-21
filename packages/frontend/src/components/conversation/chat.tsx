@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { ConversationDetail } from "@workspace/shared/types/conversation"
 import {
   MessageScrollerProvider,
@@ -7,13 +7,18 @@ import {
   MessageScrollerContent,
   MessageScrollerItem,
 } from "@workspace/ui/components/message-scroller"
+import { Button } from "@workspace/ui/components/button"
+import { SettingsIcon } from "lucide-react"
 
 import { useChatStore } from "../../lib/stores/chat.store"
 import { sendMessageStreaming } from "../../lib/api/conversations"
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
+import { SettingsPanel } from "./settings-panel"
 
 export function Chat({ conversation }: { conversation: ConversationDetail }) {
+  const [conv, setConv] = useState(conversation)
+
   const {
     messages,
     isStreaming,
@@ -31,17 +36,17 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
 
   useEffect(() => {
     if (!initialized.current) {
-      setMessages(conversation.messages)
+      setMessages(conv.messages)
       initialized.current = true
     }
-  }, [conversation, setMessages])
+  }, [conv, setMessages])
 
   const handleSend = async (content: string) => {
     setError(null)
     setStreaming(true)
     setStreamingContent("")
 
-    await sendMessageStreaming(conversation.id, content, {
+    await sendMessageStreaming(conv.id, content, {
       onSaved: (message) => {
         addMessage(message)
       },
@@ -65,22 +70,33 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <div className="size-8 overflow-hidden rounded-full bg-muted">
-          {conversation.characterProfileImage ? (
+          {conv.characterProfileImage ? (
             <img
-              src={conversation.characterProfileImage}
-              alt={`${conversation.characterName} avatar`}
+              src={conv.characterProfileImage}
+              alt={`${conv.characterName} avatar`}
               className="size-full object-cover"
             />
           ) : null}
         </div>
         <div className="flex flex-col">
           <h2 className="text-sm font-semibold">
-            {conversation.title ?? conversation.characterName}
+            {conv.title ?? conv.characterName}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {conversation.characterName} &middot;{" "}
-            {conversation.status === "active" ? "Activa" : "Archivada"}
+            {conv.characterName} &middot;{" "}
+            {conv.status === "active" ? "Activa" : "Archivada"}
           </p>
+        </div>
+        <div className="ml-auto">
+          <SettingsPanel
+            conversationId={conv.id}
+            current={conv}
+            onSettingsChanged={setConv}
+          >
+            <Button variant="ghost" size="icon" data-icon="inline-start">
+              <SettingsIcon className="size-4" />
+            </Button>
+          </SettingsPanel>
         </div>
       </header>
 
@@ -130,7 +146,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
       <footer className="border-t">
         <MessageInput
           onSend={handleSend}
-          disabled={isStreaming || conversation.status === "archived"}
+          disabled={isStreaming || conv.status === "archived"}
         />
       </footer>
     </div>

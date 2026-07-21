@@ -1,6 +1,9 @@
 import type { Conversation } from "../entities/conversation.entity"
 import type { Message } from "../entities/message.entity"
-import type { ConversationStatus } from "@workspace/shared/types/conversation"
+import type {
+  ConversationSettingsUpdate,
+  ConversationStatus,
+} from "@workspace/shared/types/conversation"
 
 export interface ConversationWithMessages {
   conversation: Conversation
@@ -17,4 +20,9 @@ export interface ConversationRepository {
   list(status?: ConversationStatus): Promise<Conversation[]>
 
   update(conversation: Conversation): Promise<Conversation>
+
+  updateSettings(
+    id: string,
+    settings: ConversationSettingsUpdate,
+  ): Promise<Conversation>
 }

@@ -1,5 +1,6 @@
 import type {
   ConversationDetail,
+  ConversationSettingsUpdate,
   ConversationSummary,
   CreateConversationInput,
 } from "@workspace/shared/types/conversation"
@@ -28,6 +29,15 @@ export const archiveConversation = (id: string): Promise<ConversationDetail> =>
 
 export const unarchiveConversation = (id: string): Promise<ConversationDetail> =>
   apiRequest(`/api/conversations/${id}/unarchive`, { method: "POST" })
+
+export const updateConversationSettings = (
+  id: string,
+  settings: ConversationSettingsUpdate,
+): Promise<ConversationDetail> =>
+  apiRequest(`/api/conversations/${id}/settings`, {
+    method: "PATCH",
+    body: JSON.stringify(settings),
+  })
 
 export interface SendMessageCallbacks {
   onSaved?: (message: MessageDTO) => void

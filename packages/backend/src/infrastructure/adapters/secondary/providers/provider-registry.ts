@@ -1,4 +1,5 @@
 import type { ProviderId } from "@workspace/shared/types/provider"
+import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 
 import { ProviderError } from "../../primary/middlewares/error-handler"
 import type { Logger } from "../../../../domain/ports/logger.port"
@@ -31,12 +32,7 @@ export class ProviderRegistryImpl implements ProviderRegistry {
 
   async getAdapter(id: ProviderId): Promise<ProviderPort | null> {
     if (id === "ollama") {
-      return new OllamaAdapter({
-        baseUrl: this.options.ollamaBaseUrl,
-        timeoutMs: this.options.timeoutMs,
-        streamingTimeoutMs: this.options.streamingTimeoutMs,
-        logger: this.options.logger,
-      })
+      return this.buildOllamaAdapter()
     }
     if (id === "openai-compatible") {
       const cfg = await this.options.settings.getMany([
@@ -57,5 +53,33 @@ export class ProviderRegistryImpl implements ProviderRegistry {
       "PROVIDER_CONNECTION_FAILED",
       `Unknown provider id: ${id}`,
     )
+  }
+
+  createAdapter(instance: ProviderInstance): ProviderPort {
+    if (instance.kind === "ollama") {
+      return this.buildOllamaAdapter()
+    }
+    if (instance.kind === "openai-compatible") {
+      return new OpenAICompatibleAdapter({
+        baseUrl: instance.url || "http://localhost:1234/v1",
+        apiKey: instance.apiKey,
+        timeoutMs: this.options.timeoutMs,
+        streamingTimeoutMs: this.options.streamingTimeoutMs,
+        logger: this.options.logger,
+      })
+    }
+    throw new ProviderError(
+      "PROVIDER_CONNECTION_FAILED",
+      `Unknown provider kind: ${(instance as { kind: string }).kind}`,
+    )
+  }
+
+  private buildOllamaAdapter(): OllamaAdapter {
+    return new OllamaAdapter({
+      baseUrl: this.options.ollamaBaseUrl,
+      timeoutMs: this.options.timeoutMs,
+      streamingTimeoutMs: this.options.streamingTimeoutMs,
+      logger: this.options.logger,
+    })
   }
 }

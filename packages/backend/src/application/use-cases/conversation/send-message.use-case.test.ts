@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest"
+import { describe, it, expect, beforeAll, vi } from "vitest"
 
 import { SendMessageUseCase } from "./send-message.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
@@ -39,6 +39,7 @@ const activeConversation = Conversation.create({
   status: "active",
   model: null,
   provider: "ollama",
+  providerInstanceId: null,
   recentMessageCount: 15,
   summaryFrequency: 15,
   temperature: 0.7,
@@ -58,6 +59,7 @@ const archivedConversation = Conversation.create({
   status: "archived",
   model: null,
   provider: "ollama",
+  providerInstanceId: null,
   recentMessageCount: 15,
   summaryFrequency: 15,
   temperature: 0.7,
@@ -93,6 +95,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   findByIdWithMessages: async () => null,
   list: async () => [],
   update: async (c) => c,
+  updateSettings: vi.fn(async (_id: string, _settings: any) => activeConversation),
 })
 
 const buildMessageRepo = (): MessageRepository => ({
@@ -124,6 +127,7 @@ let providerCount = 0
 
 const buildProviderRegistry = (shouldFail = false): ProviderRegistry => ({
   listRegistered: () => ["ollama"],
+  createAdapter: vi.fn(),
   getAdapter: async (_id: ProviderId) => {
     providerCount++
     if (shouldFail) return null
@@ -153,6 +157,14 @@ const buildProviderRegistry = (shouldFail = false): ProviderRegistry => ({
   },
 })
 
+const providerInstanceRepository = {
+  findById: vi.fn(),
+  list: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 const buildDefaultProvider = (
   provider: string | null = "ollama",
   model: string | null = null,
@@ -181,6 +193,7 @@ describe("SendMessageUseCase", () => {
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
+      providerInstanceRepository,
     )
 
     await expect(
@@ -203,6 +216,7 @@ describe("SendMessageUseCase", () => {
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
+      providerInstanceRepository,
     )
 
     await expect(
@@ -224,6 +238,7 @@ describe("SendMessageUseCase", () => {
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
+      providerInstanceRepository,
     )
 
     const events: string[] = []
@@ -249,6 +264,7 @@ describe("SendMessageUseCase", () => {
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
+      providerInstanceRepository,
     )
 
     const chunks: string[] = []
@@ -279,6 +295,7 @@ describe("SendMessageUseCase", () => {
       buildProviderRegistry(true), // will return null
       buildLogger(),
       buildDefaultProvider(),
+      providerInstanceRepository,
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })

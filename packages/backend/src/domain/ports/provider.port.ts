@@ -29,7 +29,10 @@ export type { ListModelsResult, ProviderId, ProviderModel, ProviderStatus }
  * registry para que la API pueda anunciar al frontend qué proveedores
  * están disponibles sin necesidad de instanciar cada adaptador.
  */
+import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
+
 export interface ProviderRegistry {
   listRegistered(): ProviderId[]
   getAdapter(id: ProviderId): Promise<ProviderPort | null>
+  createAdapter(instance: ProviderInstance): ProviderPort
 }

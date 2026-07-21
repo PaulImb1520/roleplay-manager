@@ -24,6 +24,7 @@ describe("ListProviderModelsUseCase", () => {
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => adapter),
     }
     const useCase = new ListProviderModelsUseCase(registry, buildSilentLogger())
@@ -43,6 +44,7 @@ describe("ListProviderModelsUseCase", () => {
   it("devuelve manualEntryRequired=true si el proveedor no esta configurado", async () => {
     const registry: ProviderRegistry = {
       listRegistered: () => ["openai-compatible"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => null),
     }
     const useCase = new ListProviderModelsUseCase(registry, buildSilentLogger())
@@ -66,6 +68,7 @@ describe("ListProviderModelsUseCase", () => {
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => adapter),
     }
     const useCase = new ListProviderModelsUseCase(registry, buildSilentLogger())

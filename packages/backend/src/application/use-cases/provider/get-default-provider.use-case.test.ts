@@ -18,7 +18,7 @@ describe("GetDefaultProviderUseCase", () => {
 
     const result = await useCase.execute()
 
-    expect(result).toEqual({ provider: null, model: null })
+    expect(result).toEqual({ provider: null, model: null, providerInstanceId: null })
   })
 
   it("devuelve el provider y model persistidos", async () => {
@@ -35,6 +35,6 @@ describe("GetDefaultProviderUseCase", () => {
 
     const result = await useCase.execute()
 
-    expect(result).toEqual({ provider: "ollama", model: "llama3:latest" })
+    expect(result).toEqual({ provider: "ollama", model: "llama3:latest", providerInstanceId: null })
   })
 })

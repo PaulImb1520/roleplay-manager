@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 
 import { ListProvidersUseCase } from "./list-providers.use-case"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
@@ -7,6 +7,7 @@ const buildRegistry = (
   registered: Array<"ollama" | "openai-compatible"> = ["ollama", "openai-compatible"],
 ): ProviderRegistry => ({
   listRegistered: () => registered,
+  createAdapter: vi.fn(),
   getAdapter: () => Promise.resolve(null),
 })
 

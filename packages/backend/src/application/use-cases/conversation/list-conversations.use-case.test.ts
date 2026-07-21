@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 
 import { ListConversationsUseCase } from "./list-conversations.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
@@ -22,6 +22,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   create: async (c) => c,
   findById: async () => null,
   findByIdWithMessages: async () => null,
+  updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
   list: async (status) => {
     const all = [
       Conversation.create({
@@ -31,6 +32,7 @@ const buildConversationRepo = (): ConversationRepository => ({
         status: "active",
         model: null,
         provider: null,
+        providerInstanceId: null,
         recentMessageCount: 15,
         summaryFrequency: 15,
         temperature: 0.7,
@@ -49,6 +51,7 @@ const buildConversationRepo = (): ConversationRepository => ({
         status: "archived",
         model: null,
         provider: null,
+        providerInstanceId: null,
         recentMessageCount: 15,
         summaryFrequency: 15,
         temperature: 0.7,

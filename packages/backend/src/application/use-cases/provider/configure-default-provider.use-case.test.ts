@@ -22,6 +22,7 @@ const buildAvailableAdapter = (): ProviderPort => ({
 
 const buildRegistry = (adapter: ProviderPort | null): ProviderRegistry => ({
   listRegistered: () => ["ollama", "openai-compatible"],
+  createAdapter: vi.fn(),
   getAdapter: vi.fn(async () => adapter),
 })
 
@@ -32,6 +33,14 @@ const buildSettings = (): SettingsRepository => ({
   setMany: vi.fn(async () => undefined),
 })
 
+const providerInstanceRepository = {
+  findById: vi.fn(),
+  list: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe("ConfigureDefaultProviderUseCase", () => {
   it("persiste provider y model tras validar conexion", async () => {
     const adapter = buildAvailableAdapter()
@@ -40,6 +49,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const useCase = new ConfigureDefaultProviderUseCase(
       registry,
       settings,
+      providerInstanceRepository,
       buildSilentLogger(),
     )
 
@@ -48,7 +58,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
       model: "llama3:latest",
     })
 
-    expect(result).toEqual({ provider: "ollama", model: "llama3:latest" })
+    expect(result).toEqual({ provider: "ollama", model: "llama3:latest", providerInstanceId: null })
     expect(adapter.validateConnection).toHaveBeenCalled()
     expect(settings.setMany).toHaveBeenCalledWith({
       default_provider: "ollama",
@@ -60,6 +70,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const useCase = new ConfigureDefaultProviderUseCase(
       buildRegistry(null),
       buildSettings(),
+      providerInstanceRepository,
       buildSilentLogger(),
     )
 
@@ -78,6 +89,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const useCase = new ConfigureDefaultProviderUseCase(
       buildRegistry(adapter),
       settings,
+      providerInstanceRepository,
       buildSilentLogger(),
     )
 
@@ -98,6 +110,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const useCase = new ConfigureDefaultProviderUseCase(
       buildRegistry(adapter),
       settings,
+      providerInstanceRepository,
       buildSilentLogger(),
     )
 
@@ -107,7 +120,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
       force: true,
     })
 
-    expect(result).toEqual({ provider: "ollama", model: "x" })
+    expect(result).toEqual({ provider: "ollama", model: "x", providerInstanceId: null })
     expect(adapter.validateConnection).not.toHaveBeenCalled()
     expect(settings.setMany).toHaveBeenCalledWith({
       default_provider: "ollama",
@@ -119,6 +132,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     const useCase = new ConfigureDefaultProviderUseCase(
       buildRegistry(null),
       buildSettings(),
+      providerInstanceRepository,
       buildSilentLogger(),
     )
 

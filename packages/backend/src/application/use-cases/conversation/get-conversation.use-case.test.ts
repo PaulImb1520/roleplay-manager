@@ -30,6 +30,7 @@ const buildConversationRepo = (): ConversationRepository => ({
         status: "active",
         model: null,
         provider: null,
+        providerInstanceId: null,
         recentMessageCount: 15,
         summaryFrequency: 15,
         temperature: 0.7,
@@ -57,6 +58,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   },
   list: async () => [],
   update: async (c) => c,
+  updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

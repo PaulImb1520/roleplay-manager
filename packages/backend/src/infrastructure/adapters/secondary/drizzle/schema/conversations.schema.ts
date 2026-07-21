@@ -2,6 +2,7 @@ import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core"
 import { sql } from "drizzle-orm"
 
 import { characterVersions } from "./character-versions.schema"
+import { providerInstances } from "./provider-instances.schema"
 
 export const conversations = sqliteTable("conversations", {
   id: text("id").primaryKey(),
@@ -14,6 +15,10 @@ export const conversations = sqliteTable("conversations", {
     .default("active"),
   model: text("model"),
   provider: text("provider"),
+  providerInstanceId: text("provider_instance_id").references(
+    () => providerInstances.id,
+    { onDelete: "set null" },
+  ),
   recentMessageCount: integer("recent_message_count").default(15),
   summaryFrequency: integer("summary_frequency").default(15),
   temperature: real("temperature").default(0.7),

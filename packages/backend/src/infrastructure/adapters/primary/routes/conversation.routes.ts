@@ -6,6 +6,8 @@ import type { GetConversationUseCase } from "../../../../application/use-cases/c
 import type { ListConversationsUseCase } from "../../../../application/use-cases/conversation/list-conversations.use-case"
 import type { ArchiveConversationUseCase } from "../../../../application/use-cases/conversation/archive-conversation.use-case"
 import type { SendMessageUseCase } from "../../../../application/use-cases/conversation/send-message.use-case"
+import type { UpdateConversationSettingsUseCase } from "../../../../application/use-cases/conversation/update-conversation-settings.use-case"
+import { validate } from "../middlewares/validation"
 
 const CreateConversationSchema = z.object({
   characterId: z.string().min(1, "characterId is required"),
@@ -15,12 +17,28 @@ const SendMessageSchema = z.object({
   content: z.string().min(1, "content is required"),
 })
 
+const UpdateConversationSettingsSchema = z.object({
+  provider: z.enum(["ollama", "openai-compatible"]).optional(),
+  providerInstanceId: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
+  recentMessageCount: z.number().int().min(1).optional(),
+  summaryFrequency: z.number().int().min(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  frequencyPenalty: z.number().min(-2).max(2).optional(),
+  presencePenalty: z.number().min(-2).max(2).optional(),
+  stopSequences: z.array(z.string()).optional(),
+  force: z.boolean().optional(),
+})
+
 export const buildConversationRouter = (deps: {
   createConversation: CreateConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
   archiveConversation: ArchiveConversationUseCase
   sendMessage: SendMessageUseCase
+  updateConversationSettings: UpdateConversationSettingsUseCase
 }): Router => {
   const router = Router()
 
@@ -121,6 +139,24 @@ export const buildConversationRouter = (deps: {
       }
     }
   })
+
+  router.patch(
+    "/conversations/:id/settings",
+    validate(UpdateConversationSettingsSchema),
+    async (req, res, next) => {
+      try {
+        const conversationId = req.params.id as string
+        const body = req.body as z.infer<typeof UpdateConversationSettingsSchema>
+        const result = await deps.updateConversationSettings.execute(
+          conversationId,
+          body,
+        )
+        res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
 
   return router
 }

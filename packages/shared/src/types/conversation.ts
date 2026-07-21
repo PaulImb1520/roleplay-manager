@@ -20,6 +20,9 @@ export interface ConversationDetail {
   status: ConversationStatus
   model: string | null
   provider: string | null
+  providerInstanceId: string | null
+  recentMessageCount: number
+  summaryFrequency: number
   temperature: number | null
   maxTokens: number | null
   topP: number | null
@@ -29,6 +32,21 @@ export interface ConversationDetail {
   createdAt: string
   updatedAt: string
   messages: MessageDTO[]
+}
+
+export interface ConversationSettingsUpdate {
+  model?: string | null
+  provider?: string | null
+  providerInstanceId?: string | null
+  recentMessageCount?: number
+  summaryFrequency?: number
+  temperature?: number
+  maxTokens?: number
+  topP?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
+  stopSequences?: string[]
+  force?: boolean
 }
 
 export interface MessageDTO {

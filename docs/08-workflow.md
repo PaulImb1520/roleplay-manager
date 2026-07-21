@@ -179,7 +179,7 @@ El orden está pensado para maximizar el feedback temprano: lo que se entrega pr
 
 **Entregable:** la versión 1.0 cumple los criterios de éxito del MVP con una experiencia estable.
 
-**Capas tocadas (transversal):** timeouts de proveedores (configurable en `settings`); manejo unificado de errores en frontend; estados de carga y error consistentes; mensajes claros para el usuario; revisión de accesibilidad básica; optimización de queries Drizzle obvias; revisión de la documentación.
+**Capas tocadas (transversal):** timeouts de proveedores (configurable en `settings`); manejo unificado de errores en frontend; retroalimentación en pantalla de chat y sus interacciones; estados de carga y error consistentes; mensajes claros para el usuario; revisión de accesibilidad básica; optimización de queries Drizzle obvias; revisión de la documentación.
 
 ---
 

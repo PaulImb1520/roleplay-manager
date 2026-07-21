@@ -5,6 +5,7 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
+import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
 
@@ -41,6 +42,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   findByIdWithMessages: async () => null,
   list: async () => [],
   update: async (c) => c,
+  updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
 })
 
 const buildMessageRepo = (): MessageRepository => ({

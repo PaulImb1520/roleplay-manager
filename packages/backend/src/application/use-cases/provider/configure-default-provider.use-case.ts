@@ -8,9 +8,11 @@ import { ProviderUnavailableError } from "../../../infrastructure/adapters/prima
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { SettingsRepository } from "../../../domain/ports/settings.repository"
+import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 
 const KEYS = {
   provider: "default_provider",
+  providerInstanceId: "default_provider_instance_id",
   model: "default_model",
 } as const
 
@@ -26,13 +28,15 @@ const REGISTERED: ReadonlyArray<ProviderId> = ["ollama", "openai-compatible"]
  *    persiste cambios. La configuracion anterior, si existia, se
  *    conserva intacta.
  * 3. Si la validacion pasa (o se omite por `force: true`), persiste
- *    las dos settings (`default_provider` y `default_model`).
+ *    las settings (`default_provider`, `default_provider_instance_id`,
+ *    `default_model`).
  * 4. Devuelve la configuracion recien persistida.
  */
 export class ConfigureDefaultProviderUseCase {
   constructor(
     private readonly registry: ProviderRegistry,
     private readonly settings: SettingsRepository,
+    private readonly providerInstanceRepository: ProviderInstanceRepository,
     private readonly logger: Logger,
   ) {}
 
@@ -45,8 +49,18 @@ export class ConfigureDefaultProviderUseCase {
       )
     }
 
+    let adapterToValidate = null
+    if (input.providerInstanceId) {
+      const instance = await this.providerInstanceRepository.findById(
+        input.providerInstanceId,
+      )
+      if (instance) {
+        adapterToValidate = this.registry.createAdapter(instance)
+      }
+    }
+
     if (input.force !== true) {
-      const adapter = await this.registry.getAdapter(input.provider)
+      const adapter = adapterToValidate ?? await this.registry.getAdapter(input.provider)
       if (adapter === null) {
         throw new ProviderUnavailableError(
           `Provider ${input.provider} is not configured.`,
@@ -65,11 +79,24 @@ export class ConfigureDefaultProviderUseCase {
       })
     }
 
-    await this.settings.setMany({
+    const entries: Record<string, string> = {
       [KEYS.provider]: input.provider,
       [KEYS.model]: input.model,
-    })
+    }
+    if (input.providerInstanceId !== undefined) {
+      if (input.providerInstanceId === null) {
+        await this.settings.set(KEYS.providerInstanceId, "")
+      } else {
+        entries[KEYS.providerInstanceId] = input.providerInstanceId
+      }
+    }
 
-    return { provider: input.provider, model: input.model }
+    await this.settings.setMany(entries)
+
+    return {
+      provider: input.provider,
+      providerInstanceId: input.providerInstanceId ?? null,
+      model: input.model,
+    }
   }
 }

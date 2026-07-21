@@ -1,9 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect --
-   El effect lanza una carga asincrona de modelos al cambiar el proveedor
-   seleccionado. El setModelsLoading(true) marca el estado de carga
-   inmediato; el setModels(result) se aplica solo si la carga no fue
-   cancelada por un cambio de selected. Patron canonico para fetch
-   disparado por efecto. */
 import { useCallback, useEffect, useState } from "react"
 import { Toaster, toast } from "@workspace/ui/components/sonner"
 import {
@@ -39,28 +33,48 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@workspace/ui/components/toggle-group"
-import { AlertCircleIcon, CheckCircle2Icon, RefreshCwIcon } from "lucide-react"
+import {
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  PlusIcon,
+  PencilIcon,
+  RefreshCwIcon,
+  Trash2Icon,
+} from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@workspace/ui/components/dialog"
 
 import type {
   ConfigureDefaultProviderInput,
   DefaultProviderConfig,
   ListModelsResult,
-  OpenAICompatibleConfig,
   ProviderId,
   ProviderStatus,
 } from "@workspace/shared/types/provider"
+import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 
 import {
   configureDefaultProvider,
   getDefaultProvider,
-  getOpenAICompatibleConfig,
-  setOpenAICompatibleConfig,
 } from "@/lib/api/settings"
 import {
   listProviders,
   listProviderModels,
   validateProvider,
 } from "@/lib/api/providers"
+import {
+  listProviderInstances,
+  createProviderInstance,
+  updateProviderInstance,
+  deleteProviderInstance,
+  validateProviderInstance,
+} from "@/lib/api/provider-instances"
 import { ApiClientError } from "@/lib/api/client"
 
 type StatusMap = Record<ProviderId, ProviderStatus | "loading">
@@ -103,14 +117,17 @@ export function ProviderManager() {
   const [selected, setSelected] = useState<ProviderId>("ollama")
   const [models, setModels] = useState<ListModelsResult | null>(null)
   const [modelsLoading, setModelsLoading] = useState(false)
-  const [openaiCfg, setOpenaiCfg] = useState<OpenAICompatibleConfig>({
-    url: "",
-    hasApiKey: false,
-  })
-  const [openaiUrlInput, setOpenaiUrlInput] = useState("")
-  const [openaiKeyInput, setOpenaiKeyInput] = useState("")
   const [modelInput, setModelInput] = useState("")
   const [savingDefault, setSavingDefault] = useState(false)
+
+  const [instances, setInstances] = useState<ProviderInstance[]>([])
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null)
+
+  const [newInstanceDialogOpen, setNewInstanceDialogOpen] = useState(false)
+  const [editInstanceId, setEditInstanceId] = useState<string | null>(null)
+  const [instanceFormName, setInstanceFormName] = useState("")
+  const [instanceFormUrl, setInstanceFormUrl] = useState("")
+  const [instanceFormApiKey, setInstanceFormApiKey] = useState("")
 
   const refreshAllStatuses = useCallback(async () => {
     setStatuses({ ollama: "loading", "openai-compatible": "loading" })
@@ -130,16 +147,18 @@ export function ProviderManager() {
   useEffect(() => {
     ;(async () => {
       try {
-        const [ids, def, oaCfg] = await Promise.all([
+        const [ids, def, insts] = await Promise.all([
           listProviders(),
           getDefaultProvider(),
-          getOpenAICompatibleConfig(),
+          listProviderInstances(),
         ])
         setRegisteredIds(ids.map((p) => p.id))
         setDefaultConfig(def)
-        setOpenaiCfg(oaCfg)
-        setOpenaiUrlInput(oaCfg.url)
+        setInstances(insts)
         if (def.provider) setSelected(def.provider)
+        if (def.provider === "openai-compatible" && def.providerInstanceId) {
+          setSelectedInstanceId(def.providerInstanceId)
+        }
       } catch (e) {
         toast.error("No se pudo cargar la configuracion inicial", {
           description: formatError(e),
@@ -179,52 +198,24 @@ export function ProviderManager() {
     }
   }, [selected, defaultConfig.provider, defaultConfig.model])
 
-  const handleVerify = async () => {
-    if (selected === "openai-compatible" && openaiCfg.url === "") {
-      toast.error("Guarda primero la configuracion del proveedor", {
-        description:
-          "La URL base debe estar guardada antes de verificar la conexion.",
-      })
+  const handleVerifyOpenAI = async () => {
+    if (!selectedInstanceId) {
+      toast.error("Selecciona una instancia primero")
       return
     }
-    setStatuses((prev) => ({ ...prev, [selected]: "loading" }))
     try {
-      const r = await validateProvider(selected)
-      setStatuses((prev) => ({ ...prev, [selected]: r.status }))
-      if (r.status === "available") {
-        toast.success("Conexion exitosa", {
-          description: `El proveedor ${selected} esta disponible.`,
-        })
+      setStatuses((prev) => ({ ...prev, "openai-compatible": "loading" }))
+      const result = await validateProviderInstance(selectedInstanceId)
+      const s: ProviderStatus = result.status === "available" ? "available" : "unavailable"
+      setStatuses((prev) => ({ ...prev, "openai-compatible": s }))
+      if (s === "available") {
+        toast.success("Conexion exitosa")
       } else {
-        toast.warning("Proveedor no disponible", {
-          description:
-            r.message ??
-            `El proveedor ${selected} respondio pero no esta operativo.`,
-        })
+        toast.warning("Instancia no disponible", { description: result.message })
       }
     } catch (e) {
-      setStatuses((prev) => ({ ...prev, [selected]: "unavailable" }))
-      toast.error("No se pudo verificar la conexion", {
-        description: formatError(e),
-      })
-    }
-  }
-
-  const handleSaveOpenAI = async () => {
-    try {
-      await setOpenAICompatibleConfig({
-        url: openaiUrlInput,
-        apiKey: openaiKeyInput === "" ? undefined : openaiKeyInput,
-      })
-      const fresh = await getOpenAICompatibleConfig()
-      setOpenaiCfg(fresh)
-      setOpenaiKeyInput("")
-      toast.success("Configuracion de OpenAI-compatible guardada")
-      void refreshAllStatuses()
-    } catch (e) {
-      toast.error("No se pudo guardar la configuracion", {
-        description: formatError(e),
-      })
+      setStatuses((prev) => ({ ...prev, "openai-compatible": "unavailable" }))
+      toast.error("No se pudo verificar la conexion", { description: formatError(e) })
     }
   }
 
@@ -234,9 +225,14 @@ export function ProviderManager() {
       toast.error("Indica un modelo antes de guardar")
       return
     }
+    if (selected === "openai-compatible" && !selectedInstanceId) {
+      toast.error("Selecciona una instancia de proveedor")
+      return
+    }
     setSavingDefault(true)
     const body: ConfigureDefaultProviderInput = {
       provider: selected,
+      providerInstanceId: selected === "openai-compatible" ? selectedInstanceId : null,
       model,
       ...(force ? { force: true } : {}),
     }
@@ -260,6 +256,57 @@ export function ProviderManager() {
       }
     } finally {
       setSavingDefault(false)
+    }
+  }
+
+  const handleCreateInstance = async () => {
+    try {
+      const instance = await createProviderInstance({
+        kind: "openai-compatible",
+        name: instanceFormName.trim(),
+        url: instanceFormUrl.trim(),
+        apiKey: instanceFormApiKey.trim() || undefined,
+      })
+      setInstances((prev) => [...prev, instance])
+      setNewInstanceDialogOpen(false)
+      setInstanceFormName("")
+      setInstanceFormUrl("")
+      setInstanceFormApiKey("")
+      toast.success("Instancia creada", { description: instance.name })
+    } catch (e) {
+      toast.error("No se pudo crear la instancia", { description: formatError(e) })
+    }
+  }
+
+  const handleUpdateInstance = async () => {
+    if (!editInstanceId) return
+    try {
+      const updated = await updateProviderInstance(editInstanceId, {
+        name: instanceFormName.trim() || undefined,
+        url: instanceFormUrl.trim() || undefined,
+        apiKey: instanceFormApiKey.trim() || undefined,
+      })
+      setInstances((prev) => prev.map((i) => (i.id === editInstanceId ? updated : i)))
+      setEditInstanceId(null)
+      setInstanceFormName("")
+      setInstanceFormUrl("")
+      setInstanceFormApiKey("")
+      toast.success("Instancia actualizada")
+    } catch (e) {
+      toast.error("No se pudo actualizar la instancia", { description: formatError(e) })
+    }
+  }
+
+  const handleDeleteInstance = async (id: string) => {
+    try {
+      await deleteProviderInstance(id)
+      setInstances((prev) => prev.filter((i) => i.id !== id))
+      if (selectedInstanceId === id) {
+        setSelectedInstanceId(null)
+      }
+      toast.success("Instancia eliminada")
+    } catch (e) {
+      toast.error("No se pudo eliminar la instancia", { description: formatError(e) })
     }
   }
 
@@ -336,53 +383,86 @@ export function ProviderManager() {
       {selected === "openai-compatible" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Configuracion del proveedor OpenAI-compatible</CardTitle>
+            <CardTitle>Instancias OpenAI-compatible</CardTitle>
             <CardDescription>
-              URL base del proveedor (por ejemplo, http://localhost:1234/v1).
-              La API key es opcional: si tu proveedor no requiere
-              autenticacion, dejala en blanco.
+              Gestiona las instancias de proveedores compatibles con OpenAI.
+              Cada instancia tiene su propia URL y API key.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="openai-url">URL base</FieldLabel>
-                <Input
-                  id="openai-url"
-                  type="url"
-                  placeholder="http://localhost:1234/v1"
-                  value={openaiUrlInput}
-                  onChange={(e) => setOpenaiUrlInput(e.target.value)}
-                />
-                <FieldDescription>
-                  Actual: {openaiCfg.url === "" ? "(no configurada)" : openaiCfg.url}
-                </FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="openai-key">API key</FieldLabel>
-                <Input
-                  id="openai-key"
-                  type="password"
-                  placeholder={openaiCfg.hasApiKey ? "(dejada, introduce una nueva para cambiarla)" : "sk-..."}
-                  value={openaiKeyInput}
-                  onChange={(e) => setOpenaiKeyInput(e.target.value)}
-                />
-                <FieldDescription>
-                  {openaiCfg.hasApiKey
-                    ? "Ya hay una API key guardada. Introduce una nueva solo si quieres reemplazarla."
-                    : "No hay API key guardada."}
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
+          <CardContent className="flex flex-col gap-3">
+            {instances.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay instancias configuradas. Crea una nueva.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {instances.map((inst) => (
+                  <div
+                    key={inst.id}
+                    className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
+                      selectedInstanceId === inst.id
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-muted/50"
+                    }`}
+                    onClick={() => setSelectedInstanceId(inst.id)}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{inst.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {inst.url || "Sin URL"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditInstanceId(inst.id)
+                          setInstanceFormName(inst.name)
+                          setInstanceFormUrl(inst.url)
+                          setInstanceFormApiKey("")
+                        }}
+                      >
+                        <PencilIcon className="size-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteInstance(inst.id)
+                        }}
+                      >
+                        <Trash2Icon className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditInstanceId(null)
+                setInstanceFormName("")
+                setInstanceFormUrl("")
+                setInstanceFormApiKey("")
+                setNewInstanceDialogOpen(true)
+              }}
+            >
+              <PlusIcon /> Nueva instancia
+            </Button>
           </CardContent>
           <CardFooter className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => void handleSaveOpenAI()}>
-              Guardar configuracion
-            </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => void handleVerify()}
+              onClick={() => void handleVerifyOpenAI()}
+              disabled={!selectedInstanceId}
             >
               Verificar conexion
             </Button>
@@ -507,7 +587,11 @@ export function ProviderManager() {
             </p>
           ) : (
             <p className="text-sm">
-              <strong>{defaultConfig.provider}</strong> &middot;{" "}
+              <strong>{defaultConfig.provider}</strong>
+              {defaultConfig.providerInstanceId ? (
+                <> &middot; <span className="text-muted-foreground">instancia: {defaultConfig.providerInstanceId}</span></>
+              ) : null}
+              &middot;{" "}
               <code className="bg-muted rounded px-1 py-0.5 text-xs">
                 {defaultConfig.model}
               </code>
@@ -515,6 +599,100 @@ export function ProviderManager() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={newInstanceDialogOpen} onOpenChange={setNewInstanceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nueva instancia OpenAI-compatible</DialogTitle>
+            <DialogDescription>
+              Configura una conexion a un proveedor compatible con OpenAI.
+            </DialogDescription>
+          </DialogHeader>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="inst-name">Nombre</FieldLabel>
+              <Input
+                id="inst-name"
+                value={instanceFormName}
+                onChange={(e) => setInstanceFormName(e.target.value)}
+                placeholder="LM Studio local"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="inst-url">URL base</FieldLabel>
+              <Input
+                id="inst-url"
+                type="url"
+                value={instanceFormUrl}
+                onChange={(e) => setInstanceFormUrl(e.target.value)}
+                placeholder="http://localhost:1234/v1"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="inst-key">API key (opcional)</FieldLabel>
+              <Input
+                id="inst-key"
+                type="password"
+                value={instanceFormApiKey}
+                onChange={(e) => setInstanceFormApiKey(e.target.value)}
+                placeholder="sk-..."
+              />
+            </Field>
+          </FieldGroup>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleCreateInstance}>Crear instancia</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editInstanceId !== null} onOpenChange={(o) => { if (!o) setEditInstanceId(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar instancia</DialogTitle>
+            <DialogDescription>
+              Modifica los datos de la conexion.
+            </DialogDescription>
+          </DialogHeader>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="edit-name">Nombre</FieldLabel>
+              <Input
+                id="edit-name"
+                value={instanceFormName}
+                onChange={(e) => setInstanceFormName(e.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="edit-url">URL base</FieldLabel>
+              <Input
+                id="edit-url"
+                type="url"
+                value={instanceFormUrl}
+                onChange={(e) => setInstanceFormUrl(e.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="edit-key">API key (dejar vacio para mantener)</FieldLabel>
+              <Input
+                id="edit-key"
+                type="password"
+                value={instanceFormApiKey}
+                onChange={(e) => setInstanceFormApiKey(e.target.value)}
+                placeholder="(dejar vacio para mantener)"
+              />
+            </Field>
+          </FieldGroup>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

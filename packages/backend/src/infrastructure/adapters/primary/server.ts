@@ -9,6 +9,7 @@ import { buildConversationRouter } from "./routes/conversation.routes"
 import { buildHealthRouter } from "./routes/health.routes"
 import { buildProviderRouter } from "./routes/provider.routes"
 import { buildSettingsRouter } from "./routes/settings.routes"
+import { buildProviderInstanceRouter } from "./routes/provider-instance.routes"
 
 export interface BuildServerOptions {
   container: AppContainer
@@ -56,6 +57,7 @@ export const buildServer = ({
       settings: container.settings,
     }),
   )
+  app.use("/api", buildProviderInstanceRouter(container))
   app.use("/api", buildCharacterRouter(container))
   app.use(
     "/api",
@@ -65,6 +67,7 @@ export const buildServer = ({
       listConversations: container.listConversations,
       archiveConversation: container.archiveConversation,
       sendMessage: container.sendMessage,
+      updateConversationSettings: container.updateConversationSettings,
     }),
   )
 

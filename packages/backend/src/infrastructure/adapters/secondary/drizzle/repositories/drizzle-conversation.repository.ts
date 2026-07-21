@@ -7,7 +7,10 @@ import type {
   ConversationWithMessages,
 } from "../../../../../domain/ports/conversation.repository"
 import type { Database } from "../../../../config/database"
-import type { ConversationStatus } from "@workspace/shared/types/conversation"
+import type {
+  ConversationSettingsUpdate,
+  ConversationStatus,
+} from "@workspace/shared/types/conversation"
 import { conversations, messages } from "../schema"
 
 type ConversationRow = typeof conversations.$inferSelect
@@ -21,6 +24,7 @@ const toConversation = (row: ConversationRow): Conversation =>
     status: row.status as ConversationStatus,
     model: row.model ?? null,
     provider: row.provider ?? null,
+    providerInstanceId: row.providerInstanceId ?? null,
     recentMessageCount: row.recentMessageCount ?? 15,
     summaryFrequency: row.summaryFrequency ?? 15,
     temperature: row.temperature ?? 0.7,
@@ -56,6 +60,7 @@ export class DrizzleConversationRepository implements ConversationRepository {
       status: conversation.status,
       model: conversation.model,
       provider: conversation.provider,
+      providerInstanceId: conversation.providerInstanceId,
       recentMessageCount: conversation.recentMessageCount,
       summaryFrequency: conversation.summaryFrequency,
       temperature: conversation.temperature,
@@ -123,5 +128,44 @@ export class DrizzleConversationRepository implements ConversationRepository {
       .where(eq(conversations.id, conversation.id))
 
     return conversation
+  }
+
+  async updateSettings(
+    id: string,
+    settings: ConversationSettingsUpdate,
+  ): Promise<Conversation> {
+    const now = new Date()
+    const values: Record<string, unknown> = { updatedAt: now }
+
+    if (settings.model !== undefined) values.model = settings.model
+    if (settings.provider !== undefined) values.provider = settings.provider
+    if (settings.providerInstanceId !== undefined)
+      values.providerInstanceId = settings.providerInstanceId
+    if (settings.recentMessageCount !== undefined)
+      values.recentMessageCount = settings.recentMessageCount
+    if (settings.summaryFrequency !== undefined)
+      values.summaryFrequency = settings.summaryFrequency
+    if (settings.temperature !== undefined)
+      values.temperature = settings.temperature
+    if (settings.maxTokens !== undefined) values.maxTokens = settings.maxTokens
+    if (settings.topP !== undefined) values.topP = settings.topP
+    if (settings.frequencyPenalty !== undefined)
+      values.frequencyPenalty = settings.frequencyPenalty
+    if (settings.presencePenalty !== undefined)
+      values.presencePenalty = settings.presencePenalty
+    if (settings.stopSequences !== undefined)
+      values.stopSequences = JSON.stringify(settings.stopSequences)
+
+    await this.db
+      .update(conversations)
+      .set(values)
+      .where(eq(conversations.id, id))
+
+    const updated = await this.findById(id)
+    if (!updated) {
+      throw new Error(`Conversation '${id}' not found after updateSettings`)
+    }
+
+    return updated
   }
 }

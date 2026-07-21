@@ -11,6 +11,7 @@ import { DrizzleSettingsRepository } from "../infrastructure/adapters/secondary/
 import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-character.repository"
 import { DrizzleConversationRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-conversation.repository"
 import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-message.repository"
+import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
 import type { ProviderRegistry } from "../domain/ports/provider.port"
@@ -18,6 +19,7 @@ import type { SettingsRepository } from "../domain/ports/settings.repository"
 import type { CharacterRepository } from "../domain/ports/character.repository"
 import type { ConversationRepository } from "../domain/ports/conversation.repository"
 import type { MessageRepository } from "../domain/ports/message.repository"
+import type { ProviderInstanceRepository } from "../domain/ports/provider-instance.repository"
 import type { PromptContextBuilder } from "../domain/ports/prompt-context-builder"
 import { CreateCharacterUseCase } from "../application/use-cases/character/create-character.use-case"
 import { GetCharacterUseCase } from "../application/use-cases/character/get-character.use-case"
@@ -30,6 +32,12 @@ import { GetConversationUseCase } from "../application/use-cases/conversation/ge
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
 import { ArchiveConversationUseCase } from "../application/use-cases/conversation/archive-conversation.use-case"
 import { SendMessageUseCase } from "../application/use-cases/conversation/send-message.use-case"
+import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
+import { ListProviderInstancesUseCase } from "../application/use-cases/provider/list-provider-instances.use-case"
+import { CreateProviderInstanceUseCase } from "../application/use-cases/provider/create-provider-instance.use-case"
+import { UpdateProviderInstanceUseCase } from "../application/use-cases/provider/update-provider-instance.use-case"
+import { DeleteProviderInstanceUseCase } from "../application/use-cases/provider/delete-provider-instance.use-case"
+import { ValidateProviderInstanceUseCase } from "../application/use-cases/provider/validate-provider-instance.use-case"
 
 export interface AppContainer {
   logger: Logger
@@ -43,6 +51,7 @@ export interface AppContainer {
   configureDefaultProvider: ConfigureDefaultProviderUseCase
   settings: SettingsRepository
   providerRegistry: ProviderRegistry
+  providerInstanceRepository: ProviderInstanceRepository
   characterRepository: CharacterRepository
   conversationRepository: ConversationRepository
   messageRepository: MessageRepository
@@ -58,6 +67,12 @@ export interface AppContainer {
   listConversations: ListConversationsUseCase
   archiveConversation: ArchiveConversationUseCase
   sendMessage: SendMessageUseCase
+  updateConversationSettings: UpdateConversationSettingsUseCase
+  listProviderInstances: ListProviderInstancesUseCase
+  createProviderInstance: CreateProviderInstanceUseCase
+  updateProviderInstance: UpdateProviderInstanceUseCase
+  deleteProviderInstance: DeleteProviderInstanceUseCase
+  validateProviderInstance: ValidateProviderInstanceUseCase
 }
 
 export interface BuildContainerOptions {
@@ -90,6 +105,8 @@ export const buildContainer = ({
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
   const getDefaultProvider = new GetDefaultProviderUseCase(settings)
+  const providerInstanceRepository: ProviderInstanceRepository =
+    new DrizzleProviderInstanceRepository(database)
 
   const sendMessage = new SendMessageUseCase(
     conversationRepository,
@@ -99,6 +116,7 @@ export const buildContainer = ({
     providerRegistry,
     logger,
     getDefaultProvider,
+    providerInstanceRepository,
   )
 
   return {
@@ -119,10 +137,12 @@ export const buildContainer = ({
     configureDefaultProvider: new ConfigureDefaultProviderUseCase(
       providerRegistry,
       settings,
+      providerInstanceRepository,
       logger,
     ),
     settings,
     providerRegistry,
+    providerInstanceRepository,
     characterRepository,
     conversationRepository,
     messageRepository,
@@ -153,5 +173,29 @@ export const buildContainer = ({
       characterRepository,
     ),
     sendMessage,
+    updateConversationSettings: new UpdateConversationSettingsUseCase(
+      conversationRepository,
+      characterRepository,
+      providerRegistry,
+      providerInstanceRepository,
+      logger,
+    ),
+    listProviderInstances: new ListProviderInstancesUseCase(
+      providerInstanceRepository,
+    ),
+    createProviderInstance: new CreateProviderInstanceUseCase(
+      providerInstanceRepository,
+    ),
+    updateProviderInstance: new UpdateProviderInstanceUseCase(
+      providerInstanceRepository,
+    ),
+    deleteProviderInstance: new DeleteProviderInstanceUseCase(
+      providerInstanceRepository,
+    ),
+    validateProviderInstance: new ValidateProviderInstanceUseCase(
+      providerInstanceRepository,
+      providerRegistry,
+      logger,
+    ),
   }
 }

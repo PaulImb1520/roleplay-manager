@@ -10,6 +10,7 @@ import type { MessageRepository } from "../../../domain/ports/message.repository
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
+import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import {
   ConversationArchivedError,
@@ -56,6 +57,7 @@ export class SendMessageUseCase {
     private readonly providerRegistry: ProviderRegistry,
     private readonly logger: Logger,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
+    private readonly providerInstanceRepository: ProviderInstanceRepository,
   ) {}
 
   async *execute(input: SendMessageInput): AsyncGenerator<SendMessageEvent> {
@@ -128,11 +130,13 @@ export class SendMessageUseCase {
     })
 
     let providerId = conversation.provider as ProviderId | null
+    let providerInstanceId = conversation.providerInstanceId
     let resolvedModel = conversation.model
     if (!providerId) {
       const defaultConfig: DefaultProviderConfig =
         await this.getDefaultProvider.execute()
       providerId = defaultConfig.provider
+      providerInstanceId = defaultConfig.providerInstanceId
       resolvedModel ??= defaultConfig.model
     }
     if (!providerId) {
@@ -145,7 +149,19 @@ export class SendMessageUseCase {
       }
       return
     }
-    const adapter = await this.providerRegistry.getAdapter(providerId)
+
+    let adapter = null
+    if (providerInstanceId) {
+      const instance = await this.providerInstanceRepository.findById(
+        providerInstanceId,
+      )
+      if (instance) {
+        adapter = this.providerRegistry.createAdapter(instance)
+      }
+    }
+    if (!adapter) {
+      adapter = await this.providerRegistry.getAdapter(providerId)
+    }
     if (!adapter) {
       yield {
         type: "error",

@@ -7,6 +7,7 @@ export interface ConversationProps {
   status: ConversationStatus
   model: string | null
   provider: string | null
+  providerInstanceId: string | null
   recentMessageCount: number
   summaryFrequency: number
   temperature: number
@@ -32,6 +33,7 @@ export class Conversation {
   get status(): ConversationStatus { return this.props.status }
   get model(): string | null { return this.props.model }
   get provider(): string | null { return this.props.provider }
+  get providerInstanceId(): string | null { return this.props.providerInstanceId }
   get recentMessageCount(): number { return this.props.recentMessageCount }
   get summaryFrequency(): number { return this.props.summaryFrequency }
   get temperature(): number { return this.props.temperature }

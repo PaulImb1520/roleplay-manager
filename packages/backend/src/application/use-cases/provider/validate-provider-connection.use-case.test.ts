@@ -22,6 +22,7 @@ describe("ValidateProviderConnectionUseCase", () => {
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => adapter),
     }
     const useCase = new ValidateProviderConnectionUseCase(
@@ -37,6 +38,7 @@ describe("ValidateProviderConnectionUseCase", () => {
   it("devuelve unconfigured cuando el registry no tiene adaptador", async () => {
     const registry: ProviderRegistry = {
       listRegistered: () => ["openai-compatible"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => null),
     }
     const useCase = new ValidateProviderConnectionUseCase(
@@ -59,6 +61,7 @@ describe("ValidateProviderConnectionUseCase", () => {
     }
     const registry: ProviderRegistry = {
       listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
       getAdapter: vi.fn(async () => adapter),
     }
     const useCase = new ValidateProviderConnectionUseCase(
