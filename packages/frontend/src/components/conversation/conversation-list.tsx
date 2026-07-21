@@ -41,7 +41,7 @@ export function ConversationList() {
         <div>
           <h1 className="text-2xl font-semibold">Conversaciones</h1>
           <p className="text-muted-foreground text-sm">
-            {conversations.length} conversación{conversations.length !== 1 ? "es" : ""}
+            {conversations.length} conversa{conversations.length !== 1 ? "ciones" : "ción"}
           </p>
         </div>
         <div className="flex gap-2">

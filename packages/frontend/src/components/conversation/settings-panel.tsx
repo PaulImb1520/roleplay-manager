@@ -1,50 +1,30 @@
 import { useCallback, useEffect, useState, type ReactElement } from "react"
 import { Toaster, toast } from "@workspace/ui/components/sonner"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@workspace/ui/components/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@workspace/ui/components/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Empty, EmptyMedia, EmptyHeader, EmptyTitle, EmptyDescription } from "@workspace/ui/components/empty"
-import { Separator } from "@workspace/ui/components/separator"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { Slider } from "@workspace/ui/components/slider"
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@workspace/ui/components/dialog"
-import { BookOpenIcon, CheckCircle2Icon, RefreshCwIcon, PlusIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
+import { BookOpenIcon, CheckCircle2Icon, RefreshCwIcon } from "lucide-react"
 
-import type {
-  ConversationDetail,
-  ConversationSettingsUpdate,
-} from "@workspace/shared/types/conversation"
+import type { ConversationDetail, ConversationSettingsUpdate } from "@workspace/shared/types/conversation"
 import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 import type { ProviderId } from "@workspace/shared/types/provider"
 
 import { updateConversationSettings } from "@/lib/api/conversations"
-import {
-  listProviderInstances,
-  createProviderInstance,
-  updateProviderInstance,
-  deleteProviderInstance,
-  validateProviderInstance,
-} from "@/lib/api/provider-instances"
+import { listProviderInstances, validateProviderInstance } from "@/lib/api/provider-instances"
 import { listProviderModels } from "@/lib/api/providers"
+import { getDefaultProvider } from "@/lib/api/settings"
 import { ApiClientError } from "@/lib/api/client"
+import { InferenceParamsCard } from "./inference-params-card"
+import { InstanceManager } from "./instance-manager"
+import { ModelCard } from "./model-card"
+import { ContextCard } from "./context-card"
 
 interface SettingsPanelProps {
   conversationId: string
@@ -99,11 +79,13 @@ export function SettingsPanel({
   const [providerStatus, setProviderStatus] = useState<ProviderStatus>("unknown")
   const [saving, setSaving] = useState(false)
 
-  const [newInstanceDialogOpen, setNewInstanceDialogOpen] = useState(false)
-  const [editInstanceId, setEditInstanceId] = useState<string | null>(null)
-  const [instanceFormName, setInstanceFormName] = useState("")
-  const [instanceFormUrl, setInstanceFormUrl] = useState("")
-  const [instanceFormApiKey, setInstanceFormApiKey] = useState("")
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+
+  const isDefaultValues =
+    temperature === 0.7 && maxTokens === 2048 && topP === 0.9 &&
+    frequencyPenalty === 0 && presencePenalty === 0 &&
+    stopSequences === "" && recentMessageCount === 15 &&
+    summaryFrequency === 15
 
   const hasChanges =
     provider !== (current.provider ?? "ollama") ||
@@ -176,9 +158,18 @@ export function SettingsPanel({
 
   useEffect(() => {
     if (!open) return
+    if (!current.provider) {
+      getDefaultProvider().then((def) => {
+        if (def.provider) {
+          setProvider(def.provider)
+          if (def.providerInstanceId) setProviderInstanceId(def.providerInstanceId)
+          if (def.model && !current.model) setModel(def.model)
+        }
+      })
+    }
     loadModels(provider ?? "ollama", providerInstanceId)
     verifyConnection()
-  }, [open, provider, providerInstanceId, loadModels, verifyConnection])
+  }, [open, provider, providerInstanceId, loadModels, verifyConnection, current.provider, current.model])
 
   useEffect(() => {
     if (open) {
@@ -234,60 +225,9 @@ export function SettingsPanel({
     setSummaryFrequency(15)
   }
 
-  const handleCreateInstance = async () => {
-    try {
-      const instance = await createProviderInstance({
-        kind: "openai-compatible",
-        name: instanceFormName.trim(),
-        url: instanceFormUrl.trim(),
-        apiKey: instanceFormApiKey.trim() || undefined,
-      })
-      setInstances((prev) => [...prev, instance])
-      setNewInstanceDialogOpen(false)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
-      toast.success("Instancia creada", { description: instance.name })
-    } catch (e) {
-      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
-      toast.error("No se pudo crear la instancia", { description: message })
-    }
-  }
-
-  const handleUpdateInstance = async () => {
-    if (!editInstanceId) return
-    try {
-      const updated = await updateProviderInstance(editInstanceId, {
-        name: instanceFormName.trim() || undefined,
-        url: instanceFormUrl.trim() || undefined,
-        apiKey: instanceFormApiKey.trim() || undefined,
-      })
-      setInstances((prev) =>
-        prev.map((i) => (i.id === editInstanceId ? updated : i)),
-      )
-      setEditInstanceId(null)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
-      toast.success("Instancia actualizada")
-    } catch (e) {
-      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
-      toast.error("No se pudo actualizar la instancia", { description: message })
-    }
-  }
-
-  const handleDeleteInstance = async (id: string) => {
-    try {
-      await deleteProviderInstance(id)
-      setInstances((prev) => prev.filter((i) => i.id !== id))
-      if (providerInstanceId === id) {
-        setProviderInstanceId(null)
-      }
-      toast.success("Instancia eliminada")
-    } catch (e) {
-      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
-      toast.error("No se pudo eliminar la instancia", { description: message })
-    }
+  const doReset = () => {
+    handleResetDefaults()
+    setResetConfirmOpen(false)
   }
 
   return (
@@ -303,14 +243,16 @@ export function SettingsPanel({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
-            <Tabs defaultValue="modelo" className="mt-4 flex flex-col gap-4">
-              <TabsList className="grid w-full grid-cols-2 shrink-0">
+          <Tabs defaultValue="modelo" className="flex min-h-0 flex-col">
+            <div className="sticky top-0 z-10 bg-popover px-4 pt-2">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="historia">Historia</TabsTrigger>
                 <TabsTrigger value="modelo">Modelo</TabsTrigger>
               </TabsList>
+            </div>
 
-              <TabsContent value="historia" className="flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+              <TabsContent value="historia" className="flex flex-col gap-4 mt-4">
                 <Empty>
                   <EmptyMedia>
                     <BookOpenIcon />
@@ -324,7 +266,7 @@ export function SettingsPanel({
                 </Empty>
               </TabsContent>
 
-              <TabsContent value="modelo" className="flex flex-col gap-4">
+              <TabsContent value="modelo" className="flex flex-col gap-4 mt-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -374,385 +316,92 @@ export function SettingsPanel({
                     </FieldGroup>
 
                     {provider === "openai-compatible" ? (
-                      <div className="flex flex-col gap-2">
-                        <Separator />
-                        <p className="text-sm font-medium">Instancias disponibles</p>
-                        {instancesLoading ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Spinner /> Cargando instancias...
-                          </div>
-                        ) : instances.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            No hay instancias configuradas. Crea una nueva.
-                          </p>
-                        ) : (
-                          <div className="flex flex-col gap-2">
-                            {instances.map((inst) => (
-                              <div
-                                key={inst.id}
-                                className={`flex items-center justify-between rounded-lg border p-2 cursor-pointer transition-colors ${
-                                  providerInstanceId === inst.id
-                                    ? "border-primary bg-primary/5"
-                                    : "hover:bg-muted/50"
-                                }`}
-                                onClick={() => {
-                                  setProvider("openai-compatible")
-                                  setProviderInstanceId(inst.id)
-                                }}
-                              >
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-medium">{inst.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {inst.url || "Sin URL"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setEditInstanceId(inst.id)
-                                      setInstanceFormName(inst.name)
-                                      setInstanceFormUrl(inst.url)
-                                      setInstanceFormApiKey("")
-                                    }}
-                                  >
-                                    <PencilIcon className="size-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-7 text-destructive"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleDeleteInstance(inst.id)
-                                    }}
-                                  >
-                                    <Trash2Icon className="size-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditInstanceId(null)
-                            setInstanceFormName("")
-                            setInstanceFormUrl("")
-                            setInstanceFormApiKey("")
-                            setNewInstanceDialogOpen(true)
-                          }}
-                        >
-                          <PlusIcon /> Nueva instancia
-                        </Button>
-                      </div>
+                      <InstanceManager
+                        instances={instances}
+                        loading={instancesLoading}
+                        selectedInstanceId={providerInstanceId}
+                        onSelect={(id) => {
+                          setProvider("openai-compatible")
+                          setProviderInstanceId(id)
+                        }}
+                        onInstancesChange={setInstances}
+                      />
                     ) : null}
 
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={verifyConnection}
-                      >
+                      <Button variant="outline" size="sm" onClick={verifyConnection}>
                         <RefreshCwIcon /> Verificar conexion
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Modelo</CardTitle>
-                  <CardDescription>
-                    {modelsManualEntry
-                      ? "Introduce el identificador del modelo manualmente."
-                      : "Selecciona un modelo de la lista."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FieldGroup>
-                    {modelsLoading ? (
-                      <Field>
-                        <FieldLabel>Cargando modelos...</FieldLabel>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Spinner /> Consultando al proveedor
-                        </div>
-                      </Field>
-                    ) : modelsManualEntry || modelsList.length === 0 ? (
-                      <Field>
-                        <FieldLabel htmlFor="model-input">
-                          Identificador del modelo
-                        </FieldLabel>
-                        <Input
-                          id="model-input"
-                          value={model ?? ""}
-                          onChange={(e) => setModel(e.target.value || null)}
-                          placeholder="gpt-4o-mini, llama3:latest, ..."
-                        />
-                        {modelsManualEntry ? (
-                          <FieldDescription>
-                            El proveedor no soporta descubrimiento automático.
-                          </FieldDescription>
-                        ) : null}
-                      </Field>
-                    ) : (
-                      <Field>
-                        <FieldLabel htmlFor="model-select">Modelo</FieldLabel>
-                        <Select
-                          value={model ?? ""}
-                          onValueChange={(v) => setModel(v || null)}
-                        >
-                          <SelectTrigger id="model-select">
-                            <SelectValue placeholder="Selecciona un modelo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {modelsList.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.name ?? m.id}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldDescription>
-                          {modelsList.length} modelos disponibles.
-                        </FieldDescription>
-                      </Field>
-                    )}
-                  </FieldGroup>
-                </CardContent>
-              </Card>
+                <ModelCard
+                  model={model}
+                  modelsList={modelsList}
+                  modelsLoading={modelsLoading}
+                  modelsManualEntry={modelsManualEntry}
+                  onModelChange={setModel}
+                />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Parámetros de inferencia</CardTitle>
-                  <CardDescription>
-                    Ajusta como el modelo genera las respuestas.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel>Temperature ({temperature.toFixed(1)})</FieldLabel>
-                      <Slider
-                        value={[temperature]}
-                        onValueChange={(v) => setTemperature(Array.isArray(v) ? v[0] : v)}
-                        min={0}
-                        max={2}
-                        step={0.1}
-                        aria-label="Temperature"
-                      />
-                      <FieldDescription>Controla la creatividad (0 = deterministico, 2 = muy creativo)</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel>Top P ({topP.toFixed(2)})</FieldLabel>
-                      <Slider
-                        value={[topP]}
-                        onValueChange={(v) => setTopP(Array.isArray(v) ? v[0] : v)}
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        aria-label="Top P"
-                      />
-                      <FieldDescription>Muestreo por nucleo de probabilidad</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel>Freq. Penalty ({frequencyPenalty.toFixed(1)})</FieldLabel>
-                      <Slider
-                        value={[frequencyPenalty]}
-                        onValueChange={(v) => setFrequencyPenalty(Array.isArray(v) ? v[0] : v)}
-                        min={-2}
-                        max={2}
-                        step={0.1}
-                        aria-label="Frequency Penalty"
-                      />
-                      <FieldDescription>Penaliza tokens repetidos</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel>Pres. Penalty ({presencePenalty.toFixed(1)})</FieldLabel>
-                      <Slider
-                        value={[presencePenalty]}
-                        onValueChange={(v) => setPresencePenalty(Array.isArray(v) ? v[0] : v)}
-                        min={-2}
-                        max={2}
-                        step={0.1}
-                        aria-label="Presence Penalty"
-                      />
-                      <FieldDescription>Penaliza introducir nuevos tokens</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="max-tokens">Max tokens</FieldLabel>
-                      <Input
-                        id="max-tokens"
-                        type="number"
-                        min={1}
-                        value={maxTokens}
-                        onChange={(e) => setMaxTokens(Number(e.target.value))}
-                      />
-                      <FieldDescription>Limite maximo de tokens en la respuesta</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="stop-sequences">Stop sequences</FieldLabel>
-                      <Input
-                        id="stop-sequences"
-                        value={stopSequences}
-                        onChange={(e) => setStopSequences(e.target.value)}
-                        placeholder="coma, separada, ..."
-                      />
-                      <FieldDescription>Separadas por coma</FieldDescription>
-                    </Field>
-                  </FieldGroup>
-                </CardContent>
-              </Card>
+                <InferenceParamsCard
+                  temperature={temperature}
+                  topP={topP}
+                  frequencyPenalty={frequencyPenalty}
+                  presencePenalty={presencePenalty}
+                  maxTokens={maxTokens}
+                  stopSequences={stopSequences}
+                  onTemperatureChange={setTemperature}
+                  onTopPChange={setTopP}
+                  onFrequencyPenaltyChange={setFrequencyPenalty}
+                  onPresencePenaltyChange={setPresencePenalty}
+                  onMaxTokensChange={setMaxTokens}
+                  onStopSequencesChange={setStopSequences}
+                />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contexto narrativo</CardTitle>
-                  <CardDescription>
-                    Controla como se construye el contexto de la conversacion.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="recent-count">Mensajes recientes</FieldLabel>
-                      <Input
-                        id="recent-count"
-                        type="number"
-                        min={1}
-                        value={recentMessageCount}
-                        onChange={(e) => setRecentMessageCount(Number(e.target.value))}
-                      />
-                      <FieldDescription>
-                        Cantidad de mensajes recientes incluidos en el contexto
-                      </FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="summary-freq">Frecuencia de resumen</FieldLabel>
-                      <Input
-                        id="summary-freq"
-                        type="number"
-                        min={1}
-                        value={summaryFrequency}
-                        onChange={(e) => setSummaryFrequency(Number(e.target.value))}
-                      />
-                      <FieldDescription>
-                        Cada cuantos mensajes se genera un resumen automatico
-                      </FieldDescription>
-                    </Field>
-                  </FieldGroup>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                <ContextCard
+                  recentMessageCount={recentMessageCount}
+                  summaryFrequency={summaryFrequency}
+                  onRecentMessageCountChange={setRecentMessageCount}
+                  onSummaryFrequencyChange={setSummaryFrequency}
+                />
+              </TabsContent>
+            </div>
           </Tabs>
-        </div>
 
-        <div className="shrink-0 border-t px-4 py-3 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={handleResetDefaults}
-            disabled={saving}
-          >
-            Restablecer valores
-          </Button>
-          <Button onClick={handleSave} disabled={!hasChanges || saving}>
-            {saving ? <Spinner /> : null}
-            Aplicar cambios
-          </Button>
-        </div>
-      </SheetContent>
+          <div className="shrink-0 border-t px-4 py-3 flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (isDefaultValues) {
+                  handleResetDefaults()
+                } else {
+                  setResetConfirmOpen(true)
+                }
+              }}
+              disabled={saving}
+            >
+              Restablecer valores
+            </Button>
+            <Button onClick={handleSave} disabled={!hasChanges || saving}>
+              {saving ? <Spinner /> : null}
+              Aplicar cambios
+            </Button>
+          </div>
+        </SheetContent>
       </Sheet>
 
-      <Dialog open={newInstanceDialogOpen} onOpenChange={setNewInstanceDialogOpen}>
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nueva instancia OpenAI-compatible</DialogTitle>
+            <DialogTitle>Restablecer valores</DialogTitle>
             <DialogDescription>
-              Configura una conexion a un proveedor compatible con OpenAI.
+              Se perderán los cambios sin guardar. Esta acción no afecta los datos guardados en el servidor.
             </DialogDescription>
           </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="inst-name">Nombre</FieldLabel>
-              <Input
-                id="inst-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-                placeholder="LM Studio local"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-url">URL base</FieldLabel>
-              <Input
-                id="inst-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-                placeholder="http://localhost:1234/v1"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-key">API key (opcional)</FieldLabel>
-              <Input
-                id="inst-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="sk-..."
-              />
-            </Field>
-          </FieldGroup>
           <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleCreateInstance}>Crear instancia</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editInstanceId !== null} onOpenChange={(o) => { if (!o) setEditInstanceId(null) }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar instancia</DialogTitle>
-            <DialogDescription>
-              Modifica los datos de la conexion.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="edit-name">Nombre</FieldLabel>
-              <Input
-                id="edit-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-url">URL base</FieldLabel>
-              <Input
-                id="edit-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-key">API key (dejar vacio para mantener)</FieldLabel>
-              <Input
-                id="edit-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="(dejar vacio para mantener)"
-              />
-            </Field>
-          </FieldGroup>
-          <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
+            <Button variant="outline" onClick={() => setResetConfirmOpen(false)}>Cancelar</Button>
+            <Button onClick={doReset}>Restablecer</Button>
           </div>
         </DialogContent>
       </Dialog>
