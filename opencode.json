@@ -5,6 +5,17 @@
       "type": "remote",
       "url": "https://mcp.docs.astro.build/mcp",
       "enabled": true
+    },
+    "shadcn": {
+      "type": "local",
+      "command": [
+        "pnpm",
+        "dlx",
+        "shadcn@latest",
+        "mcp"
+      ],
+      "cwd": "packages/ui",
+      "enabled": true
     }
   }
 }
