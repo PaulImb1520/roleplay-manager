@@ -1,4 +1,3 @@
-import { useState } from "react"
 import type { MessageDTO } from "@workspace/shared/types/message"
 import {
   Message,
@@ -9,6 +8,13 @@ import {
 import { Bubble, BubbleContent } from "@workspace/ui/components/bubble"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from "@workspace/ui/components/context-menu"
 import {
   Pencil,
   RotateCcw,
@@ -24,9 +30,9 @@ import { parseMessage } from "../../lib/format-message"
 export function MessageBubble({
   message,
   isStreaming,
-  onEdit,
   onDelete,
   onRegenerate,
+  onRewind,
   onCyclePrev,
   onCycleNext,
   onStartEdit,
@@ -36,9 +42,8 @@ export function MessageBubble({
   editContent,
   onEditContentChange,
 }: {
-  message: Pick<MessageDTO, "id" | "role" | "content" | "createdAt" | "alternatives" | "alternativesCursor">
+  message: Pick<MessageDTO, "id" | "role" | "content" | "createdAt" | "position" | "alternatives" | "alternativesCursor">
   isStreaming?: boolean
-  onEdit?: (messageId: string, content: string) => void
   onDelete?: (messageId: string) => void
   onRegenerate?: (messageId: string) => void
   onRewind?: (messageId: string) => void
@@ -51,7 +56,6 @@ export function MessageBubble({
   editContent?: string
   onEditContentChange?: (content: string) => void
 }) {
-  const [showActions, setShowActions] = useState(false)
   const isUser = message.role === "user"
   const segments = parseMessage(message.content)
   const totalAlternatives = 1 + (message.alternatives?.length ?? 0)
@@ -70,11 +74,7 @@ export function MessageBubble({
   }
 
   return (
-    <Message
-      align={isUser ? "end" : "start"}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
+    <Message align={isUser ? "end" : "start"}>
       <MessageContent>
         {isEditing ? (
           <div className="flex flex-col gap-2">
@@ -99,108 +99,99 @@ export function MessageBubble({
             </div>
           </div>
         ) : (
-          <Bubble variant={isUser ? "default" : "muted"}>
-            <BubbleContent>
-              {segments.map((segment, i) => {
-                switch (segment.type) {
-                  case "action":
-                    return (
-                      <span key={i} className="italic text-muted-foreground/70">
-                        {segment.content}
-                      </span>
-                    )
-                  case "ooc":
-                    return (
-                      <code
-                        key={i}
-                        className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
-                      >
-                        //{segment.content}
-                      </code>
-                    )
-                  default:
-                    return <span key={i}>{segment.content}</span>
-                }
-              })}
-              {isStreaming && (
-                <span className="inline-block w-[2px] h-4 bg-foreground ml-0.5 animate-pulse" />
-              )}
-            </BubbleContent>
-          </Bubble>
+          <ContextMenu>
+            <ContextMenuTrigger>
+              <Bubble variant={isUser ? "default" : "muted"} align={isUser ? "end" : "start"} className={isUser ? "ml-auto" : ""}>
+                <BubbleContent>
+                  {segments.map((segment, i) => {
+                    switch (segment.type) {
+                      case "action":
+                        return (
+                          <span key={i} className="italic text-muted-foreground/70">
+                            {segment.content}
+                          </span>
+                        )
+                      case "ooc":
+                        return (
+                          <code
+                            key={i}
+                            className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
+                          >
+                            //{segment.content}
+                          </code>
+                        )
+                      default:
+                        return <span key={i}>{segment.content}</span>
+                    }
+                  })}
+                  {isStreaming && (
+                    <span className="inline-block w-0.5 h-4 bg-foreground ml-0.5 animate-pulse" />
+                  )}
+                </BubbleContent>
+              </Bubble>
+            </ContextMenuTrigger>
+            {!isStreaming && (
+              <ContextMenuContent>
+                {!isUser && (
+                  <ContextMenuItem onClick={() => onRegenerate?.(message.id)}>
+                    <RotateCcw className="size-4" />
+                    Regenerar
+                  </ContextMenuItem>
+                )}
+                <ContextMenuItem onClick={() => onStartEdit?.(message.id, message.content)}>
+                  <Pencil className="size-4" />
+                  Editar
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => onRewind?.(message.id)}>
+                  <Undo2 className="size-4" />
+                  Retroceder
+                </ContextMenuItem>
+                {message.position > 0 && (
+                  <>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem variant="destructive" onClick={() => onDelete?.(message.id)}>
+                      <Trash2 className="size-4" />
+                      Eliminar
+                    </ContextMenuItem>
+                  </>
+                )}
+              </ContextMenuContent>
+            )}
+          </ContextMenu>
         )}
-        {!isStreaming && message.createdAt && (
+        {!isStreaming && (message.createdAt || (totalAlternatives > 1 && message.role === "assistant")) && (
           <MessageFooter>
-            {new Date(message.createdAt).toLocaleTimeString()}
+            {message.createdAt && (
+              <span>{new Date(message.createdAt).toLocaleTimeString()}</span>
+            )}
+            {totalAlternatives > 1 && message.role === "assistant" && (
+              <MessageActions>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  disabled={!canCyclePrev}
+                  onClick={() => onCyclePrev?.(message.id)}
+                >
+                  <ChevronLeft className="size-3" />
+                </Button>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {currentIndex + 1}/{totalAlternatives}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  disabled={!canCycleNext}
+                  onClick={() => onCycleNext?.(message.id)}
+                >
+                  <ChevronRight className="size-3" />
+                </Button>
+              </MessageActions>
+            )}
           </MessageFooter>
         )}
       </MessageContent>
-
-      {showActions && !isStreaming && totalAlternatives > 1 && message.role === "assistant" && (
-        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            disabled={!canCyclePrev}
-            onClick={() => onCyclePrev?.(message.id)}
-          >
-            <ChevronLeft className="size-3" />
-          </Button>
-          <span className="tabular-nums">
-            {currentIndex + 1}/{totalAlternatives}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            disabled={!canCycleNext}
-            onClick={() => onCycleNext?.(message.id)}
-          >
-            <ChevronRight className="size-3" />
-          </Button>
-        </div>
-      )}
-
-      {showActions && !isStreaming && !isEditing && (
-        <MessageActions>
-          {!isUser && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6"
-              onClick={() => onRegenerate?.(message.id)}
-            >
-              <RotateCcw className="size-3" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            onClick={() => onStartEdit?.(message.id, message.content)}
-          >
-            <Pencil className="size-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            onClick={() => onRewind?.(message.id)}
-          >
-            <Undo2 className="size-3" />
-          </Button>
-          {message.position > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 text-destructive"
-              onClick={() => onDelete?.(message.id)}
-            >
-              <Trash2 className="size-3" />
-            </Button>
-          )}
-        </MessageActions>
-      )}
     </Message>
   )
 }
