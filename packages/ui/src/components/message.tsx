@@ -86,10 +86,7 @@ function MessageActions({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="message-actions"
-      className={cn(
-        "flex gap-1 opacity-0 transition-opacity group-hover/message:opacity-100",
-        className
-      )}
+      className={cn("flex gap-1", className)}
       {...props}
     />
   )
