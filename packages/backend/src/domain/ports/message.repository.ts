@@ -5,5 +5,15 @@ export interface MessageRepository {
 
   findByConversationId(conversationId: string): Promise<Message[]>
 
+  findById(id: string): Promise<Message | null>
+
   findLastByConversationId(conversationId: string): Promise<Message | null>
+
+  update(message: Message): Promise<Message>
+
+  deleteById(id: string): Promise<void>
+
+  deleteAfterPosition(conversationId: string, position: number): Promise<void>
+
+  clearAlternatives(conversationId: string): Promise<void>
 }

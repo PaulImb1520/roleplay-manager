@@ -104,6 +104,13 @@ export class ConversationArchivedError extends DomainError {
   }
 }
 
+export class MessageNotFoundError extends NotFoundError {
+  constructor(id: string) {
+    super("MESSAGE_NOT_FOUND", `Message with id '${id}' not found.`)
+    this.name = "MessageNotFoundError"
+  }
+}
+
 export class ConversationAlreadyActiveError extends DomainError {
   constructor(id: string) {
     super("CONVERSATION_ALREADY_ACTIVE", `Conversation '${id}' is already active.`)
