@@ -80,11 +80,17 @@ const buildMessageRepo = (messageCount: number): MessageRepository => ({
         content: `Message ${i}`,
         position: i,
         alternatives: [],
+        alternativesCursor: 0,
         createdAt: now,
         editedAt: null,
       }),
     ),
+  findById: async () => null,
   findLastByConversationId: async () => null,
+  update: async (m) => m,
+  deleteById: async () => {},
+  deleteAfterPosition: async () => {},
+  clearAlternatives: async () => {},
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

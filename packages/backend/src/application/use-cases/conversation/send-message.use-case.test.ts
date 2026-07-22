@@ -80,6 +80,7 @@ const existingMessages = [
     content: "Hello!",
     position: 0,
     alternatives: [],
+    alternativesCursor: 0,
     createdAt: now,
     editedAt: null,
   }),
@@ -101,7 +102,12 @@ const buildConversationRepo = (): ConversationRepository => ({
 const buildMessageRepo = (): MessageRepository => ({
   create: async (m) => m,
   findByConversationId: async () => existingMessages,
+  findById: async () => null,
   findLastByConversationId: async () => null,
+  update: async (m) => m,
+  deleteById: async () => {},
+  deleteAfterPosition: async () => {},
+  clearAlternatives: async () => {},
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

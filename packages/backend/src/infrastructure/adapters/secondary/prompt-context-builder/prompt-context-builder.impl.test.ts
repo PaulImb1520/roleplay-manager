@@ -58,6 +58,7 @@ const createMessage = (role: "user" | "assistant", content: string, position: nu
     content,
     position,
     alternatives: [],
+    alternativesCursor: 0,
     createdAt: now,
     editedAt: null,
   })

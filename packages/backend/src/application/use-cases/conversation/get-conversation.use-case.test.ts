@@ -50,6 +50,7 @@ const buildConversationRepo = (): ConversationRepository => ({
           content: "Hello!",
           position: 0,
           alternatives: [],
+          alternativesCursor: 0,
           createdAt: now,
           editedAt: null,
         }),

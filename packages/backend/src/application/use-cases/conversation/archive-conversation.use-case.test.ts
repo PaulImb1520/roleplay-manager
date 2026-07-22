@@ -70,6 +70,7 @@ const buildConversationRepo = (conversation: Conversation): ConversationReposito
         content: "Hello!",
         position: 0,
         alternatives: [],
+        alternativesCursor: 0,
         createdAt: now,
         editedAt: null,
       }),

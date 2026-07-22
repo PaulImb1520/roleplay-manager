@@ -48,7 +48,12 @@ const buildConversationRepo = (): ConversationRepository => ({
 const buildMessageRepo = (): MessageRepository => ({
   create: async (m) => m,
   findByConversationId: async () => [],
+  findById: async () => null,
   findLastByConversationId: async () => null,
+  update: async (m) => m,
+  deleteById: async () => {},
+  deleteAfterPosition: async () => {},
+  clearAlternatives: async () => {},
 })
 
 describe("CreateConversationUseCase", () => {
