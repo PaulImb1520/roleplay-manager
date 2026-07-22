@@ -12,6 +12,7 @@ import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary
 import { DrizzleConversationRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-conversation.repository"
 import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-message.repository"
 import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
+import { DrizzleMemoryRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory.repository"
 import { DrizzleMemoryChangeProposalRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory-change-proposal.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
@@ -20,6 +21,7 @@ import type { SettingsRepository } from "../domain/ports/settings.repository"
 import type { CharacterRepository } from "../domain/ports/character.repository"
 import type { ConversationRepository } from "../domain/ports/conversation.repository"
 import type { MessageRepository } from "../domain/ports/message.repository"
+import type { MemoryRepository } from "../domain/ports/memory.repository"
 import type { MemoryChangeProposalRepository } from "../domain/ports/memory-change-proposal.repository"
 import type { ProviderInstanceRepository } from "../domain/ports/provider-instance.repository"
 import type { PromptContextBuilder } from "../domain/ports/prompt-context-builder"
@@ -41,6 +43,14 @@ import { RewindConversationUseCase } from "../application/use-cases/conversation
 import { ContinueConversationUseCase } from "../application/use-cases/conversation/continue-conversation.use-case"
 import { CycleAlternativeUseCase } from "../application/use-cases/conversation/cycle-alternative.use-case"
 import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
+import { ProposeMemoryChangesUseCase } from "../application/use-cases/memory/propose-memory-changes.use-case"
+import { ApplyMemoryChangesUseCase } from "../application/use-cases/memory/apply-memory-changes.use-case"
+import { ApplyAllMemoryChangesUseCase } from "../application/use-cases/memory/apply-all-memory-changes.use-case"
+import { CreateMemoryUseCase } from "../application/use-cases/memory/create-memory.use-case"
+import { UpdateMemoryUseCase } from "../application/use-cases/memory/update-memory.use-case"
+import { DeleteMemoryUseCase } from "../application/use-cases/memory/delete-memory.use-case"
+import { ListMemoriesUseCase } from "../application/use-cases/memory/list-memories.use-case"
+import { ListProposalsUseCase } from "../application/use-cases/memory/list-proposals.use-case"
 import { ListProviderInstancesUseCase } from "../application/use-cases/provider/list-provider-instances.use-case"
 import { CreateProviderInstanceUseCase } from "../application/use-cases/provider/create-provider-instance.use-case"
 import { UpdateProviderInstanceUseCase } from "../application/use-cases/provider/update-provider-instance.use-case"
@@ -63,6 +73,7 @@ export interface AppContainer {
   characterRepository: CharacterRepository
   conversationRepository: ConversationRepository
   messageRepository: MessageRepository
+  memoryRepository: MemoryRepository
   memoryChangeProposalRepository: MemoryChangeProposalRepository
   promptContextBuilder: PromptContextBuilder
   createCharacter: CreateCharacterUseCase
@@ -88,6 +99,16 @@ export interface AppContainer {
   updateProviderInstance: UpdateProviderInstanceUseCase
   deleteProviderInstance: DeleteProviderInstanceUseCase
   validateProviderInstance: ValidateProviderInstanceUseCase
+
+  // Memory
+  proposeMemoryChanges: ProposeMemoryChangesUseCase
+  applyMemoryChanges: ApplyMemoryChangesUseCase
+  applyAllMemoryChanges: ApplyAllMemoryChangesUseCase
+  createMemory: CreateMemoryUseCase
+  updateMemory: UpdateMemoryUseCase
+  deleteMemory: DeleteMemoryUseCase
+  listMemories: ListMemoriesUseCase
+  listProposals: ListProposalsUseCase
 }
 
 export interface BuildContainerOptions {
@@ -118,6 +139,8 @@ export const buildContainer = ({
   const characterRepository: CharacterRepository = new DrizzleCharacterRepository(database)
   const conversationRepository: ConversationRepository = new DrizzleConversationRepository(database)
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
+  const memoryRepository: MemoryRepository =
+    new DrizzleMemoryRepository(database)
   const memoryChangeProposalRepository: MemoryChangeProposalRepository =
     new DrizzleMemoryChangeProposalRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
@@ -125,15 +148,35 @@ export const buildContainer = ({
   const providerInstanceRepository: ProviderInstanceRepository =
     new DrizzleProviderInstanceRepository(database)
 
+  const proposeMemoryChanges = new ProposeMemoryChangesUseCase(
+    conversationRepository,
+    characterRepository,
+    memoryRepository,
+    memoryChangeProposalRepository,
+    providerRegistry,
+    providerInstanceRepository,
+    getDefaultProvider,
+    logger,
+  )
+
+  const applyAllMemoryChanges = new ApplyAllMemoryChangesUseCase(
+    memoryRepository,
+    memoryChangeProposalRepository,
+    logger,
+  )
+
   const sendMessage = new SendMessageUseCase(
     conversationRepository,
     messageRepository,
     characterRepository,
+    memoryRepository,
     promptContextBuilder,
     providerRegistry,
     logger,
     getDefaultProvider,
     providerInstanceRepository,
+    proposeMemoryChanges,
+    applyAllMemoryChanges,
   )
 
   const regenerateReply = new RegenerateReplyUseCase(
@@ -185,6 +228,7 @@ export const buildContainer = ({
     characterRepository,
     conversationRepository,
     messageRepository,
+    memoryRepository,
     memoryChangeProposalRepository,
     promptContextBuilder,
     createCharacter: new CreateCharacterUseCase(characterRepository),
@@ -256,5 +300,17 @@ export const buildContainer = ({
       providerRegistry,
       logger,
     ),
+    proposeMemoryChanges,
+    applyMemoryChanges: new ApplyMemoryChangesUseCase(
+      memoryRepository,
+      memoryChangeProposalRepository,
+      logger,
+    ),
+    applyAllMemoryChanges,
+    createMemory: new CreateMemoryUseCase(memoryRepository),
+    updateMemory: new UpdateMemoryUseCase(memoryRepository),
+    deleteMemory: new DeleteMemoryUseCase(memoryRepository),
+    listMemories: new ListMemoriesUseCase(memoryRepository),
+    listProposals: new ListProposalsUseCase(memoryChangeProposalRepository),
   }
 }

@@ -7,11 +7,14 @@ import { Message } from "../../../domain/entities/message.entity"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
+import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
+import type { ProposeMemoryChangesUseCase } from "../memory/propose-memory-changes.use-case"
+import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
@@ -53,11 +56,14 @@ export class SendMessageUseCase {
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly memoryRepository: MemoryRepository,
     private readonly promptContextBuilder: PromptContextBuilder,
     private readonly providerRegistry: ProviderRegistry,
     private readonly logger: Logger,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
+    private readonly proposeMemoryChanges: ProposeMemoryChangesUseCase,
+    private readonly applyAllMemoryChanges: ApplyAllMemoryChangesUseCase,
   ) {}
 
   async *execute(input: SendMessageInput): AsyncGenerator<SendMessageEvent> {
@@ -130,10 +136,15 @@ export class SendMessageUseCase {
 
     const allMessages = [...messages, userMessage]
 
+    const memories = await this.memoryRepository.findByConversationId(
+      input.conversationId,
+    )
+
     const context = await this.promptContextBuilder.build({
       characterVersion: characterResult.currentVersion,
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
+      memories,
     })
 
     let providerId = conversation.provider as ProviderId | null
@@ -224,6 +235,24 @@ export class SendMessageUseCase {
     await this.messageRepository.create(assistantMessage)
 
     yield { type: "done", message: toMessageDTO(assistantMessage) }
+
+    // Memory proposal generation (fire-and-forget from client perspective)
+    try {
+      const proposals = await this.proposeMemoryChanges.execute({
+        conversationId: input.conversationId,
+      })
+
+      if (conversation.memoryProposalMode === "auto" && proposals.length > 0) {
+        await this.applyAllMemoryChanges.execute({
+          conversationId: input.conversationId,
+          processedBy: "system",
+        })
+      }
+    } catch (error) {
+      this.logger.error("Memory proposal processing failed", error as Error, {
+        conversationId: input.conversationId,
+      })
+    }
   }
 }
 

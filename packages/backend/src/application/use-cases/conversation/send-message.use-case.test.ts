@@ -187,6 +187,25 @@ const buildLogger = (): Logger => ({
   child: () => buildLogger(),
 })
 
+const buildMemoryRepo = () => ({
+  findById: async () => null,
+  findByConversationId: async () => [],
+  create: async (m: any) => m,
+  update: async (m: any) => m,
+  deleteById: async () => {},
+})
+
+import type { ProposeMemoryChangesUseCase } from "../memory/propose-memory-changes.use-case"
+import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+
+const proposeMemoryChanges = {
+  execute: async () => [],
+} as unknown as ProposeMemoryChangesUseCase
+
+const applyAllMemoryChanges = {
+  execute: async () => [],
+} as unknown as ApplyAllMemoryChangesUseCase
+
 describe("SendMessageUseCase", () => {
   beforeAll(() => {
     providerCount = 0
@@ -197,11 +216,14 @@ describe("SendMessageUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildMemoryRepo(),
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
+      proposeMemoryChanges,
+      applyAllMemoryChanges,
     )
 
     await expect(
@@ -220,11 +242,14 @@ describe("SendMessageUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildMemoryRepo(),
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
+      proposeMemoryChanges,
+      applyAllMemoryChanges,
     )
 
     await expect(
@@ -242,11 +267,14 @@ describe("SendMessageUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildMemoryRepo(),
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
+      proposeMemoryChanges,
+      applyAllMemoryChanges,
     )
 
     const events: string[] = []
@@ -268,11 +296,14 @@ describe("SendMessageUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildMemoryRepo(),
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
+      proposeMemoryChanges,
+      applyAllMemoryChanges,
     )
 
     const chunks: string[] = []
@@ -299,11 +330,14 @@ describe("SendMessageUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(),
       buildCharacterRepo(),
+      buildMemoryRepo(),
       buildPromptContextBuilder(),
-      buildProviderRegistry(true), // will return null
+      buildProviderRegistry(true),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
+      proposeMemoryChanges,
+      applyAllMemoryChanges,
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })

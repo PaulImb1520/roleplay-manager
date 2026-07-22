@@ -43,6 +43,7 @@ const UpdateConversationSettingsSchema = z.object({
   frequencyPenalty: z.number().min(-2).max(2).optional(),
   presencePenalty: z.number().min(-2).max(2).optional(),
   stopSequences: z.array(z.string()).optional(),
+  memoryProposalMode: z.enum(["auto", "manual"]).optional(),
   force: z.boolean().optional(),
 })
 

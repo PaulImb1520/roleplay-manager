@@ -10,6 +10,7 @@ import { buildHealthRouter } from "./routes/health.routes"
 import { buildProviderRouter } from "./routes/provider.routes"
 import { buildSettingsRouter } from "./routes/settings.routes"
 import { buildProviderInstanceRouter } from "./routes/provider-instance.routes"
+import { buildMemoryRouter } from "./routes/memory.routes"
 
 export interface BuildServerOptions {
   container: AppContainer
@@ -74,6 +75,18 @@ export const buildServer = ({
       continueConversation: container.continueConversation,
       cycleAlternative: container.cycleAlternative,
       updateConversationSettings: container.updateConversationSettings,
+    }),
+  )
+  app.use(
+    "/api",
+    buildMemoryRouter({
+      listMemories: container.listMemories,
+      createMemory: container.createMemory,
+      updateMemory: container.updateMemory,
+      deleteMemory: container.deleteMemory,
+      listProposals: container.listProposals,
+      applyMemoryChanges: container.applyMemoryChanges,
+      applyAllMemoryChanges: container.applyAllMemoryChanges,
     }),
   )
 
