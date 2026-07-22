@@ -45,6 +45,7 @@ const toMessage = (row: MessageRow): Message =>
     content: row.content,
     position: row.position,
     alternatives: row.alternatives ?? [],
+    alternativesCursor: row.alternativesCursor,
     createdAt: new Date(row.createdAt),
     editedAt: row.editedAt ? new Date(row.editedAt) : null,
   })
