@@ -17,19 +17,21 @@ import {
 } from "@workspace/ui/components/context-menu"
 import {
   Pencil,
-  RotateCcw,
-  Undo2,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Check,
   X,
+  History,
+  RefreshCcw,
+  Copy,
 } from "lucide-react"
 import { parseMessage } from "../../lib/format-message"
 
 export function MessageBubble({
   message,
   isStreaming,
+  isLastMessage,
   onDelete,
   onRegenerate,
   onRewind,
@@ -44,6 +46,7 @@ export function MessageBubble({
 }: {
   message: Pick<MessageDTO, "id" | "role" | "content" | "createdAt" | "position" | "alternatives" | "alternativesCursor">
   isStreaming?: boolean
+  isLastMessage?: boolean
   onDelete?: (messageId: string) => void
   onRegenerate?: (messageId: string) => void
   onRewind?: (messageId: string) => void
@@ -100,7 +103,7 @@ export function MessageBubble({
           </div>
         ) : (
           <ContextMenu>
-            <ContextMenuTrigger>
+            <ContextMenuTrigger className="select-text">
               <Bubble variant={isUser ? "default" : "muted"} align={isUser ? "end" : "start"} className={isUser ? "ml-auto" : ""}>
                 <BubbleContent>
                   {segments.map((segment, i) => {
@@ -132,9 +135,9 @@ export function MessageBubble({
             </ContextMenuTrigger>
             {!isStreaming && (
               <ContextMenuContent>
-                {!isUser && (
+                {!isUser && isLastMessage && (
                   <ContextMenuItem onClick={() => onRegenerate?.(message.id)}>
-                    <RotateCcw className="size-4" />
+                    <RefreshCcw className="size-4" />
                     Regenerar
                   </ContextMenuItem>
                 )}
@@ -143,8 +146,12 @@ export function MessageBubble({
                   Editar
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => onRewind?.(message.id)}>
-                  <Undo2 className="size-4" />
-                  Retroceder
+                  <History className="size-4" />
+                  Rebobinar
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => navigator.clipboard.writeText(message.content)}>
+                  <Copy className="size-4" />
+                  Copiar
                 </ContextMenuItem>
                 {message.position > 0 && (
                   <>

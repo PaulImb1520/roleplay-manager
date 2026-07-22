@@ -251,6 +251,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
                     >
                       <MessageBubble
                         message={msg}
+                        isLastMessage={i === messages.length - 1 && !streamingContent}
                         isEditing={editingMessageId === msg.id}
                         editContent={editingMessageId === msg.id ? editingContent : undefined}
                         onEditContentChange={setEditingContent}
