@@ -12,6 +12,7 @@ import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary
 import { DrizzleConversationRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-conversation.repository"
 import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-message.repository"
 import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
+import { DrizzleMemoryChangeProposalRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory-change-proposal.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
 import type { ProviderRegistry } from "../domain/ports/provider.port"
@@ -19,6 +20,7 @@ import type { SettingsRepository } from "../domain/ports/settings.repository"
 import type { CharacterRepository } from "../domain/ports/character.repository"
 import type { ConversationRepository } from "../domain/ports/conversation.repository"
 import type { MessageRepository } from "../domain/ports/message.repository"
+import type { MemoryChangeProposalRepository } from "../domain/ports/memory-change-proposal.repository"
 import type { ProviderInstanceRepository } from "../domain/ports/provider-instance.repository"
 import type { PromptContextBuilder } from "../domain/ports/prompt-context-builder"
 import { CreateCharacterUseCase } from "../application/use-cases/character/create-character.use-case"
@@ -32,6 +34,12 @@ import { GetConversationUseCase } from "../application/use-cases/conversation/ge
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
 import { ArchiveConversationUseCase } from "../application/use-cases/conversation/archive-conversation.use-case"
 import { SendMessageUseCase } from "../application/use-cases/conversation/send-message.use-case"
+import { EditMessageUseCase } from "../application/use-cases/conversation/edit-message.use-case"
+import { DeleteMessageUseCase } from "../application/use-cases/conversation/delete-message.use-case"
+import { RegenerateReplyUseCase } from "../application/use-cases/conversation/regenerate-reply.use-case"
+import { RewindConversationUseCase } from "../application/use-cases/conversation/rewind-conversation.use-case"
+import { ContinueConversationUseCase } from "../application/use-cases/conversation/continue-conversation.use-case"
+import { CycleAlternativeUseCase } from "../application/use-cases/conversation/cycle-alternative.use-case"
 import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
 import { ListProviderInstancesUseCase } from "../application/use-cases/provider/list-provider-instances.use-case"
 import { CreateProviderInstanceUseCase } from "../application/use-cases/provider/create-provider-instance.use-case"
@@ -55,6 +63,7 @@ export interface AppContainer {
   characterRepository: CharacterRepository
   conversationRepository: ConversationRepository
   messageRepository: MessageRepository
+  memoryChangeProposalRepository: MemoryChangeProposalRepository
   promptContextBuilder: PromptContextBuilder
   createCharacter: CreateCharacterUseCase
   getCharacter: GetCharacterUseCase
@@ -67,6 +76,12 @@ export interface AppContainer {
   listConversations: ListConversationsUseCase
   archiveConversation: ArchiveConversationUseCase
   sendMessage: SendMessageUseCase
+  editMessage: EditMessageUseCase
+  deleteMessage: DeleteMessageUseCase
+  regenerateReply: RegenerateReplyUseCase
+  rewindConversation: RewindConversationUseCase
+  continueConversation: ContinueConversationUseCase
+  cycleAlternative: CycleAlternativeUseCase
   updateConversationSettings: UpdateConversationSettingsUseCase
   listProviderInstances: ListProviderInstancesUseCase
   createProviderInstance: CreateProviderInstanceUseCase
@@ -103,12 +118,36 @@ export const buildContainer = ({
   const characterRepository: CharacterRepository = new DrizzleCharacterRepository(database)
   const conversationRepository: ConversationRepository = new DrizzleConversationRepository(database)
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
+  const memoryChangeProposalRepository: MemoryChangeProposalRepository =
+    new DrizzleMemoryChangeProposalRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
   const getDefaultProvider = new GetDefaultProviderUseCase(settings)
   const providerInstanceRepository: ProviderInstanceRepository =
     new DrizzleProviderInstanceRepository(database)
 
   const sendMessage = new SendMessageUseCase(
+    conversationRepository,
+    messageRepository,
+    characterRepository,
+    promptContextBuilder,
+    providerRegistry,
+    logger,
+    getDefaultProvider,
+    providerInstanceRepository,
+  )
+
+  const regenerateReply = new RegenerateReplyUseCase(
+    conversationRepository,
+    messageRepository,
+    characterRepository,
+    promptContextBuilder,
+    providerRegistry,
+    logger,
+    getDefaultProvider,
+    providerInstanceRepository,
+  )
+
+  const continueConversation = new ContinueConversationUseCase(
     conversationRepository,
     messageRepository,
     characterRepository,
@@ -146,6 +185,7 @@ export const buildContainer = ({
     characterRepository,
     conversationRepository,
     messageRepository,
+    memoryChangeProposalRepository,
     promptContextBuilder,
     createCharacter: new CreateCharacterUseCase(characterRepository),
     getCharacter: new GetCharacterUseCase(characterRepository),
@@ -173,6 +213,25 @@ export const buildContainer = ({
       characterRepository,
     ),
     sendMessage,
+    editMessage: new EditMessageUseCase(
+      conversationRepository,
+      messageRepository,
+    ),
+    deleteMessage: new DeleteMessageUseCase(
+      conversationRepository,
+      messageRepository,
+    ),
+    regenerateReply,
+    rewindConversation: new RewindConversationUseCase(
+      conversationRepository,
+      messageRepository,
+      memoryChangeProposalRepository,
+    ),
+    continueConversation,
+    cycleAlternative: new CycleAlternativeUseCase(
+      conversationRepository,
+      messageRepository,
+    ),
     updateConversationSettings: new UpdateConversationSettingsUseCase(
       conversationRepository,
       characterRepository,

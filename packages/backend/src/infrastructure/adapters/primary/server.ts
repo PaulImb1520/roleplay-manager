@@ -67,6 +67,12 @@ export const buildServer = ({
       listConversations: container.listConversations,
       archiveConversation: container.archiveConversation,
       sendMessage: container.sendMessage,
+      editMessage: container.editMessage,
+      deleteMessage: container.deleteMessage,
+      regenerateReply: container.regenerateReply,
+      rewindConversation: container.rewindConversation,
+      continueConversation: container.continueConversation,
+      cycleAlternative: container.cycleAlternative,
       updateConversationSettings: container.updateConversationSettings,
     }),
   )
