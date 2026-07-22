@@ -76,6 +76,12 @@ export class SendMessageUseCase {
     )
     const nextPosition = messages.length
 
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null
+    if (lastMsg?.role === "assistant" && lastMsg.alternatives.length > 0) {
+      const accepted = lastMsg.accept()
+      await this.messageRepository.update(accepted)
+    }
+
     const userMessage = Message.create({
       id: randomUUIDv7(),
       conversationId: input.conversationId,
@@ -83,6 +89,7 @@ export class SendMessageUseCase {
       content: input.content,
       position: nextPosition,
       alternatives: [],
+      alternativesCursor: 0,
       createdAt: new Date(),
       editedAt: null,
     })
@@ -210,6 +217,7 @@ export class SendMessageUseCase {
       content: fullContent,
       position: nextPosition + 1,
       alternatives: [],
+      alternativesCursor: 0,
       createdAt: new Date(),
       editedAt: null,
     })
@@ -227,6 +235,7 @@ function toMessageDTO(m: Message): MessageDTO {
     content: m.content,
     position: m.position,
     alternatives: m.alternatives,
+    alternativesCursor: m.alternativesCursor,
     createdAt: m.createdAt.toISOString(),
     editedAt: m.editedAt?.toISOString() ?? null,
   }

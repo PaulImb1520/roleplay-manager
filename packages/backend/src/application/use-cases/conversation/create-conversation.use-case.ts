@@ -59,6 +59,7 @@ export class CreateConversationUseCase {
       content: result.currentVersion.greeting,
       position: 0,
       alternatives: [],
+      alternativesCursor: 0,
       createdAt: now,
       editedAt: null,
     })
@@ -99,6 +100,7 @@ function toMessageDTO(m: Message): MessageDTO {
     content: m.content,
     position: m.position,
     alternatives: m.alternatives,
+    alternativesCursor: m.alternativesCursor,
     createdAt: m.createdAt.toISOString(),
     editedAt: m.editedAt?.toISOString() ?? null,
   }

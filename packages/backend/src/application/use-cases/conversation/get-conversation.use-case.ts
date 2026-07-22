@@ -58,6 +58,7 @@ function toMessageDTO(m: Message): MessageDTO {
     content: m.content,
     position: m.position,
     alternatives: m.alternatives,
+    alternativesCursor: m.alternativesCursor,
     createdAt: m.createdAt.toISOString(),
     editedAt: m.editedAt?.toISOString() ?? null,
   }
