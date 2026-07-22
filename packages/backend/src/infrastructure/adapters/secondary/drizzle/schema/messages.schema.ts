@@ -14,6 +14,7 @@ export const messages = sqliteTable("messages", {
   alternatives: text("alternatives", { mode: "json" })
     .$type<string[]>()
     .default(sql`'[]'`),
+  alternativesCursor: integer("alternatives_cursor").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   editedAt: integer("edited_at", { mode: "timestamp" }),
 })

@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `alternatives_cursor` integer DEFAULT 0 NOT NULL;
