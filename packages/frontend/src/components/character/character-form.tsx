@@ -85,9 +85,19 @@ export function CharacterForm({ character }: Props) {
         active: c.active,
       })) ?? [],
   )
+  const [versionNumber, setVersionNumber] = useState(version?.versionNumber ?? 1)
   const [activeTab, setActiveTab] = useState("general")
   const [saving, setSaving] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [lastSnapshot, setLastSnapshot] = useState(() => ({
+    name: character?.name ?? "",
+    subtitle: version?.subtitle ?? null,
+    profileImage: version?.profileImage ?? "",
+    description: version?.description ?? "",
+    instructions: version?.instructions ?? null,
+    greeting: version?.greeting ?? "",
+    cards: (version?.cards ?? []).map(c => ({ title: c.title, content: c.content, active: c.active })),
+  }))
 
   const addCard = () => setCards((prev) => [...prev, emptyCard()])
 
@@ -108,6 +118,32 @@ export function CharacterForm({ character }: Props) {
     setCards((prev) =>
       prev.map((c, i) => (i === idx ? { ...c, [field]: value } : c)),
     )
+
+  function hasChanges(): boolean {
+    if (!isEditing) return true
+    const current = {
+      name: name.trim(),
+      subtitle: subtitle.trim() || null,
+      profileImage: profileImage.trim(),
+      description: description.trim(),
+      instructions: instructions.trim() || null,
+      greeting: greeting.trim(),
+      cards: cards.map(c => ({ title: c.title.trim(), content: c.content.trim(), active: c.active })),
+    }
+    return (
+      current.name !== lastSnapshot.name ||
+      current.subtitle !== lastSnapshot.subtitle ||
+      current.profileImage !== lastSnapshot.profileImage ||
+      current.description !== lastSnapshot.description ||
+      current.instructions !== lastSnapshot.instructions ||
+      current.greeting !== lastSnapshot.greeting ||
+      current.cards.length !== lastSnapshot.cards.length ||
+      current.cards.some((c, i) => {
+        const orig = lastSnapshot.cards[i]
+        return !orig || c.title !== orig.title || c.content !== orig.content || c.active !== orig.active
+      })
+    )
+  }
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
@@ -132,6 +168,11 @@ export function CharacterForm({ character }: Props) {
       return
     }
 
+    if (isEditing && !hasChanges()) {
+      toast.warning("No hay cambios que guardar")
+      return
+    }
+
     setSaving(true)
     try {
       if (isEditing && character) {
@@ -149,7 +190,33 @@ export function CharacterForm({ character }: Props) {
             active: c.active,
           })),
         }
-        await updateCharacter(character.id, input)
+        const result = await updateCharacter(character.id, input)
+        setName(result.name)
+        setSubtitle(result.currentVersion.subtitle ?? "")
+        setProfileImage(result.currentVersion.profileImage)
+        setDescription(result.currentVersion.description)
+        setInstructions(result.currentVersion.instructions ?? "")
+        setGreeting(result.currentVersion.greeting)
+        setCards(result.currentVersion.cards.map(c => ({
+          id: c.id,
+          title: c.title,
+          content: c.content,
+          active: c.active,
+        })))
+        setVersionNumber(result.currentVersion.versionNumber)
+        setLastSnapshot({
+          name: result.name,
+          subtitle: result.currentVersion.subtitle ?? null,
+          profileImage: result.currentVersion.profileImage,
+          description: result.currentVersion.description,
+          instructions: result.currentVersion.instructions ?? null,
+          greeting: result.currentVersion.greeting,
+          cards: result.currentVersion.cards.map(c => ({
+            title: c.title,
+            content: c.content,
+            active: c.active,
+          })),
+        })
         toast.success("Personaje actualizado")
       } else {
         const input: CreateCharacterInput = {
@@ -165,7 +232,6 @@ export function CharacterForm({ character }: Props) {
         }
         const result = await createCharacter(input)
         const conv = await createConversation({ characterId: result.id })
-        toast.success("Personaje creado")
         location.href = `/conversations/${conv.id}`
         return
       }
@@ -208,7 +274,7 @@ export function CharacterForm({ character }: Props) {
             {isEditing ? "Editar personaje" : "Crear personaje"}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isEditing ? `v${version?.versionNumber}` : "Nuevo personaje"}
+            {isEditing ? `v${versionNumber}` : "Nuevo personaje"}
           </p>
         </div>
         <div className="flex items-center gap-2">
