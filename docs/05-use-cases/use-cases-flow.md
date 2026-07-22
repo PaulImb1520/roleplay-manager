@@ -23,6 +23,9 @@ flowchart TB
         UC22[UpdateSummary]:::doc
         UC23[DeleteSummary]:::doc
         UC24[ConfigureDefaultProvider]:::doc
+        UC25[ContinueConversation]:::doc
+        UC26[DeleteMessage]:::doc
+        UC27[CycleAlternative]:::doc
     end
 
     subgraph SystemInitiated["Casos de uso iniciados por el sistema"]
@@ -75,7 +78,7 @@ flowchart TB
     UC9 --> Conversation
     UC10 --> Conversation
 
-    %% Mensajes: edición / regeneración / retroceso
+    %% Mensajes: edición / regeneración / retroceso / continuar / eliminar / ciclo
     UC5 -->|modifica content + editedAt| Message
     UC11 -->|re-invoca| UC12
     UC11 -->|re-invoca| UC13
@@ -83,6 +86,13 @@ flowchart TB
     UC6 -->|elimina mensajes posteriores| Message
     UC6 -->|elimina resúmenes con rango invalidado| Summary
     UC6 -->|descarta propuestas pending| MemoryProposal
+    UC25 -->|invoca| UC12
+    UC25 -->|invoca| UC13
+    UC25 -->|acepta alternatives del último assistant| Message
+    UC25 -->|crea nuevo mensaje assistant| Message
+    UC26 -->|elimina mensaje| Message
+    UC26 -->|reasigna positions| Message
+    UC27 -->|actualiza alternativesCursor| Message
 
     %% Contexto y generación
     UC12 --> PromptContext
@@ -117,7 +127,7 @@ flowchart TB
 
     classDef doc fill:#1b5e20,color:#fff,stroke:#2e7d32
     classDef entity fill:#0d47a1,color:#fff,stroke:#1565c0
-    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24 doc
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24,UC25,UC26,UC27 doc
     class Character,CharVersion,CharCard,Conversation,Message,Memory,MemoryProposal,Summary,Settings,PromptContext,GeneratedResponse entity
 ```
 
@@ -132,6 +142,24 @@ Los siguientes detalles no se representan gráficamente para no saturar el diagr
 * `RegenerateReply` mueve el contenido actual del último mensaje `assistant` a su lista `alternatives` y sustituye el `content` por la nueva generación. El historial se conserva hasta que el usuario envía un nuevo mensaje, momento en el que `SendMessage` **limpia automáticamente** la lista `alternatives` del mensaje aceptado.
 * `EditMessage` solo actualiza `content` y `editedAt`; **no** toca `alternatives` ni limpia el historial de regeneraciones.
 * Las memorias dinámicas, los resúmenes y las propuestas de memoria pendientes **no se alteran** durante `RegenerateReply` ni `EditMessage`.
+
+### Continuar conversación (`ContinueConversation`)
+
+* Genera una nueva respuesta del asistente sin mensaje de entrada del usuario.
+* Si el último mensaje del asistente tiene alternativas, las acepta implícitamente (`Message.accept()`) antes de continuar.
+* La respuesta se transmite vía SSE al igual que `SendMessage`.
+
+### Eliminar mensaje (`DeleteMessage`)
+
+* Elimina un mensaje individual. No puede eliminar el greeting (posición 0).
+* Reasigna las posiciones de los mensajes posteriores para mantener la secuencia contigua.
+* No modifica propuestas de memoria ni resúmenes automáticamente.
+
+### Ciclo de alternativas (`CycleAlternative`)
+
+* Navega entre las versiones alternativas de un mensaje del asistente.
+* La posición del cursor se persiste en `alternatives_cursor` de la base de datos.
+* La alternativa mostrada se consolida como canónica al enviar un nuevo mensaje (`UC3`) o continuar (`UC25`).
 
 ### Retroceso de conversación (`RewindConversation`)
 
@@ -170,7 +198,7 @@ Los siguientes detalles no se representan gráficamente para no saturar el diagr
 `SendMessage` orquesta los siguientes casos de uso del sistema en este orden:
 
 1. **`PromptContextBuilder`** — construye el `PromptContext` a partir de la versión del personaje, tarjetas activas, resumen más reciente, memorias seleccionadas y mensajes recientes.
-2. **`GenerateCharacterResponse`** — envía el `PromptContext` al proveedor y almacena la respuesta del asistente como `Message`. Limpia las `alternatives` del mensaje `assistant` inmediatamente anterior, si existieran.
+2. **`GenerateCharacterResponse`** — envía el `PromptContext` al proveedor y almacena la respuesta del asistente como `Message`. Acepta las `alternatives` del mensaje `assistant` inmediatamente anterior (vía `Message.accept()`), si existieran, consolidando la versión mostrada como canónica.
 3. **`GenerateConversationTitle`** — solo en la primera interacción del usuario; genera y aplica un título automáticamente sobre la conversación.
 4. **`GenerateSummary`** — solo si el umbral `summaryFrequency` se ha alcanzado; al terminar, invoca de nuevo `GenerateConversationTitle` para refrescar el título con el estado narrativo actualizado.
 5. **`ProposeMemoryChanges`** — analiza la nueva interacción y genera cero o más `MemoryChangeProposal` en estado `pending`.

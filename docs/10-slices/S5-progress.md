@@ -1,25 +1,47 @@
-# S5 — Progress
+# S5 — Regenerar, Editar, Retroceder, Eliminar, Continuar + Ciclaje de alternativas
 
-## Objective (remaining from previous session)
-- Implementar SettingsPanel lateral (Sheet) en el chat con dos pestañas: Historia (placeholder) y Modelo (configuración del proveedor/instancia, parámetros de inferencia, contexto narrativo), persistido en BD.
-- Migrar el modelo de proveedores de configuración única global a instancias nombradas de OpenAI-compatible, manteniendo Ollama como proveedor fijo integrado.
+**Estado:** completado.
 
-## Completed in this session
-1. **SettingsPanel trigger integrado en chat.tsx**
-   - Botón `SettingsIcon` en el header (derecha, `ml-auto`) envuelto en `SettingsPanel > SheetTrigger asChild`
-   - Estado local `conv` para reflejar cambios de settings sin recargar la página
-   - `onSettingsChanged` actualiza el estado local
+## Objetivo
+Implementar las acciones de mensaje faltantes en el chat: regenerar respuesta, editar mensaje, retroceder conversación, eliminar mensaje, continuar conversación, y ciclo de alternativas (navegación entre versiones regeneradas).
 
-2. **ProviderManager migrado a instancias**
-   - Eliminada la card legacy de configuración OpenAI-compatible (URL + API key global)
-   - Reemplazada por gestión de instancias: listar, crear, editar, eliminar (reutilizando los mismos diálogos que SettingsPanel)
-   - Al seleccionar "OpenAI-compatible", se muestra selector de instancias
-   - `handleSaveDefault` incluye `providerInstanceId` en `ConfigureDefaultProviderInput`
-   - Verificación de conexión usa `validateProviderInstance` en lugar de `validateProvider("openai-compatible")`
-   - Estado inicial carga `instances` y restaura la instancia seleccionada del default config
+## Decisiones clave
+- **EditMessage** puro: solo actualiza `content` + `editedAt`, sin regenerar, sin tocar `alternatives`.
+- **Rewind** descarta `MemoryChangeProposal` pendientes en el mismo slice.
+- **ContinueConversation** es un caso de uso nuevo con endpoint SSE propio (`POST /api/conversations/:id/continue`).
+- **Ciclador** con cursor persistido en BD (`alternatives_cursor`). Botones `←`/`→` con indicador `2/3`. La versión mostrada se consolida al enviar o continuar.
+- **DeleteMessage** elimina el mensaje y reasigna posiciones. No permite borrar el greeting.
+- **Alternatives**: se almacenan en `alternatives[]` como historial cronológico (más reciente primero). El cursor indica qué índice se muestra.
 
-3. **Verificación**
-   - Node.js typecheck/lint no ejecutable en este entorno (error EPERM en `AppData`), pero los cambios son análogos a componentes ya existentes y siguen los mismos patrones.
+## Cambios en schema
+- `messages` tabla: añadido `alternatives_cursor integer DEFAULT 0 NOT NULL`
 
-## Blockers
-- Node.js en este entorno no puede acceder a `C:\Users\Administrador\AppData` (EPERM), lo que impide ejecutar `astro check` y `eslint`. Ningún bloqueo de código.
+## Nuevos endpoints
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| PATCH | `/api/conversations/:id/messages/:messageId` | Editar mensaje |
+| DELETE | `/api/conversations/:id/messages/:messageId` | Eliminar mensaje |
+| POST | `/api/conversations/:id/messages/:messageId/regenerate` | Regenerar (SSE) |
+| POST | `/api/conversations/:id/rewind` | Retroceder |
+| POST | `/api/conversations/:id/continue` | Continuar (SSE) |
+| POST | `/api/conversations/:id/messages/:messageId/cycle` | Ciclar alternativa |
+
+## Nuevos archivos backend
+- `application/use-cases/conversation/edit-message.use-case.ts`
+- `application/use-cases/conversation/delete-message.use-case.ts`
+- `application/use-cases/conversation/regenerate-reply.use-case.ts`
+- `application/use-cases/conversation/rewind-conversation.use-case.ts`
+- `application/use-cases/conversation/continue-conversation.use-case.ts`
+- `application/use-cases/conversation/cycle-alternative.use-case.ts`
+- `domain/ports/memory-change-proposal.repository.ts`
+- `infrastructure/.../drizzle-memory-change-proposal.repository.ts`
+
+## Cambios frontend
+- `chat.store.ts`: replaceMessage, removeMessage, truncateAfter, startEditing
+- `message.tsx`: botones Editar/Regenerar/Retroceder/Ciclar/Eliminar, editor inline
+- `message-input.tsx`: botón Continue (cuando textarea vacío) / Send (cuando hay texto)
+- `chat.tsx`: handlers de edición, regeneración, ciclo, rewind-dialog, delete-dialog
+- `conversations.ts`: nuevas funciones API + refactor SSE a `streamEventSource`
+
+## Migración
+- `0002_add_alternatives_cursor.sql`: nueva columna en `messages`
