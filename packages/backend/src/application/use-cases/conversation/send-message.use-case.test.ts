@@ -48,6 +48,7 @@ const activeConversation = Conversation.create({
   frequencyPenalty: 0,
   presencePenalty: 0,
   stopSequences: [],
+  memoryProposalMode: "auto",
   createdAt: now,
   updatedAt: now,
 })
@@ -68,6 +69,7 @@ const archivedConversation = Conversation.create({
   frequencyPenalty: 0,
   presencePenalty: 0,
   stopSequences: [],
+  memoryProposalMode: "auto",
   createdAt: now,
   updatedAt: now,
 })

@@ -1,0 +1,1 @@
+ALTER TABLE `conversations` ADD `memory_proposal_mode` text DEFAULT 'auto' NOT NULL;

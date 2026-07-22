@@ -1,5 +1,7 @@
 export type ConversationStatus = "active" | "archived"
 
+export type MemoryProposalMode = "auto" | "manual"
+
 export interface ConversationSummary {
   id: string
   characterName: string
@@ -29,6 +31,7 @@ export interface ConversationDetail {
   frequencyPenalty: number | null
   presencePenalty: number | null
   stopSequences: string[]
+  memoryProposalMode: MemoryProposalMode
   createdAt: string
   updatedAt: string
   messages: MessageDTO[]
@@ -46,6 +49,7 @@ export interface ConversationSettingsUpdate {
   frequencyPenalty?: number
   presencePenalty?: number
   stopSequences?: string[]
+  memoryProposalMode?: MemoryProposalMode
   force?: boolean
 }
 

@@ -48,6 +48,7 @@ export class CreateConversationUseCase {
       frequencyPenalty: 0,
       presencePenalty: 0,
       stopSequences: [],
+      memoryProposalMode: "auto",
       createdAt: now,
       updatedAt: now,
     })
@@ -85,6 +86,7 @@ export class CreateConversationUseCase {
       frequencyPenalty: conversation.frequencyPenalty,
       presencePenalty: conversation.presencePenalty,
       stopSequences: conversation.stopSequences,
+      memoryProposalMode: conversation.memoryProposalMode,
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
       messages: [toMessageDTO(greeting)],

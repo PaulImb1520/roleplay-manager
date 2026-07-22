@@ -61,6 +61,7 @@ export class ArchiveConversationUseCase {
       frequencyPenalty: conversation.frequencyPenalty,
       presencePenalty: conversation.presencePenalty,
       stopSequences: conversation.stopSequences,
+      memoryProposalMode: conversation.memoryProposalMode,
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
       messages: convWithMessages.messages.map(toMessageDTO),

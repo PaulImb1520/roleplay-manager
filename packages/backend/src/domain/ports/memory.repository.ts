@@ -1,4 +1,9 @@
-// Stub de puerto para MemoryRepository.
-// Se implementa en el slice S6 (Memoria dinámica).
+import type { Memory } from "../entities/memory.entity"
 
-export type MemoryRepository = unknown
+export interface MemoryRepository {
+  findById(id: string): Promise<Memory | null>
+  findByConversationId(conversationId: string): Promise<Memory[]>
+  create(memory: Memory): Promise<Memory>
+  update(memory: Memory): Promise<Memory>
+  deleteById(id: string): Promise<void>
+}

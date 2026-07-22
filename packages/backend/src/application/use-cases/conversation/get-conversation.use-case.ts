@@ -43,6 +43,7 @@ export class GetConversationUseCase {
       frequencyPenalty: convWithMessages.conversation.frequencyPenalty,
       presencePenalty: convWithMessages.conversation.presencePenalty,
       stopSequences: convWithMessages.conversation.stopSequences,
+      memoryProposalMode: convWithMessages.conversation.memoryProposalMode,
       createdAt: convWithMessages.conversation.createdAt.toISOString(),
       updatedAt: convWithMessages.conversation.updatedAt.toISOString(),
       messages: convWithMessages.messages.map(toMessageDTO),

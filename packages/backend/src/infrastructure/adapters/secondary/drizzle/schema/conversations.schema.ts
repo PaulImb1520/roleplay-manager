@@ -29,6 +29,11 @@ export const conversations = sqliteTable("conversations", {
   stopSequences: text("stop_sequences", { mode: "json" })
     .$type<string[]>()
     .default(sql`'[]'`),
+  memoryProposalMode: text("memory_proposal_mode", {
+    enum: ["auto", "manual"],
+  })
+    .notNull()
+    .default("auto"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 })

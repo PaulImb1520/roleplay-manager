@@ -33,6 +33,7 @@ const activeConv = Conversation.create({
   frequencyPenalty: 0,
   presencePenalty: 0,
   stopSequences: [],
+  memoryProposalMode: "auto",
   createdAt: now,
   updatedAt: now,
 })
@@ -53,6 +54,7 @@ const archivedConv = Conversation.create({
   frequencyPenalty: 0,
   presencePenalty: 0,
   stopSequences: [],
+  memoryProposalMode: "auto",
   createdAt: now,
   updatedAt: now,
 })

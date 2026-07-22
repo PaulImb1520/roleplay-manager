@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e2ca9dd9-a168-48da-88c1-465427d7ddb4",
-  "prevId": "db42772b-84e4-478f-a7f7-5e6e946b44bf",
+  "id": "1d2ce5d3-4c80-4686-b565-6fe33b48f013",
+  "prevId": "e2ca9dd9-a168-48da-88c1-465427d7ddb4",
   "tables": {
     "character_cards": {
       "name": "character_cards",
@@ -319,6 +319,14 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'[]'"
+        },
+        "memory_proposal_mode": {
+          "name": "memory_proposal_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'auto'"
         },
         "created_at": {
           "name": "created_at",

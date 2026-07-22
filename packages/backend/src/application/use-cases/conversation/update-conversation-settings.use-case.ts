@@ -158,6 +158,7 @@ export class UpdateConversationSettingsUseCase {
       frequencyPenalty: updated.frequencyPenalty,
       presencePenalty: updated.presencePenalty,
       stopSequences: updated.stopSequences,
+      memoryProposalMode: updated.memoryProposalMode,
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
       messages: [],

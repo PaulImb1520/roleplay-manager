@@ -1,5 +1,7 @@
 import type { ConversationStatus } from "@workspace/shared/types/conversation"
 
+export type MemoryProposalMode = "auto" | "manual"
+
 export interface ConversationProps {
   id: string
   versionId: string
@@ -16,6 +18,7 @@ export interface ConversationProps {
   frequencyPenalty: number
   presencePenalty: number
   stopSequences: string[]
+  memoryProposalMode: MemoryProposalMode
   createdAt: Date
   updatedAt: Date
 }
@@ -42,6 +45,7 @@ export class Conversation {
   get frequencyPenalty(): number { return this.props.frequencyPenalty }
   get presencePenalty(): number { return this.props.presencePenalty }
   get stopSequences(): string[] { return this.props.stopSequences }
+  get memoryProposalMode(): MemoryProposalMode { return this.props.memoryProposalMode }
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
 
@@ -57,5 +61,10 @@ export class Conversation {
       return this
     }
     return new Conversation({ ...this.props, status: "active", updatedAt: new Date() })
+  }
+
+  withMemoryProposalMode(mode: MemoryProposalMode): Conversation {
+    if (this.props.memoryProposalMode === mode) return this
+    return new Conversation({ ...this.props, memoryProposalMode: mode, updatedAt: new Date() })
   }
 }

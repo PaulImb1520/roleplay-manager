@@ -10,6 +10,7 @@ import type { Database } from "../../../../config/database"
 import type {
   ConversationSettingsUpdate,
   ConversationStatus,
+  MemoryProposalMode,
 } from "@workspace/shared/types/conversation"
 import { conversations, messages } from "../schema"
 
@@ -33,6 +34,7 @@ const toConversation = (row: ConversationRow): Conversation =>
     frequencyPenalty: row.frequencyPenalty ?? 0,
     presencePenalty: row.presencePenalty ?? 0,
     stopSequences: row.stopSequences ?? [],
+    memoryProposalMode: (row.memoryProposalMode ?? "auto") as MemoryProposalMode,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   })
@@ -156,6 +158,8 @@ export class DrizzleConversationRepository implements ConversationRepository {
       values.presencePenalty = settings.presencePenalty
     if (settings.stopSequences !== undefined)
       values.stopSequences = JSON.stringify(settings.stopSequences)
+    if (settings.memoryProposalMode !== undefined)
+      values.memoryProposalMode = settings.memoryProposalMode
 
     await this.db
       .update(conversations)
