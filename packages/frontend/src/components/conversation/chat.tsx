@@ -175,6 +175,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
       const result = await rewindConversation(conv.id, confirmRewind)
       setMessages(result.messages)
 
+      setMessages(result.messages)
+
       if (targetMsg?.role === "user") {
         setRewindDraft(targetMsg.content)
         setInputKey(k => k + 1)

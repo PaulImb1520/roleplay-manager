@@ -49,6 +49,10 @@ export class RewindConversationUseCase {
       targetMessage.position,
     )
 
+    if (targetMessage.role === "user") {
+      await this.messageRepository.deleteById(targetMessage.id)
+    }
+
     await this.memoryChangeProposalRepository.discardPendingByConversationId(
       input.conversationId,
     )
