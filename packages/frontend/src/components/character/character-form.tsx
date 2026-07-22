@@ -1,4 +1,3 @@
-import { useState } from "react"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -6,7 +5,6 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react"
-import { toast } from "@workspace/ui/components/sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
@@ -38,233 +36,36 @@ import {
 } from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
 
-import type {
-  CharacterDetail,
-  CharacterVersionDTO,
-  CreateCharacterInput,
-  UpdateCharacterInput,
-} from "@workspace/shared/types/character"
-import { ApiClientError } from "@/lib/api/client"
-import {
-  createCharacter,
-  updateCharacter,
-} from "@/lib/api/characters"
-import { createConversation } from "@/lib/api/conversations"
-
-interface CardEntry {
-  id: string
-  title: string
-  content: string
-  active: boolean
-}
-
-function emptyCard(): CardEntry {
-  return { id: crypto.randomUUID(), title: "", content: "", active: true }
-}
+import type { CharacterDetail } from "@workspace/shared/types/character"
+import { useCharacterForm } from "./use-character-form"
 
 interface Props {
   character?: CharacterDetail
 }
 
 export function CharacterForm({ character }: Props) {
-  const isEditing = !!character
-  const version: CharacterVersionDTO | undefined = character?.currentVersion
-
-  const [name, setName] = useState(character?.name ?? "")
-  const [subtitle, setSubtitle] = useState(version?.subtitle ?? "")
-  const [profileImage, setProfileImage] = useState(version?.profileImage ?? "")
-  const [description, setDescription] = useState(version?.description ?? "")
-  const [instructions, setInstructions] = useState(version?.instructions ?? "")
-  const [greeting, setGreeting] = useState(version?.greeting ?? "")
-  const [cards, setCards] = useState<CardEntry[]>(
-    () =>
-      version?.cards.map((c) => ({
-        id: c.id,
-        title: c.title,
-        content: c.content,
-        active: c.active,
-      })) ?? [],
-  )
-  const [versionNumber, setVersionNumber] = useState(version?.versionNumber ?? 1)
-  const [activeTab, setActiveTab] = useState("general")
-  const [saving, setSaving] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [lastSnapshot, setLastSnapshot] = useState(() => ({
-    name: character?.name ?? "",
-    subtitle: version?.subtitle ?? null,
-    profileImage: version?.profileImage ?? "",
-    description: version?.description ?? "",
-    instructions: version?.instructions ?? null,
-    greeting: version?.greeting ?? "",
-    cards: (version?.cards ?? []).map(c => ({ title: c.title, content: c.content, active: c.active })),
-  }))
-
-  const addCard = () => setCards((prev) => [...prev, emptyCard()])
-
-  const removeCard = (idx: number) =>
-    setCards((prev) => prev.filter((_, i) => i !== idx))
-
-  const moveCard = (idx: number, direction: "up" | "down") => {
-    setCards((prev) => {
-      const next = [...prev]
-      const target = direction === "up" ? idx - 1 : idx + 1
-      if (target < 0 || target >= next.length) return prev
-      ;[next[idx], next[target]] = [next[target], next[idx]]
-      return next
-    })
-  }
-
-  const updateCard = (idx: number, field: keyof CardEntry, value: string | boolean) =>
-    setCards((prev) =>
-      prev.map((c, i) => (i === idx ? { ...c, [field]: value } : c)),
-    )
-
-  function hasChanges(): boolean {
-    if (!isEditing) return true
-    const current = {
-      name: name.trim(),
-      subtitle: subtitle.trim() || null,
-      profileImage: profileImage.trim(),
-      description: description.trim(),
-      instructions: instructions.trim() || null,
-      greeting: greeting.trim(),
-      cards: cards.map(c => ({ title: c.title.trim(), content: c.content.trim(), active: c.active })),
-    }
-    return (
-      current.name !== lastSnapshot.name ||
-      current.subtitle !== lastSnapshot.subtitle ||
-      current.profileImage !== lastSnapshot.profileImage ||
-      current.description !== lastSnapshot.description ||
-      current.instructions !== lastSnapshot.instructions ||
-      current.greeting !== lastSnapshot.greeting ||
-      current.cards.length !== lastSnapshot.cards.length ||
-      current.cards.some((c, i) => {
-        const orig = lastSnapshot.cards[i]
-        return !orig || c.title !== orig.title || c.content !== orig.content || c.active !== orig.active
-      })
-    )
-  }
-
-  const handleSubmit = async (e: React.SyntheticEvent) => {
-    e.preventDefault()
-    if (!name.trim()) {
-      toast.error("El nombre es obligatorio")
-      return
-    }
-    if (!profileImage.trim()) {
-      toast.error("La imagen de perfil es obligatoria")
-      return
-    }
-    if (!description.trim()) {
-      toast.error("La descripción es obligatoria")
-      return
-    }
-    if (!greeting.trim()) {
-      toast.error("El saludo inicial es obligatorio")
-      return
-    }
-    if (cards.some((c) => !c.title.trim() || !c.content.trim())) {
-      toast.error("Las tarjetas deben tener título y contenido")
-      return
-    }
-
-    if (isEditing && !hasChanges()) {
-      toast.warning("No hay cambios que guardar")
-      return
-    }
-
-    setSaving(true)
-    try {
-      if (isEditing && character) {
-        const input: UpdateCharacterInput = {
-          name: name.trim() !== character.name ? name.trim() : undefined,
-          subtitle: subtitle.trim() || null,
-          profileImage: profileImage.trim() !== version?.profileImage ? profileImage.trim() : undefined,
-          description: description.trim() !== version?.description ? description.trim() : undefined,
-          instructions: instructions.trim() || null,
-          greeting: greeting.trim() !== version?.greeting ? greeting.trim() : undefined,
-          cards: cards.map((c, i) => ({
-            title: c.title,
-            content: c.content,
-            position: i,
-            active: c.active,
-          })),
-        }
-        const result = await updateCharacter(character.id, input)
-        setName(result.name)
-        setSubtitle(result.currentVersion.subtitle ?? "")
-        setProfileImage(result.currentVersion.profileImage)
-        setDescription(result.currentVersion.description)
-        setInstructions(result.currentVersion.instructions ?? "")
-        setGreeting(result.currentVersion.greeting)
-        setCards(result.currentVersion.cards.map(c => ({
-          id: c.id,
-          title: c.title,
-          content: c.content,
-          active: c.active,
-        })))
-        setVersionNumber(result.currentVersion.versionNumber)
-        setLastSnapshot({
-          name: result.name,
-          subtitle: result.currentVersion.subtitle ?? null,
-          profileImage: result.currentVersion.profileImage,
-          description: result.currentVersion.description,
-          instructions: result.currentVersion.instructions ?? null,
-          greeting: result.currentVersion.greeting,
-          cards: result.currentVersion.cards.map(c => ({
-            title: c.title,
-            content: c.content,
-            active: c.active,
-          })),
-        })
-        toast.success("Personaje actualizado")
-      } else {
-        const input: CreateCharacterInput = {
-          name: name.trim(),
-          subtitle: subtitle.trim() || null,
-          profileImage: profileImage.trim(),
-          description: description.trim(),
-          instructions: instructions.trim() || null,
-          greeting: greeting.trim(),
-          cards: cards
-            .filter((c) => c.title.trim() && c.content.trim())
-            .map((c) => ({ title: c.title, content: c.content, active: c.active })),
-        }
-        const result = await createCharacter(input)
-        const conv = await createConversation({ characterId: result.id })
-        location.href = `/conversations/${conv.id}`
-        return
-      }
-    } catch (e) {
-      if (e instanceof ApiClientError) {
-        toast.error(`Error: ${e.message}`)
-      } else {
-        toast.error("Error inesperado al guardar")
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!character) return
-    setSaving(true)
-    try {
-      const { deleteCharacter: del } = await import("@/lib/api/characters")
-      await del(character.id)
-      toast.success("Personaje eliminado")
-      location.href = "/"
-    } catch (e) {
-      if (e instanceof ApiClientError) {
-        toast.error(`Error: ${e.message}`)
-      } else {
-        toast.error("Error inesperado al eliminar")
-      }
-    } finally {
-      setSaving(false)
-      setShowDeleteDialog(false)
-    }
-  }
+  const {
+    isEditing,
+    name, setName,
+    subtitle, setSubtitle,
+    profileImage, setProfileImage,
+    description, setDescription,
+    instructions, setInstructions,
+    greeting, setGreeting,
+    cards,
+    versionNumber,
+    activeTab, setActiveTab,
+    saving,
+    showDeleteDialog, setShowDeleteDialog,
+    dirty,
+    addCard,
+    removeCard,
+    moveCard,
+    updateCard,
+    handleSubmit,
+    handleDelete,
+    handleStartConversation,
+  } = useCharacterForm(character)
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -280,19 +81,7 @@ export function CharacterForm({ character }: Props) {
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={async () => {
-                  if (!character) return
-                  try {
-                    const conv = await createConversation({ characterId: character.id })
-                    location.href = `/conversations/${conv.id}`
-                  } catch {
-                    toast.error("Error al crear la conversación")
-                  }
-                }}
-              >
+              <Button type="button" variant="secondary" onClick={handleStartConversation}>
                 <MessageSquarePlusIcon />
                 Iniciar conversación
               </Button>
@@ -319,7 +108,7 @@ export function CharacterForm({ character }: Props) {
               </Dialog>
             </>
           ) : null}
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving || (isEditing && !dirty)}>
             {isEditing ? "Guardar cambios" : "Crear personaje"}
           </Button>
         </div>
@@ -436,10 +225,7 @@ export function CharacterForm({ character }: Props) {
                   </Button>
                 </div>
                 {cards.map((card, idx) => (
-                  <div
-                    key={card.id}
-                    className="flex gap-3 rounded-lg border p-3"
-                  >
+                  <div key={card.id} className="flex gap-3 rounded-lg border p-3">
                     <div className="flex flex-col gap-1">
                       <button
                         type="button"
