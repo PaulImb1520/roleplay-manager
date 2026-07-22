@@ -39,6 +39,43 @@ export const updateConversationSettings = (
     body: JSON.stringify(settings),
   })
 
+export const editMessage = (
+  conversationId: string,
+  messageId: string,
+  content: string,
+): Promise<MessageDTO> =>
+  apiRequest(`/api/conversations/${conversationId}/messages/${messageId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content }),
+  })
+
+export const deleteMessage = (
+  conversationId: string,
+  messageId: string,
+): Promise<void> =>
+  apiRequest(`/api/conversations/${conversationId}/messages/${messageId}`, {
+    method: "DELETE",
+  })
+
+export const rewindConversation = (
+  conversationId: string,
+  targetMessageId: string,
+): Promise<{ messages: MessageDTO[] }> =>
+  apiRequest(`/api/conversations/${conversationId}/rewind`, {
+    method: "POST",
+    body: JSON.stringify({ targetMessageId }),
+  })
+
+export const cycleAlternative = (
+  conversationId: string,
+  messageId: string,
+  direction: "prev" | "next",
+): Promise<MessageDTO> =>
+  apiRequest(`/api/conversations/${conversationId}/messages/${messageId}/cycle`, {
+    method: "POST",
+    body: JSON.stringify({ direction }),
+  })
+
 export interface SendMessageCallbacks {
   onSaved?: (message: MessageDTO) => void
   onChunk: (content: string) => void
@@ -46,20 +83,18 @@ export interface SendMessageCallbacks {
   onError: (error: { code: string; message: string }) => void
 }
 
-export const sendMessageStreaming = async (
-  conversationId: string,
-  content: string,
+const streamEventSource = async (
+  url: string,
+  body: object,
   callbacks: SendMessageCallbacks,
 ): Promise<void> => {
-  const url = `${getBaseUrl()}/api/conversations/${conversationId}/messages`
-
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
@@ -118,3 +153,35 @@ export const sendMessageStreaming = async (
     }
   }
 }
+
+export const sendMessageStreaming = (
+  conversationId: string,
+  content: string,
+  callbacks: SendMessageCallbacks,
+): Promise<void> =>
+  streamEventSource(
+    `${getBaseUrl()}/api/conversations/${conversationId}/messages`,
+    { content },
+    callbacks,
+  )
+
+export const regenerateReplyStreaming = (
+  conversationId: string,
+  messageId: string,
+  callbacks: SendMessageCallbacks,
+): Promise<void> =>
+  streamEventSource(
+    `${getBaseUrl()}/api/conversations/${conversationId}/messages/${messageId}/regenerate`,
+    {},
+    callbacks,
+  )
+
+export const continueConversationStreaming = (
+  conversationId: string,
+  callbacks: SendMessageCallbacks,
+): Promise<void> =>
+  streamEventSource(
+    `${getBaseUrl()}/api/conversations/${conversationId}/continue`,
+    {},
+    callbacks,
+  )
