@@ -5,14 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import { Empty, EmptyMedia, EmptyHeader, EmptyTitle, EmptyDescription } from "@workspace/ui/components/empty"
+
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
-import { BookOpenIcon, CheckCircle2Icon, RefreshCwIcon } from "lucide-react"
+import { CheckCircle2Icon, RefreshCwIcon } from "lucide-react"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@workspace/ui/components/accordion"
 
-import type { ConversationDetail, ConversationSettingsUpdate } from "@workspace/shared/types/conversation"
+import type { ConversationDetail, ConversationSettingsUpdate, MemoryProposalMode } from "@workspace/shared/types/conversation"
 import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 import type { ProviderId } from "@workspace/shared/types/provider"
 
@@ -21,10 +22,14 @@ import { listProviderInstances, validateProviderInstance } from "@/lib/api/provi
 import { listProviderModels } from "@/lib/api/providers"
 import { getDefaultProvider } from "@/lib/api/settings"
 import { ApiClientError } from "@/lib/api/client"
+import { useMemoryStore } from "@/lib/stores/memory.store"
 import { InferenceParamsCard } from "./inference-params-card"
 import { InstanceManager } from "./instance-manager"
 import { ModelCard } from "./model-card"
 import { ContextCard } from "./context-card"
+import { MemoryModeCard } from "../memory/memory-mode-card"
+import { ProposalList } from "../memory/proposal-list"
+import { MemoryList } from "../memory/memory-list"
 
 interface SettingsPanelProps {
   conversationId: string
@@ -80,6 +85,8 @@ export function SettingsPanel({
   const [saving, setSaving] = useState(false)
 
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+
+  const pendingCount = useMemoryStore((s) => s.proposals.length)
 
   const isDefaultValues =
     temperature === 0.7 && maxTokens === 2048 && topP === 0.9 &&
@@ -230,6 +237,19 @@ export function SettingsPanel({
     setResetConfirmOpen(false)
   }
 
+  const handleMemoryModeChange = async (mode: MemoryProposalMode) => {
+    try {
+      const updated = await updateConversationSettings(conversationId, {
+        memoryProposalMode: mode,
+      })
+      onSettingsChanged(updated)
+      toast.success("Modo de memorias actualizado")
+    } catch (e) {
+      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
+      toast.error("No se pudo cambiar el modo", { description: message })
+    }
+  }
+
   return (
     <>
       <Toaster richColors position="top-right" />
@@ -239,7 +259,7 @@ export function SettingsPanel({
           <SheetHeader className="shrink-0 px-4 pt-4">
             <SheetTitle>Configuracion del chat</SheetTitle>
             <SheetDescription>
-              Ajusta los parametros de la conversacion y del modelo.
+              Ajusta los parametros de la conversación y del modelo.
             </SheetDescription>
           </SheetHeader>
 
@@ -253,17 +273,35 @@ export function SettingsPanel({
 
             <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
               <TabsContent value="historia" className="flex flex-col gap-4 mt-4">
-                <Empty>
-                  <EmptyMedia>
-                    <BookOpenIcon />
-                  </EmptyMedia>
-                  <EmptyHeader>
-                    <EmptyTitle>Proximamente</EmptyTitle>
-                    <EmptyDescription>
-                      Aqui podras gestionar las memorias y resumenes de esta conversacion.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
+                <Accordion defaultValue={["mode", "memories"]} multiple>
+                  <AccordionItem value="mode">
+                    <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
+                    <AccordionContent>
+                      <MemoryModeCard
+                        conversationId={conversationId}
+                        current={current.memoryProposalMode}
+                        onChange={handleMemoryModeChange}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="proposals">
+                    <AccordionTrigger className="flex items-center gap-2">
+                      Propuestas pendientes
+                      {pendingCount > 0 ? (
+                        <Badge>{pendingCount}</Badge>
+                      ) : null}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ProposalList conversationId={conversationId} />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="memories">
+                    <AccordionTrigger>Memoria dinámica</AccordionTrigger>
+                    <AccordionContent>
+                      <MemoryList conversationId={conversationId} />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </TabsContent>
 
               <TabsContent value="modelo" className="flex flex-col gap-4 mt-4">
