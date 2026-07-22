@@ -1,13 +1,15 @@
 import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
-import { Send } from "lucide-react"
+import { Send, ArrowRight } from "lucide-react"
 
 export function MessageInput({
   onSend,
+  onContinue,
   disabled,
 }: {
   onSend: (content: string) => void
+  onContinue?: () => void
   disabled: boolean
 }) {
   const [content, setContent] = useState("")
@@ -19,6 +21,13 @@ export function MessageInput({
     onSend(trimmed)
     setContent("")
   }
+
+  const handleContinue = () => {
+    if (disabled) return
+    onContinue?.()
+  }
+
+  const hasText = content.trim().length > 0
 
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2 p-4">
@@ -36,14 +45,27 @@ export function MessageInput({
         }}
         disabled={disabled}
       />
-      <Button
-        type="submit"
-        size="icon"
-        disabled={disabled || !content.trim()}
-        className="shrink-0"
-      >
-        <Send className="size-4" />
-      </Button>
+      {hasText ? (
+        <Button
+          type="submit"
+          size="icon"
+          disabled={disabled || !hasText}
+          className="shrink-0"
+        >
+          <Send className="size-4" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          disabled={disabled}
+          className="shrink-0"
+          onClick={handleContinue}
+        >
+          <ArrowRight className="size-4" />
+        </Button>
+      )}
     </form>
   )
 }
