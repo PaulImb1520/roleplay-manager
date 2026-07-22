@@ -36,6 +36,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const [conv, setConv] = useState(conversation)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [confirmRewind, setConfirmRewind] = useState<string | null>(null)
+  const [rewindDraft, setRewindDraft] = useState("")
+  const [inputKey, setInputKey] = useState(0)
 
   const {
     messages,
@@ -168,13 +170,21 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const handleRewind = useCallback(async () => {
     if (!confirmRewind) return
     try {
+      const targetMsg = messages.find(m => m.id === confirmRewind)
+
       const result = await rewindConversation(conv.id, confirmRewind)
       setMessages(result.messages)
+
+      if (targetMsg?.role === "user") {
+        setRewindDraft(targetMsg.content)
+        setInputKey(k => k + 1)
+      }
+
       setConfirmRewind(null)
     } catch (err) {
       setError((err as Error).message)
     }
-  }, [conv.id, confirmRewind, setMessages, setError])
+  }, [conv.id, confirmRewind, messages, setMessages, setError])
 
   const handleCyclePrev = useCallback(
     async (messageId: string) => {
@@ -296,9 +306,11 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
 
       <footer className="border-t">
         <MessageInput
+          key={inputKey}
           onSend={handleSend}
           onContinue={handleContinue}
           disabled={isStreaming || conv.status === "archived"}
+          rewindDraft={rewindDraft}
         />
       </footer>
 

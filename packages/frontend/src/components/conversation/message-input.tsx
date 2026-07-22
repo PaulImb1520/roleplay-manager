@@ -7,12 +7,14 @@ export function MessageInput({
   onSend,
   onContinue,
   disabled,
+  rewindDraft = "",
 }: {
   onSend: (content: string) => void
   onContinue?: () => void
   disabled: boolean
+  rewindDraft?: string
 }) {
-  const [content, setContent] = useState("")
+  const [content, setContent] = useState(rewindDraft)
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault()
