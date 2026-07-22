@@ -357,79 +357,78 @@ export function CharacterForm({ character }: Props) {
           <FieldGroup>
             <FieldContent>
               <p className="text-muted-foreground text-sm">
-                Las tarjetas definen la personalidad del personaje. Se ordenan por importancia. Arrastra o usa las flechas para reordenar.
+                Las tarjetas definen las características del personaje. Se ordenan por importancia. Arrastra o usa las flechas para reordenar.
               </p>
             </FieldContent>
 
-            {cards.length > 0 ? (
-              <ScrollArea className="max-h-96">
-                <div className="flex flex-col gap-3">
-                  {cards.map((card, idx) => (
-                    <div
-                      key={card.id}
-                      className="flex gap-3 rounded-lg border p-3"
-                    >
-                      <div className="flex flex-col gap-1">
+            <ScrollArea className="max-h-96">
+              <div className="flex flex-col gap-3">
+                <div className="sticky top-0 z-10 bg-popover py-1">
+                  <Button type="button" variant="outline" onClick={addCard} className="w-full">
+                    <PlusIcon />
+                    Añadir tarjeta
+                  </Button>
+                </div>
+                {cards.map((card, idx) => (
+                  <div
+                    key={card.id}
+                    className="flex gap-3 rounded-lg border p-3"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveCard(idx, "up")}
+                        disabled={idx === 0}
+                        className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
+                        aria-label="Subir"
+                      >
+                        <ArrowUpIcon className="size-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveCard(idx, "down")}
+                        disabled={idx === cards.length - 1}
+                        className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
+                        aria-label="Bajar"
+                      >
+                        <ArrowDownIcon className="size-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Input
+                        value={card.title}
+                        onChange={(e) => updateCard(idx, "title", e.target.value)}
+                        placeholder="Título de la tarjeta"
+                      />
+                      <Textarea
+                        value={card.content}
+                        onChange={(e) => updateCard(idx, "content", e.target.value)}
+                        placeholder="Contenido de la tarjeta"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            checked={card.active}
+                            onChange={(e) => updateCard(idx, "active", e.target.checked)}
+                          />
+                          Activa
+                        </label>
                         <button
                           type="button"
-                          onClick={() => moveCard(idx, "up")}
-                          disabled={idx === 0}
-                          className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
-                          aria-label="Subir"
+                          onClick={() => removeCard(idx)}
+                          className="ml-auto flex items-center gap-1 text-xs text-destructive hover:underline"
                         >
-                          <ArrowUpIcon className="size-4" />
+                          <Trash2Icon className="size-3" />
+                          Eliminar
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => moveCard(idx, "down")}
-                          disabled={idx === cards.length - 1}
-                          className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
-                          aria-label="Bajar"
-                        >
-                          <ArrowDownIcon className="size-4" />
-                        </button>
-                      </div>
-                      <div className="flex flex-1 flex-col gap-2">
-                        <Input
-                          value={card.title}
-                          onChange={(e) => updateCard(idx, "title", e.target.value)}
-                          placeholder="Título de la tarjeta"
-                        />
-                        <Textarea
-                          value={card.content}
-                          onChange={(e) => updateCard(idx, "content", e.target.value)}
-                          placeholder="Contenido de la tarjeta"
-                        />
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <input
-                              type="checkbox"
-                              checked={card.active}
-                              onChange={(e) => updateCard(idx, "active", e.target.checked)}
-                            />
-                            Activa
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => removeCard(idx)}
-                            className="ml-auto flex items-center gap-1 text-xs text-destructive hover:underline"
-                          >
-                            <Trash2Icon className="size-3" />
-                            Eliminar
-                          </button>
-                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <ScrollBar />
-              </ScrollArea>
-            ) : null}
-
-            <Button type="button" variant="outline" onClick={addCard}>
-              <PlusIcon />
-              Añadir tarjeta
-            </Button>
+                  </div>
+                ))}
+              </div>
+              <ScrollBar />
+            </ScrollArea>
           </FieldGroup>
         </TabsContent>
       </Tabs>
