@@ -4,14 +4,19 @@ import type { MessageDTO } from "@workspace/shared/types/message"
 import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
 
 import { Message } from "../../../domain/entities/message.entity"
+import { MemoryChangeProposal } from "../../../domain/entities/memory-change-proposal.entity"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
+import type { MemoryRepository } from "../../../domain/ports/memory.repository"
+import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
+import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+import { extractProposals } from "../../../lib/memory-proposal-extractor"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
@@ -45,11 +50,14 @@ export class RegenerateReplyUseCase {
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryChangeProposalRepository: MemoryChangeProposalRepository,
     private readonly promptContextBuilder: PromptContextBuilder,
     private readonly providerRegistry: ProviderRegistry,
     private readonly logger: Logger,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
+    private readonly applyAllMemoryChanges: ApplyAllMemoryChangesUseCase,
   ) {}
 
   async *execute(
@@ -112,10 +120,15 @@ export class RegenerateReplyUseCase {
       input.conversationId,
     )
 
+    const memories = await this.memoryRepository.findByConversationId(
+      input.conversationId,
+    )
+
     const context = await this.promptContextBuilder.build({
       characterVersion: characterResult.currentVersion,
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
+      memories,
     })
 
     let providerId = conversation.provider as ProviderId | null
@@ -193,10 +206,55 @@ export class RegenerateReplyUseCase {
       return
     }
 
-    const regenerated = message.regenerate(fullContent)
+    const { cleanedContent, proposals } = extractProposals(fullContent)
+
+    const regenerated = message.regenerate(cleanedContent)
     await this.messageRepository.update(regenerated)
 
     yield { type: "done", message: toMessageDTO(regenerated) }
+
+    // Save and auto-apply extracted proposals
+    if (proposals.length > 0) {
+      try {
+        const now = new Date()
+        const proposalEntities = proposals.map((raw) =>
+          MemoryChangeProposal.create({
+            id: randomUUIDv7(),
+            conversationId: input.conversationId,
+            operation: raw.operation,
+            targetMemoryId: raw.targetMemoryId ?? null,
+            actor: raw.actor,
+            title: raw.title,
+            description: raw.description,
+            priority: raw.priority ?? 5,
+            status: "pending",
+            createdAt: now,
+            processedAt: null,
+            processedBy: "user",
+          }),
+        )
+        await this.memoryChangeProposalRepository.createMany(proposalEntities)
+      } catch (error) {
+        this.logger.error("Failed to save memory proposals", error as Error, {
+          conversationId: input.conversationId,
+        })
+      }
+    }
+
+    if (conversation.memoryProposalMode === "auto" && proposals.length > 0) {
+      try {
+        await this.applyAllMemoryChanges.execute({
+          conversationId: input.conversationId,
+          processedBy: "system",
+        })
+      } catch (error) {
+        this.logger.error(
+          "Failed to auto-apply memory proposals",
+          error as Error,
+          { conversationId: input.conversationId },
+        )
+      }
+    }
   }
 }
 
