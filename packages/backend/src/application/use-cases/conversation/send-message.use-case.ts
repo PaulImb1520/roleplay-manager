@@ -4,17 +4,19 @@ import type { MessageDTO } from "@workspace/shared/types/message"
 import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
 
 import { Message } from "../../../domain/entities/message.entity"
+import { MemoryChangeProposal } from "../../../domain/entities/memory-change-proposal.entity"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
+import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
-import type { ProposeMemoryChangesUseCase } from "../memory/propose-memory-changes.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+import { extractProposals } from "../../../lib/memory-proposal-extractor"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
@@ -57,12 +59,12 @@ export class SendMessageUseCase {
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
     private readonly memoryRepository: MemoryRepository,
+    private readonly memoryChangeProposalRepository: MemoryChangeProposalRepository,
     private readonly promptContextBuilder: PromptContextBuilder,
     private readonly providerRegistry: ProviderRegistry,
     private readonly logger: Logger,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
-    private readonly proposeMemoryChanges: ProposeMemoryChangesUseCase,
     private readonly applyAllMemoryChanges: ApplyAllMemoryChangesUseCase,
   ) {}
 
@@ -221,11 +223,13 @@ export class SendMessageUseCase {
       return
     }
 
+    const { cleanedContent, proposals } = extractProposals(fullContent)
+
     const assistantMessage = Message.create({
       id: randomUUIDv7(),
       conversationId: input.conversationId,
       role: "assistant",
-      content: fullContent,
+      content: cleanedContent,
       position: nextPosition + 1,
       alternatives: [],
       alternativesCursor: 0,
@@ -236,22 +240,47 @@ export class SendMessageUseCase {
 
     yield { type: "done", message: toMessageDTO(assistantMessage) }
 
-    // Memory proposal generation (fire-and-forget from client perspective)
-    try {
-      const proposals = await this.proposeMemoryChanges.execute({
-        conversationId: input.conversationId,
-      })
+    // Save and auto-apply extracted proposals
+    if (proposals.length > 0) {
+      try {
+        const now = new Date()
+        const proposalEntities = proposals.map((raw) =>
+          MemoryChangeProposal.create({
+            id: randomUUIDv7(),
+            conversationId: input.conversationId,
+            operation: raw.operation,
+            targetMemoryId: raw.targetMemoryId ?? null,
+            actor: raw.actor,
+            title: raw.title,
+            description: raw.description,
+            priority: raw.priority ?? 5,
+            status: "pending",
+            createdAt: now,
+            processedAt: null,
+            processedBy: "user",
+          }),
+        )
+        await this.memoryChangeProposalRepository.createMany(proposalEntities)
+      } catch (error) {
+        this.logger.error("Failed to save memory proposals", error as Error, {
+          conversationId: input.conversationId,
+        })
+      }
+    }
 
-      if (conversation.memoryProposalMode === "auto" && proposals.length > 0) {
+    if (conversation.memoryProposalMode === "auto" && proposals.length > 0) {
+      try {
         await this.applyAllMemoryChanges.execute({
           conversationId: input.conversationId,
           processedBy: "system",
         })
+      } catch (error) {
+        this.logger.error(
+          "Failed to auto-apply memory proposals",
+          error as Error,
+          { conversationId: input.conversationId },
+        )
       }
-    } catch (error) {
-      this.logger.error("Memory proposal processing failed", error as Error, {
-        conversationId: input.conversationId,
-      })
     }
   }
 }

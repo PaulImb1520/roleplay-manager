@@ -195,16 +195,22 @@ const buildMemoryRepo = () => ({
   deleteById: async () => {},
 })
 
-import type { ProposeMemoryChangesUseCase } from "../memory/propose-memory-changes.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
-
-const proposeMemoryChanges = {
-  execute: async () => [],
-} as unknown as ProposeMemoryChangesUseCase
 
 const applyAllMemoryChanges = {
   execute: async () => [],
 } as unknown as ApplyAllMemoryChangesUseCase
+
+const memoryChangeProposalRepository = {
+  create: async (p: any) => p,
+  createMany: async () => {},
+  findById: async () => null,
+  findPendingByConversationId: async () => [],
+  findByConversationId: async () => [],
+  update: async (p: any) => p,
+  markProcessed: async () => {},
+  discardPendingByConversationId: async () => {},
+}
 
 describe("SendMessageUseCase", () => {
   beforeAll(() => {
@@ -217,12 +223,12 @@ describe("SendMessageUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildMemoryRepo(),
+      memoryChangeProposalRepository,
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
-      proposeMemoryChanges,
       applyAllMemoryChanges,
     )
 
@@ -243,12 +249,12 @@ describe("SendMessageUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildMemoryRepo(),
+      memoryChangeProposalRepository,
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
-      proposeMemoryChanges,
       applyAllMemoryChanges,
     )
 
@@ -268,12 +274,12 @@ describe("SendMessageUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildMemoryRepo(),
+      memoryChangeProposalRepository,
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
-      proposeMemoryChanges,
       applyAllMemoryChanges,
     )
 
@@ -297,12 +303,12 @@ describe("SendMessageUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildMemoryRepo(),
+      memoryChangeProposalRepository,
       buildPromptContextBuilder(),
       buildProviderRegistry(),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
-      proposeMemoryChanges,
       applyAllMemoryChanges,
     )
 
@@ -331,12 +337,12 @@ describe("SendMessageUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildMemoryRepo(),
+      memoryChangeProposalRepository,
       buildPromptContextBuilder(),
       buildProviderRegistry(true),
       buildLogger(),
       buildDefaultProvider(),
       providerInstanceRepository,
-      proposeMemoryChanges,
       applyAllMemoryChanges,
     )
 
