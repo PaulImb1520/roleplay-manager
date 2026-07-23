@@ -145,10 +145,12 @@ export function MessageBubble({
                   <Pencil className="size-4" />
                   Editar
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => onRewind?.(message.id)}>
-                  <History className="size-4" />
-                  Rebobinar
-                </ContextMenuItem>
+                {!isLastMessage && (
+                  <ContextMenuItem onClick={() => onRewind?.(message.id)}>
+                    <History className="size-4" />
+                    Rebobinar
+                  </ContextMenuItem>
+                )}
                 <ContextMenuItem onClick={() => navigator.clipboard.writeText(message.content)}>
                   <Copy className="size-4" />
                   Copiar
