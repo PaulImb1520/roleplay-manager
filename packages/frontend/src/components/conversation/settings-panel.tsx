@@ -354,7 +354,11 @@ export function SettingsPanel({
                           }}
                         >
                           <SelectTrigger id="provider-select">
-                            <SelectValue placeholder="Selecciona un proveedor" />
+                            <SelectValue placeholder="Selecciona un proveedor">
+                              {provider === "ollama"
+                                ? "Ollama (local)"
+                                : instances.find((i) => i.id === providerInstanceId)?.name}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ollama">Ollama (local)</SelectItem>
