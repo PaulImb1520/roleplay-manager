@@ -497,7 +497,7 @@ export function ProviderManager() {
                   placeholder="gpt-4o-mini, llama3:latest, ..."
                 />
                 <FieldDescription>
-                  Este proveedor no soporta descubrimiento automatico de modelos.
+                  Este proveedor no soporta descubrimiento automático de modelos.
                 </FieldDescription>
               </Field>
             ) : models && models.models.length > 0 ? (
@@ -578,7 +578,7 @@ export function ProviderManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuracion actual</CardTitle>
+          <CardTitle>Configuración actual</CardTitle>
         </CardHeader>
         <CardContent>
           {defaultConfig.provider === null ? (

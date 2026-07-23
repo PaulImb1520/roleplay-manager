@@ -45,7 +45,7 @@ export function ContextCard({
               value={summaryFrequency}
               onChange={(e) => onSummaryFrequencyChange(Number(e.target.value))}
             />
-            <FieldDescription>Cada cuantos mensajes se genera un resumen automatico.</FieldDescription>
+            <FieldDescription>Cada cuantos mensajes se genera un resumen automático.</FieldDescription>
           </Field>
         </FieldGroup>
       </CardContent>
