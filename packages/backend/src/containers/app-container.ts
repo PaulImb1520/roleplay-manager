@@ -43,7 +43,6 @@ import { RewindConversationUseCase } from "../application/use-cases/conversation
 import { ContinueConversationUseCase } from "../application/use-cases/conversation/continue-conversation.use-case"
 import { CycleAlternativeUseCase } from "../application/use-cases/conversation/cycle-alternative.use-case"
 import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
-import { ProposeMemoryChangesUseCase } from "../application/use-cases/memory/propose-memory-changes.use-case"
 import { ApplyMemoryChangesUseCase } from "../application/use-cases/memory/apply-memory-changes.use-case"
 import { ApplyAllMemoryChangesUseCase } from "../application/use-cases/memory/apply-all-memory-changes.use-case"
 import { CreateMemoryUseCase } from "../application/use-cases/memory/create-memory.use-case"
@@ -101,7 +100,6 @@ export interface AppContainer {
   validateProviderInstance: ValidateProviderInstanceUseCase
 
   // Memory
-  proposeMemoryChanges: ProposeMemoryChangesUseCase
   applyMemoryChanges: ApplyMemoryChangesUseCase
   applyAllMemoryChanges: ApplyAllMemoryChangesUseCase
   createMemory: CreateMemoryUseCase
@@ -148,17 +146,6 @@ export const buildContainer = ({
   const providerInstanceRepository: ProviderInstanceRepository =
     new DrizzleProviderInstanceRepository(database)
 
-  const proposeMemoryChanges = new ProposeMemoryChangesUseCase(
-    conversationRepository,
-    characterRepository,
-    memoryRepository,
-    memoryChangeProposalRepository,
-    providerRegistry,
-    providerInstanceRepository,
-    getDefaultProvider,
-    logger,
-  )
-
   const applyAllMemoryChanges = new ApplyAllMemoryChangesUseCase(
     memoryRepository,
     memoryChangeProposalRepository,
@@ -170,12 +157,12 @@ export const buildContainer = ({
     messageRepository,
     characterRepository,
     memoryRepository,
+    memoryChangeProposalRepository,
     promptContextBuilder,
     providerRegistry,
     logger,
     getDefaultProvider,
     providerInstanceRepository,
-    proposeMemoryChanges,
     applyAllMemoryChanges,
   )
 
@@ -183,22 +170,28 @@ export const buildContainer = ({
     conversationRepository,
     messageRepository,
     characterRepository,
+    memoryRepository,
+    memoryChangeProposalRepository,
     promptContextBuilder,
     providerRegistry,
     logger,
     getDefaultProvider,
     providerInstanceRepository,
+    applyAllMemoryChanges,
   )
 
   const continueConversation = new ContinueConversationUseCase(
     conversationRepository,
     messageRepository,
     characterRepository,
+    memoryRepository,
+    memoryChangeProposalRepository,
     promptContextBuilder,
     providerRegistry,
     logger,
     getDefaultProvider,
     providerInstanceRepository,
+    applyAllMemoryChanges,
   )
 
   return {
@@ -300,7 +293,6 @@ export const buildContainer = ({
       providerRegistry,
       logger,
     ),
-    proposeMemoryChanges,
     applyMemoryChanges: new ApplyMemoryChangesUseCase(
       memoryRepository,
       memoryChangeProposalRepository,
