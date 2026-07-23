@@ -30,6 +30,8 @@ import { ContextCard } from "./context-card"
 import { MemoryModeCard } from "../memory/memory-mode-card"
 import { ProposalList } from "../memory/proposal-list"
 import { MemoryList } from "../memory/memory-list"
+import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
+import { usePersistedStringList } from "@/lib/hooks/use-persisted-string-list"
 
 interface SettingsPanelProps {
   conversationId: string
@@ -87,6 +89,20 @@ export function SettingsPanel({
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
   const pendingCount = useMemoryStore((s) => s.proposals.length)
+
+  const [tab, setTab] = usePersistedValue({
+    scope: conversationId,
+    key: "settings-tab",
+    defaultValue: "modelo",
+    validate: (v): v is "modelo" | "historia" => v === "modelo" || v === "historia",
+  })
+
+  const [openSections, setOpenSections] = usePersistedStringList({
+    scope: conversationId,
+    key: "settings-accordion",
+    defaultValue: ["mode", "memories"],
+    validateItem: (v) => v === "mode" || v === "proposals" || v === "memories",
+  })
 
   const isDefaultValues =
     temperature === 0.7 && maxTokens === 2048 && topP === 0.9 &&
@@ -210,7 +226,7 @@ export function SettingsPanel({
     try {
       const updated = await updateConversationSettings(conversationId, settings)
       onSettingsChanged(updated)
-      toast.success("Configuracion guardada", {
+      toast.success("Configuración guardada", {
         description: "Los cambios se aplicaran en la proxima respuesta.",
       })
     } catch (e) {
@@ -257,13 +273,13 @@ export function SettingsPanel({
         {children ? <SheetTrigger render={children as ReactElement} /> : null}
         <SheetContent side="right" className="flex h-full flex-col w-full max-w-md sm:max-w-lg">
           <SheetHeader className="shrink-0 px-4 pt-4">
-            <SheetTitle>Configuracion del chat</SheetTitle>
+            <SheetTitle>Configuración del chat</SheetTitle>
             <SheetDescription>
               Ajusta los parametros de la conversación y del modelo.
             </SheetDescription>
           </SheetHeader>
 
-          <Tabs defaultValue="modelo" className="flex min-h-0 flex-col">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "modelo" | "historia")} className="flex min-h-0 flex-col">
             <div className="sticky top-0 z-10 bg-popover px-4 pt-2">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="historia">Historia</TabsTrigger>
@@ -273,12 +289,11 @@ export function SettingsPanel({
 
             <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
               <TabsContent value="historia" className="flex flex-col gap-4 mt-4">
-                <Accordion defaultValue={["mode", "memories"]} multiple>
+                <Accordion value={openSections} onValueChange={setOpenSections} multiple>
                   <AccordionItem value="mode">
                     <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
                     <AccordionContent>
                       <MemoryModeCard
-                        conversationId={conversationId}
                         current={current.memoryProposalMode}
                         onChange={handleMemoryModeChange}
                       />
