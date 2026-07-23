@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { FieldLegend, FieldSet } from "@workspace/ui/components/field"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -118,16 +118,12 @@ export function MemoryList({ conversationId }: MemoryListProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Memoria dinámica</CardTitle>
-          <CardAction>
-            <Button onClick={openCreate}>Crear memoria</Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+      <FieldSet>
+        <FieldLegend>Memoria dinámica</FieldLegend>
+        <Button onClick={openCreate} className="self-end mt-2">Crear memoria</Button>
+        <div className="flex flex-col gap-3">
           {memories.length === 0 ? (
-            <Empty>
+            <Empty className="p-2">
               <EmptyHeader>
                 <EmptyTitle>No hay memorias todavía</EmptyTitle>
                 <EmptyDescription>
@@ -151,8 +147,8 @@ export function MemoryList({ conversationId }: MemoryListProps) {
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </FieldSet>
 
       <Dialog open={dialogMode === "create" || dialogMode === "edit"} onOpenChange={(open) => { if (!open) { setDialogMode(null); resetForm() } }}>
         <DialogContent>

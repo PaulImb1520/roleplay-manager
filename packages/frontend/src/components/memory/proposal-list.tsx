@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { FieldLegend, FieldSet } from "@workspace/ui/components/field"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -117,7 +117,7 @@ export function ProposalList({ conversationId }: ProposalListProps) {
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle>No hay propuestas pendientes</EmptyTitle>
+          <EmptyTitle>No hay propuestas pendientes.</EmptyTitle>
         </EmptyHeader>
       </Empty>
     )
@@ -125,16 +125,12 @@ export function ProposalList({ conversationId }: ProposalListProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Propuestas pendientes</CardTitle>
-          {pendingProposals.length > 1 && (
-            <CardAction>
-              <Button onClick={handleApplyAll}>Aceptar todo</Button>
-            </CardAction>
-          )}
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+      <FieldSet>
+        <FieldLegend>Propuestas pendientes</FieldLegend>
+        {pendingProposals.length > 1 && (
+          <Button onClick={handleApplyAll} className="self-start">Aceptar todo</Button>
+        )}
+        <div className="flex flex-col gap-3">
           {pendingProposals.map((proposal) => (
             <div key={proposal.id} className="flex flex-col gap-2 rounded-lg border p-3">
               <div className="flex items-center gap-2">
@@ -158,8 +154,8 @@ export function ProposalList({ conversationId }: ProposalListProps) {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </FieldSet>
 
       <Dialog open={!!editingProposal} onOpenChange={(open) => { if (!open) setEditingProposal(null) }}>
         <DialogContent>

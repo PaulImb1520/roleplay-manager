@@ -1,64 +1,47 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@workspace/ui/components/field"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle } from "@workspace/ui/components/field"
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
-import { toast } from "@workspace/ui/components/sonner"
 import type { MemoryProposalMode } from "@workspace/shared/types/conversation"
-import { updateConversationSettings } from "@/lib/api/conversations"
 
 interface MemoryModeCardProps {
-  conversationId: string
   current: MemoryProposalMode
   onChange: (mode: MemoryProposalMode) => void
 }
 
-export function MemoryModeCard({ conversationId, current, onChange }: MemoryModeCardProps) {
-  const handleValueChange = async (value: string) => {
-    const mode = value as MemoryProposalMode
-    try {
-      await updateConversationSettings(conversationId, { memoryProposalMode: mode })
-      onChange(mode)
-      toast.success("Modo de memorias actualizado")
-    } catch {
-      toast.error("Error al actualizar el modo de memorias")
-    }
-  }
-
+export function MemoryModeCard({ current, onChange }: MemoryModeCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Modo de memorias</CardTitle>
-        <CardDescription>
+    <FieldGroup>
+      <FieldSet>
+        <FieldLegend variant="label">Modo de memorias</FieldLegend>
+        <FieldDescription>
           Controla cómo se gestionan las propuestas de memorias.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <RadioGroup value={current} onValueChange={handleValueChange}>
-          <FieldLabel>
-            <Field className="flex-row items-center gap-3">
-              <RadioGroupItem value="auto" />
+        </FieldDescription>
+        <RadioGroup value={current} onValueChange={(value) => onChange(value as MemoryProposalMode)}>
+          <FieldLabel htmlFor="mode-auto">
+            <Field orientation="horizontal">
               <FieldContent>
-                <span className="text-sm font-medium">Auto</span>
+                <FieldTitle>Auto</FieldTitle>
                 <FieldDescription>
                   El sistema acepta y aplica automáticamente las propuestas de memorias después de cada mensaje
                 </FieldDescription>
               </FieldContent>
+              <RadioGroupItem value="auto" id="mode-auto" />
             </Field>
           </FieldLabel>
-          <FieldLabel>
-            <Field className="flex-row items-center gap-3">
-              <RadioGroupItem value="manual" />
+          <FieldLabel htmlFor="mode-manual">
+            <Field orientation="horizontal">
               <FieldContent>
-                <span className="text-sm font-medium">Manual</span>
+                <FieldTitle>Manual</FieldTitle>
                 <FieldDescription>
                   Tú revisas y decides aceptar, editar o descartar cada propuesta
                 </FieldDescription>
               </FieldContent>
+              <RadioGroupItem value="manual" id="mode-manual" />
             </Field>
           </FieldLabel>
         </RadioGroup>
-      </CardContent>
-    </Card>
+      </FieldSet>
+    </FieldGroup>
   )
 }
