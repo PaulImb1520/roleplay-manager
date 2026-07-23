@@ -1,0 +1,1 @@
+ALTER TABLE `memory_change_proposals` DROP COLUMN `reason`;
