@@ -64,7 +64,7 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
     systemParts.push("")
     systemParts.push('```memory_proposals')
     systemParts.push('[')
-    systemParts.push('  { "operation": "CREATE", "actor": "...", "title": "...", "description": "...", "priority": 5, "reason": "..." }')
+    systemParts.push('  { "operation": "CREATE", "actor": "...", "title": "...", "description": "...", "priority": 5 }')
     systemParts.push(']')
     systemParts.push('```')
     systemParts.push("")

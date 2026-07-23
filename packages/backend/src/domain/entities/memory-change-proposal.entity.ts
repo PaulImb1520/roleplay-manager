@@ -11,7 +11,6 @@ export interface MemoryChangeProposalProps {
   title: string
   description: string
   priority: number
-  reason: string | null
   status: ProposalStatus
   createdAt: Date
   processedAt: Date | null
@@ -41,7 +40,6 @@ export class MemoryChangeProposal {
   get title(): string { return this.props.title }
   get description(): string { return this.props.description }
   get priority(): number { return this.props.priority }
-  get reason(): string | null { return this.props.reason }
   get status(): ProposalStatus { return this.props.status }
   get createdAt(): Date { return this.props.createdAt }
   get processedAt(): Date | null { return this.props.processedAt }

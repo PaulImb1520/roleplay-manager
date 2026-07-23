@@ -7,7 +7,6 @@ export type MemoryChangeProposalDTO = {
   title: string
   description: string
   priority: number
-  reason: string | null
   status: "pending" | "applied" | "discarded"
   createdAt: string
   processedAt: string | null

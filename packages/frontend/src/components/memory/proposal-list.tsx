@@ -142,9 +142,6 @@ export function ProposalList({ conversationId }: ProposalListProps) {
               </div>
               <span className="text-sm font-semibold">{proposal.title}</span>
               <p className="text-sm text-muted-foreground">{proposal.description}</p>
-              {proposal.reason && (
-                <p className="text-sm italic text-muted-foreground">{proposal.reason}</p>
-              )}
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => handleApply(proposal)}>Aceptar</Button>
                 <Button size="sm" variant="outline" onClick={() => openEditDialog(proposal)}>
