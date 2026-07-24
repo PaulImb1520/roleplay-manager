@@ -124,7 +124,6 @@ export function MemoryList({ conversationId }: MemoryListProps) {
   return (
     <>
       <FieldSet>
-        <FieldLegend>Memoria dinámica</FieldLegend>
         <Button onClick={openCreate} className="self-end mt-2">Crear memoria</Button>
         <div className="flex flex-col gap-3">
           {memories.length === 0 ? (
