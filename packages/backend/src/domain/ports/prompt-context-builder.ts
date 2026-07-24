@@ -9,5 +9,6 @@ export interface PromptContextBuilder {
     messages: Message[]
     recentMessageCount: number
     memories?: Memory[]
+    enableMemoryProposalTool?: boolean
   }): Promise<PromptContext>
 }

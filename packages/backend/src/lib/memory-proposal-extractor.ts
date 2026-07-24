@@ -55,3 +55,56 @@ export function extractProposals(content: string): ExtractedProposals {
     return { cleanedContent, proposals: [], foundBlock: true }
   }
 }
+
+export interface CleanStreamState {
+  fullContent: string
+}
+
+export async function* createCleanStream(
+  stream: AsyncIterable<{ content?: string }>,
+  state: CleanStreamState,
+): AsyncGenerator<{ content: string }> {
+  let lastYieldedPos = 0
+  let blockStart = -1
+  let blockEnd = -1
+
+  for await (const chunk of stream) {
+    if (chunk.content) {
+      state.fullContent += chunk.content
+    }
+    if (blockEnd === -1) {
+      if (blockStart === -1) {
+        blockStart = state.fullContent.indexOf("```memory_proposals", lastYieldedPos)
+      }
+      if (blockStart !== -1) {
+        blockEnd = state.fullContent.indexOf("```", blockStart + 3)
+      }
+
+      if (blockStart !== -1 && blockEnd !== -1) {
+        const afterBlock = state.fullContent.slice(blockEnd + 3)
+        if (afterBlock) {
+          yield { content: afterBlock }
+        }
+        lastYieldedPos = state.fullContent.length
+      } else if (blockStart !== -1) {
+        const beforeBlock = state.fullContent.slice(lastYieldedPos, blockStart)
+        if (beforeBlock) {
+          yield { content: beforeBlock }
+        }
+        lastYieldedPos = blockStart
+      } else {
+        const newContent = state.fullContent.slice(lastYieldedPos)
+        if (newContent) {
+          yield { content: newContent }
+        }
+        lastYieldedPos = state.fullContent.length
+      }
+    } else {
+      const newContent = state.fullContent.slice(lastYieldedPos)
+      if (newContent) {
+        yield { content: newContent }
+      }
+      lastYieldedPos = state.fullContent.length
+    }
+  }
+}
