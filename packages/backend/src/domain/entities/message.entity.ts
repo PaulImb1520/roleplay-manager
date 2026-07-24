@@ -19,6 +19,11 @@ export class Message {
     return new Message(props)
   }
 
+  static fromPersistence(props: MessageProps): Message {
+    if (!["user", "assistant"].includes(props.role)) throw new Error("Invalid role")
+    return new Message(props)
+  }
+
   get id(): string { return this.props.id }
   get conversationId(): string { return this.props.conversationId }
   get role(): "user" | "assistant" { return this.props.role }
@@ -59,7 +64,7 @@ export class Message {
   }
 
   regenerate(newContent: string): Message {
-    return new Message({
+    return Message.create({
       ...this.props,
       alternatives: [this.content, ...this.props.alternatives],
       content: newContent,
@@ -79,7 +84,7 @@ export class Message {
 
   withContent(newContent: string): Message {
     const accepted = this.accept()
-    return new Message({
+    return Message.create({
       ...accepted.props,
       content: newContent,
       editedAt: new Date(),

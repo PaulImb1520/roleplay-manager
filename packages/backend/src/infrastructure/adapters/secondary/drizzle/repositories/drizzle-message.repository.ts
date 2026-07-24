@@ -8,7 +8,7 @@ import { messages } from "../schema"
 type MessageRow = typeof messages.$inferSelect
 
 const toMessage = (row: MessageRow): Message =>
-  Message.create({
+  Message.fromPersistence({
     id: row.id,
     conversationId: row.conversationId,
     role: row.role as "user" | "assistant",
