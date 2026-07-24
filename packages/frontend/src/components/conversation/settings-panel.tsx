@@ -88,7 +88,7 @@ export function SettingsPanel({
 
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
-  const pendingCount = useMemoryStore((s) => s.proposals.length)
+  const pendingCount = useMemoryStore((s) => s.proposals.filter((p) => p.status === "pending").length)
 
   const [tab, setTab] = usePersistedValue({
     scope: conversationId,
