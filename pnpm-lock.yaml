@@ -111,6 +111,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.15)
+      '@workspace/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@workspace/ui':
         specifier: workspace:*
         version: link:../ui
