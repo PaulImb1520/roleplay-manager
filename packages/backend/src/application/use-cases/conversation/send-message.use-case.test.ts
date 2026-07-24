@@ -682,4 +682,121 @@ describe("SendMessageUseCase — memory proposal flow", () => {
     expect(savedAssistantContents[0]).toBe("Hola,  mundo")
     expect(savedAssistantContents[0].includes("memory_proposals")).toBe(false)
   })
+
+  it("filtra OOC de mensajes previos y preserva el del ultimo mensaje del usuario", async () => {
+    const builtContexts: PromptContext[] = []
+
+    const existingMessagesWithOoc = [
+      Message.create({
+        id: "msg-0",
+        conversationId: "conv-1",
+        role: "user",
+        content: "Mensaje viejo //instruccion vieja//",
+        position: 0,
+        alternatives: [],
+        alternativesCursor: 0,
+        createdAt: now,
+        editedAt: null,
+      }),
+      Message.create({
+        id: "msg-1",
+        conversationId: "conv-1",
+        role: "assistant",
+        content: "OK",
+        position: 1,
+        alternatives: [],
+        alternativesCursor: 0,
+        createdAt: now,
+        editedAt: null,
+      }),
+    ]
+
+    const buildMessageRepoWithOocHistory = (): MessageRepository => ({
+      create: async (m) => m,
+      findByConversationId: async () => existingMessagesWithOoc,
+      findById: async () => null,
+      findLastByConversationId: async () => null,
+      update: async (m) => m,
+      deleteById: async () => {},
+      deleteAfterPosition: async () => {},
+      clearAlternatives: async () => {},
+    })
+
+    const promptContextBuilder: PromptContextBuilder = {
+      build: async (params: any) => {
+        const messages = params.messages as Array<{ role: "user" | "assistant"; content: string }>
+        const lastUserIdx = params.filterOocFromHistory
+          ? messages.map((m) => m.role).lastIndexOf("user")
+          : -1
+        const ctxMessages = messages.map((m, idx) => {
+          if (
+            params.filterOocFromHistory &&
+            m.role === "user" &&
+            idx !== lastUserIdx
+          ) {
+            const cleaned = m.content.replace(/\/\/[^\n]*?\/\//g, "")
+            return { role: m.role, content: cleaned.trim() }
+          }
+          return { role: m.role, content: m.content }
+        })
+        const ctx: PromptContext = {
+          systemPrompt: params.enableMemoryProposalTool
+            ? "system sin bloque markdown"
+            : "system con bloque markdown",
+          messages: ctxMessages,
+        }
+        builtContexts.push(ctx)
+        return ctx
+      },
+    }
+
+    const useCase = new SendMessageUseCase(
+      buildConversationRepo(),
+      buildMessageRepoWithOocHistory(),
+      buildCharacterRepo(),
+      buildMemoryRepo(),
+      buildProposalRepoForOoc(),
+      promptContextBuilder,
+      buildProviderRegistry(),
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      buildApplyAllForOoc(),
+    )
+
+    const gen = useCase.execute({
+      conversationId: "conv-1",
+      content: "Mensaje nuevo //instruccion nueva//",
+    })
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(builtContexts).toHaveLength(1)
+    const ctx = builtContexts[0]
+    const oldUserMsg = ctx.messages.find((m) => m.content.includes("Mensaje viejo"))
+    expect(oldUserMsg).toBeDefined()
+    expect(oldUserMsg!.content).not.toContain("instruccion vieja")
+    const newUserMsg = ctx.messages[ctx.messages.length - 1]
+    expect(newUserMsg.content).toBe("Mensaje nuevo //instruccion nueva//")
+  })
 })
+
+function buildProposalRepoForOoc(): MemoryChangeProposalRepository {
+  return {
+    create: async (p: any) => p,
+    createMany: async () => {},
+    findById: async () => null,
+    findPendingByConversationId: async () => [],
+    findByConversationId: async () => [],
+    update: async (p: any) => p,
+    markProcessed: async () => {},
+    discardPendingByConversationId: async () => {},
+  }
+}
+
+function buildApplyAllForOoc(): ApplyAllMemoryChangesUseCase {
+  return {
+    execute: async () => [],
+  } as unknown as ApplyAllMemoryChangesUseCase
+}
