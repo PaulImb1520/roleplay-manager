@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ConversationDetail } from "@workspace/shared/types/conversation"
 import {
   MessageScrollerProvider,
@@ -7,6 +7,7 @@ import {
   MessageScrollerContent,
   MessageScrollerItem,
 } from "@workspace/ui/components/message-scroller"
+import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { SettingsIcon } from "lucide-react"
 import {
@@ -62,15 +63,23 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
 
   const loadMemories = useMemoryStore((s) => s.loadMemories)
   const loadProposals = useMemoryStore((s) => s.loadProposals)
+  const proposals = useMemoryStore((s) => s.proposals)
+
+  const pendingCount = useMemo(
+    () => proposals.filter((p) => p.status === "pending").length,
+    [proposals],
+  )
 
   const initialized = useRef(false)
 
   useEffect(() => {
     if (!initialized.current) {
       setMessages(conv.messages)
+      loadMemories(conv.id)
+      loadProposals(conv.id)
       initialized.current = true
     }
-  }, [conv, setMessages])
+  }, [conv, setMessages, loadMemories, loadProposals])
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -235,12 +244,17 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           ) : null}
         </div>
         <div className="flex flex-col">
-          <h2 className="text-sm font-semibold">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
             {conv.title ?? conv.characterName}
+            {pendingCount > 0 && (
+              <Badge variant="destructive">{pendingCount}</Badge>
+            )}
           </h2>
-          <p className="text-xs text-muted-foreground">
-            {conv.characterName} &middot;{" "}
-            {conv.status === "active" ? "Activa" : "Archivada"}
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            {conv.characterName}
+            <Badge variant={conv.status === "active" ? "default" : "secondary"}>
+              {conv.status === "active" ? "Activa" : "Archivada"}
+            </Badge>
           </p>
         </div>
         <div className="ml-auto">
