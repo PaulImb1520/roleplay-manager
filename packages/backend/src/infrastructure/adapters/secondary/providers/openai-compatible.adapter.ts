@@ -109,23 +109,53 @@ export class OpenAICompatibleAdapter implements ProviderPort {
       ...context.messages,
     ]
 
-    try {
-      const stream = await this.client.chat.completions.create({
-        model: model as string,
-        messages,
-        stream: true,
-        temperature: options?.temperature,
-        max_tokens: options?.maxTokens,
-        top_p: options?.topP,
-        frequency_penalty: options?.frequencyPenalty,
-        presence_penalty: options?.presencePenalty,
-        stop: options?.stopSequences,
-      })
+    const hasTools = !!(options?.tools && options.tools.length > 0)
 
-      for await (const chunk of stream) {
-        const delta = chunk.choices?.[0]?.delta?.content
-        if (delta) {
-          yield { content: delta }
+    const stream = await this.client.chat.completions.create({
+      model: model as string,
+      messages,
+      stream: true,
+      temperature: options?.temperature,
+      max_tokens: options?.maxTokens,
+      top_p: options?.topP,
+      frequency_penalty: options?.frequencyPenalty,
+      presence_penalty: options?.presencePenalty,
+      stop: options?.stopSequences,
+      ...(hasTools
+        ? { tools: options!.tools, tool_choice: options!.toolChoice ?? "auto" }
+        : {}),
+    })
+
+    try {
+      for await (const chunk of stream as AsyncIterable<{
+        choices?: Array<{
+          delta?: {
+            content?: string | null
+            tool_calls?: Array<{
+              index: number
+              id?: string
+              function?: { name?: string; arguments?: string }
+            }>
+          }
+        }>
+      }>) {
+        const choice = chunk.choices?.[0]
+        const delta = choice?.delta
+        if (!delta) continue
+
+        const content = delta.content ?? undefined
+        const toolCallDeltas = delta.tool_calls?.map((tc) => ({
+          index: tc.index,
+          id: tc.id,
+          functionName: tc.function?.name,
+          argumentsDelta: tc.function?.arguments,
+        }))
+
+        if (content || (toolCallDeltas && toolCallDeltas.length > 0)) {
+          yield {
+            content,
+            toolCalls: toolCallDeltas && toolCallDeltas.length > 0 ? toolCallDeltas : undefined,
+          }
         }
       }
     } catch (error) {
