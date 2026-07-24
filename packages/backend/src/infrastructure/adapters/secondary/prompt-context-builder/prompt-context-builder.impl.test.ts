@@ -219,4 +219,80 @@ describe("PromptContextBuilderImpl", () => {
     expect(result.systemPrompt).not.toContain("Propuestas de modificación de memoria")
     expect(result.systemPrompt).not.toContain("```memory_proposals")
   })
+
+  it("filtra OOC de mensajes del usuario previos al ultimo cuando filterOocFromHistory=true", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [
+        createMessage("user", "Hola //primera instruccion//", 0),
+        createMessage("assistant", "Respuesta", 1),
+        createMessage("user", "*Salgo.* //Crea memorias//", 2),
+      ],
+      recentMessageCount: 10,
+      filterOocFromHistory: true,
+    })
+
+    expect(result.messages[0].content).toBe("Hola")
+    expect(result.messages[0].content).not.toContain("primera instruccion")
+    expect(result.messages[1].content).toBe("Respuesta")
+    expect(result.messages[2].content).toBe("*Salgo.* //Crea memorias//")
+    expect(result.messages[2].content).toContain("Crea memorias")
+  })
+
+  it("preserva el OOC del ultimo mensaje del usuario intacto", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [
+        createMessage("user", "Mensaje viejo //instruccion vieja//", 0),
+        createMessage("assistant", "OK", 1),
+        createMessage("user", "Mensaje nuevo //instruccion nueva//", 2),
+      ],
+      recentMessageCount: 10,
+      filterOocFromHistory: true,
+    })
+
+    const lastUser = result.messages[result.messages.length - 1]
+    expect(lastUser.content).toBe("Mensaje nuevo //instruccion nueva//")
+  })
+
+  it("incluye salvaguarda OOC en el systemPrompt cuando filterOocFromHistory=true", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+      filterOocFromHistory: true,
+    })
+
+    expect(result.systemPrompt).toContain("Meta-instrucciones del usuario (OOC)")
+    expect(result.systemPrompt).toContain("//...//")
+  })
+
+  it("no incluye salvaguarda OOC por default", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).not.toContain("Meta-instrucciones del usuario (OOC)")
+  })
+
+  it("no filtra OOC de mensajes del assistant", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [
+        createMessage("user", "Hola //meta//", 0),
+        createMessage("assistant", "Respuesta //mi propia nota//", 1),
+      ],
+      recentMessageCount: 10,
+      filterOocFromHistory: true,
+    })
+
+    expect(result.messages[1].content).toBe("Respuesta //mi propia nota//")
+  })
 })

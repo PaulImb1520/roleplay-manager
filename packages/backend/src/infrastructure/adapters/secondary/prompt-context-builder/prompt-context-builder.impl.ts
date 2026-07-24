@@ -1,3 +1,5 @@
+import { parseOoc } from "@workspace/shared/lib/ooc-parser"
+
 import type { CharacterVersion } from "../../../../domain/entities/character-version.entity"
 import type { Message } from "../../../../domain/entities/message.entity"
 import type { Memory } from "../../../../domain/entities/memory.entity"
@@ -11,6 +13,7 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
     recentMessageCount: number
     memories?: Memory[]
     enableMemoryProposalTool?: boolean
+    filterOocFromHistory?: boolean
   }): Promise<PromptContext> {
     const {
       characterVersion: cv,
@@ -18,6 +21,7 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
       recentMessageCount,
       memories,
       enableMemoryProposalTool = false,
+      filterOocFromHistory = false,
     } = params
 
     const systemParts: string[] = [
@@ -89,14 +93,42 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
     systemParts.push(`Ejemplo del estilo de ${cv.name}:`)
     systemParts.push(`"${cv.greeting}"`)
 
+    if (filterOocFromHistory) {
+      systemParts.push("")
+      systemParts.push(`## Meta-instrucciones del usuario (OOC)`)
+      systemParts.push(
+        "El usuario puede incluir meta-instrucciones entre `//...//` (out-of-character) en sus mensajes, normalmente al final. Estas son instrucciones para ti, no parte del roleplay.",
+      )
+      systemParts.push(
+        "- Cuando el último mensaje del usuario contenga una meta-instrucción, ejecútala (por ejemplo, `//crea memorias con lo que sabes//` significa que debes llamar a la herramienta `propose_memory_changes`).",
+      )
+      systemParts.push(
+        "- No respondas a las meta-instrucciones en personaje: no narres que el personaje 'asintió' o 'leyó la nota'. Ejecuta la instrucción silenciosamente y, si tiene sentido narrativo, continúa el roleplay después.",
+      )
+      systemParts.push(
+        "- Las meta-instrucciones de mensajes anteriores ya fueron filtradas; solo verás OOC en el último mensaje del usuario.",
+      )
+    }
+
     const systemPrompt = systemParts.join("\n")
 
     const recentMessages = messages.slice(-recentMessageCount)
+    const lastUserIdx = filterOocFromHistory
+      ? recentMessages.map((m) => m.role).lastIndexOf("user")
+      : -1
 
-    const contextMessages = recentMessages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }))
+    const contextMessages = recentMessages.map((m, idx) => {
+      if (filterOocFromHistory && m.role === "user" && idx !== lastUserIdx) {
+        return {
+          role: "user" as const,
+          content: parseOoc(m.content).cleanedContent,
+        }
+      }
+      return {
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }
+    })
 
     return {
       systemPrompt,

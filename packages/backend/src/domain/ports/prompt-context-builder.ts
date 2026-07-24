@@ -10,5 +10,6 @@ export interface PromptContextBuilder {
     recentMessageCount: number
     memories?: Memory[]
     enableMemoryProposalTool?: boolean
+    filterOocFromHistory?: boolean
   }): Promise<PromptContext>
 }
