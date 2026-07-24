@@ -14,6 +14,7 @@ import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
 import type { PromptContext, StreamChunk } from "../../../domain/value-objects/prompt-context"
 import type { ProviderId } from "@workspace/shared/types/provider"
+import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 
 const now = new Date()
 
@@ -357,5 +358,328 @@ describe("SendMessageUseCase", () => {
     }
 
     expect(hasError).toBe(true)
+  })
+})
+
+describe("SendMessageUseCase — memory proposal flow", () => {
+  const LLM_CHUNKS_WITH_PROPOSALS = [
+    "Hola ",
+    "Alice!\n\n",
+    "```memory_proposals\n",
+    "[\n",
+    '  { "operation": "CREATE", "actor": "Alice", "title": "Estado animo", "description": "Alice esta feliz", "priority": 3 }\n',
+    "]\n",
+    "```",
+  ]
+
+  const buildProviderWithProposals = (): ProviderRegistry => ({
+    listRegistered: () => ["ollama"],
+    createAdapter: vi.fn(),
+    getAdapter: async () => ({
+      validateConnection: async () => "available" as const,
+      listModels: async () => ({ models: [], manualEntryRequired: false }),
+      generateStreaming: function (): AsyncIterable<StreamChunk> {
+        return {
+          [Symbol.asyncIterator]: () => {
+            let i = 0
+            return {
+              next: async () => {
+                if (i < LLM_CHUNKS_WITH_PROPOSALS.length) {
+                  return { value: { content: LLM_CHUNKS_WITH_PROPOSALS[i++] }, done: false } as const
+                }
+                return { value: undefined, done: true } as const
+              },
+            }
+          },
+        }
+      },
+    }),
+  })
+
+  it("extrae propuestas, limpia el contenido y lo guarda en BD", async () => {
+    const savedProposals: any[] = []
+    const savedAssistantContents: string[] = []
+
+    const buildMessageRepoCustom = (): MessageRepository => ({
+      create: async (m: any) => {
+        if (m.role === "assistant") savedAssistantContents.push(m.content)
+        return m
+      },
+      findByConversationId: async () => existingMessages,
+      findById: async () => null,
+      findLastByConversationId: async () => null,
+      update: async (m) => m,
+      deleteById: async () => {},
+      deleteAfterPosition: async () => {},
+      clearAlternatives: async () => {},
+    })
+
+    const proposalRepo: MemoryChangeProposalRepository = {
+      create: async (p: any) => p,
+      createMany: async (entities: any[]) => {
+        entities.forEach((e) => savedProposals.push(e))
+      },
+      findById: async () => null,
+      findPendingByConversationId: async () =>
+        savedProposals.filter((p: any) => p.status === "pending"),
+      findByConversationId: async () => [],
+      update: async (p: any) => p,
+      markProcessed: async () => {},
+      discardPendingByConversationId: async () => {},
+    }
+
+    const applyAll = {
+      execute: async () => [],
+    } as unknown as ApplyAllMemoryChangesUseCase
+
+    const useCase = new SendMessageUseCase(
+      buildConversationRepo(),
+      buildMessageRepoCustom(),
+      buildCharacterRepo(),
+      buildMemoryRepo(),
+      proposalRepo,
+      buildPromptContextBuilder(),
+      buildProviderWithProposals(),
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      applyAll,
+    )
+
+    const gen = useCase.execute({
+      conversationId: "conv-1",
+      content: "Hola",
+    })
+
+    const chunks: string[] = []
+    for await (const event of gen) {
+      if (event.type === "chunk") {
+        chunks.push(event.content)
+      }
+    }
+
+    expect(savedAssistantContents).toHaveLength(1)
+    expect(savedAssistantContents[0].includes("memory_proposals")).toBe(false)
+
+    expect(savedProposals).toHaveLength(1)
+    expect(savedProposals[0].operation).toBe("CREATE")
+    expect(savedProposals[0].actor).toBe("Alice")
+    expect(savedProposals[0].status).toBe("pending")
+  })
+
+  it("aplica automaticamente las propuestas en modo auto", async () => {
+    const savedProposals: any[] = []
+    const createdMemories: any[] = []
+
+    const buildMemoryRepoWithTrack = () => ({
+      findById: async () => null,
+      findByConversationId: async () => [],
+      create: async (m: any) => {
+        createdMemories.push(m)
+        return m
+      },
+      update: async (m: any) => m,
+      deleteById: async () => {},
+    })
+
+    const proposalRepo: MemoryChangeProposalRepository = {
+      create: async (p: any) => p,
+      createMany: async (entities: any[]) => {
+        entities.forEach((e) => savedProposals.push(e))
+      },
+      findById: async () => null,
+      findPendingByConversationId: async () =>
+        savedProposals.filter((p: any) => p.status === "pending"),
+      findByConversationId: async () => [],
+      update: async (p: any) => p,
+      markProcessed: async (id: string, status: any, processedBy: any) => {
+        const idx = savedProposals.findIndex((sp: any) => sp.id === id)
+        if (idx !== -1) {
+          savedProposals[idx] = savedProposals[idx].markProcessed(processedBy as any, status as any)
+        }
+      },
+      discardPendingByConversationId: async () => {},
+    }
+
+    const applyAll = {
+      execute: async (input: {
+        conversationId: string
+        processedBy: string
+      }) => {
+        const pending = savedProposals.filter(
+          (p: any) => p.status === "pending",
+        )
+        for (const proposal of pending) {
+          createdMemories.push({
+            id: proposal.id,
+            actor: proposal.actor,
+            title: proposal.title,
+          })
+          await (proposalRepo.markProcessed as any)(
+            proposal.id,
+            "applied",
+            input.processedBy,
+          )
+        }
+        return createdMemories.map((m: any) => ({
+          id: m.id,
+          conversationId: input.conversationId,
+          actor: m.actor,
+          title: m.title,
+          description: "",
+          priority: 5,
+          createdBy: "assistant",
+          updatedBy: "system",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+      },
+    } as unknown as ApplyAllMemoryChangesUseCase
+
+    const useCase = new SendMessageUseCase(
+      buildConversationRepo(),
+      buildMessageRepo(),
+      buildCharacterRepo(),
+      buildMemoryRepoWithTrack(),
+      proposalRepo,
+      buildPromptContextBuilder(),
+      buildProviderWithProposals(),
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      applyAll,
+    )
+
+    const gen = useCase.execute({
+      conversationId: "conv-1",
+      content: "Hola",
+    })
+
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(savedProposals).toHaveLength(1)
+    expect(savedProposals[0].status).toBe("applied")
+    expect(createdMemories).toHaveLength(1)
+    expect(createdMemories[0].actor).toBe("Alice")
+    expect(createdMemories[0].title).toBe("Estado animo")
+  })
+
+  it("extrae propuestas desde tool calls nativos y omite el bloque markdown del systemPrompt", async () => {
+    const savedProposals: any[] = []
+    const savedAssistantContents: string[] = []
+    const buildSystemPrompts: string[] = []
+
+    const buildMessageRepoCustom = (): MessageRepository => ({
+      create: async (m: any) => {
+        if (m.role === "assistant") savedAssistantContents.push(m.content)
+        return m
+      },
+      findByConversationId: async () => existingMessages,
+      findById: async () => null,
+      findLastByConversationId: async () => null,
+      update: async (m) => m,
+      deleteById: async () => {},
+      deleteAfterPosition: async () => {},
+      clearAlternatives: async () => {},
+    })
+
+    const proposalRepo: MemoryChangeProposalRepository = {
+      create: async (p: any) => p,
+      createMany: async (entities: any[]) => {
+        entities.forEach((e) => savedProposals.push(e))
+      },
+      findById: async () => null,
+      findPendingByConversationId: async () =>
+        savedProposals.filter((p: any) => p.status === "pending"),
+      findByConversationId: async () => [],
+      update: async (p: any) => p,
+      markProcessed: async () => {},
+      discardPendingByConversationId: async () => {},
+    }
+
+    const promptContextBuilder: PromptContextBuilder = {
+      build: async (params: any) => {
+        buildSystemPrompts.push(params.enableMemoryProposalTool ? "ON" : "OFF")
+        return {
+          systemPrompt: params.enableMemoryProposalTool
+            ? "Eres un personaje. Sin bloque markdown."
+            : "Eres un personaje. ```memory_proposals ... ```",
+          messages: [{ role: "user", content: "Hola" }],
+        }
+      },
+    }
+
+    const buildProviderWithToolCalls = (): ProviderRegistry => ({
+      listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
+      getAdapter: async () => ({
+        validateConnection: async () => "available" as const,
+        listModels: async () => ({ models: [], manualEntryRequired: false }),
+        generateStreaming: function (): AsyncIterable<StreamChunk> {
+          return {
+            [Symbol.asyncIterator]: () => {
+              const chunks: StreamChunk[] = [
+                { content: "Hola, " },
+                {
+                  toolCalls: [
+                    {
+                      index: 0,
+                      id: "c1",
+                      functionName: "propose_memory_changes",
+                      argumentsDelta: '{"operation":"CREATE","actor":"Alice","title":"Estado","description":"Feliz","priority":3}',
+                    },
+                  ],
+                },
+                { content: " mundo" },
+              ]
+              let i = 0
+              return {
+                next: async () => {
+                  if (i < chunks.length) {
+                    return { value: chunks[i++], done: false } as const
+                  }
+                  return { value: undefined, done: true } as const
+                },
+              }
+            },
+          }
+        },
+      }),
+    })
+
+    const applyAll = {
+      execute: async () => [],
+    } as unknown as ApplyAllMemoryChangesUseCase
+
+    const useCase = new SendMessageUseCase(
+      buildConversationRepo(),
+      buildMessageRepoCustom(),
+      buildCharacterRepo(),
+      buildMemoryRepo(),
+      proposalRepo,
+      promptContextBuilder,
+      buildProviderWithToolCalls(),
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      applyAll,
+    )
+
+    const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(buildSystemPrompts[0]).toBe("ON")
+    expect(buildSystemPrompts[0]).not.toContain("memory_proposals")
+    expect(savedProposals).toHaveLength(1)
+    expect(savedProposals[0].operation).toBe("CREATE")
+    expect(savedProposals[0].actor).toBe("Alice")
+    expect(savedProposals[0].title).toBe("Estado")
+    expect(savedProposals[0].priority).toBe(3)
+    expect(savedAssistantContents[0]).toBe("Hola,  mundo")
+    expect(savedAssistantContents[0].includes("memory_proposals")).toBe(false)
   })
 })
