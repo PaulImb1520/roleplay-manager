@@ -1,0 +1,247 @@
+import { describe, it, expect, vi } from "vitest"
+
+import { ContinueConversationUseCase } from "./continue-conversation.use-case"
+import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
+import type { MessageRepository } from "../../../domain/ports/message.repository"
+import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
+import type { ProviderRegistry } from "../../../domain/ports/provider.port"
+import type { Logger } from "../../../domain/ports/logger.port"
+import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
+import { Conversation } from "../../../domain/entities/conversation.entity"
+import { Message } from "../../../domain/entities/message.entity"
+import { Character } from "../../../domain/entities/character.entity"
+import { CharacterVersion } from "../../../domain/entities/character-version.entity"
+import type { StreamChunk } from "../../../domain/value-objects/prompt-context"
+import type { ProviderId } from "@workspace/shared/types/provider"
+import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
+import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+import type { MemoryRepository } from "../../../domain/ports/memory.repository"
+import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
+
+const now = new Date()
+
+const baseConversation = Conversation.create({
+  id: "conv-1",
+  versionId: "ver-1",
+  title: "Test",
+  status: "active",
+  provider: "ollama" as ProviderId,
+  providerInstanceId: null,
+  model: "llama3",
+  recentMessageCount: 10,
+  summaryFrequency: 20,
+  temperature: 0.7,
+  maxTokens: 512,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stopSequences: [],
+  memoryProposalMode: "manual",
+  createdAt: now,
+  updatedAt: now,
+})
+
+const baseCharacter = Character.create({
+  id: "char-1",
+  name: "Alice",
+  createdAt: now,
+  updatedAt: now,
+})
+
+const baseVersion = CharacterVersion.create({
+  id: "ver-1",
+  characterId: "char-1",
+  name: "Alice",
+  subtitle: null,
+  profileImage: "https://example.com/avatar.png",
+  description: "A character",
+  instructions: null,
+  greeting: "Hello",
+  versionNumber: 1,
+  createdAt: now,
+  cards: [],
+})
+
+const baseMessages = [
+  Message.create({
+    id: "msg-0",
+    conversationId: "conv-1",
+    role: "user",
+    content: "Hola",
+    position: 0,
+    alternatives: [],
+    alternativesCursor: 0,
+    createdAt: now,
+    editedAt: null,
+  }),
+]
+
+function buildConversationRepo(): ConversationRepository {
+  return {
+    findById: async () => baseConversation,
+    findByIdWithMessages: async () => null,
+    list: async () => [],
+    create: async () => baseConversation,
+    update: async () => baseConversation,
+    updateSettings: async () => baseConversation,
+  }
+}
+
+function buildMessageRepo(): MessageRepository {
+  return {
+    create: async (m) => m,
+    findByConversationId: async () => baseMessages,
+    findById: async () => null,
+    findLastByConversationId: async () => null,
+    update: async (m) => m,
+    deleteById: async () => {},
+    deleteAfterPosition: async () => {},
+    clearAlternatives: async () => {},
+  }
+}
+
+function buildCharacterRepo(): CharacterRepository {
+  return {
+    findById: async () => ({ character: baseCharacter, currentVersion: baseVersion }),
+    findVersionById: async () => baseVersion,
+    findVersionsByCharacterId: async () => [baseVersion],
+    findMaxVersionNumber: async () => 1,
+    saveVersion: async (v) => v,
+    createWithFirstVersion: async () => ({ character: baseCharacter, version: baseVersion }),
+    list: async () => [],
+    update: async () => baseCharacter,
+    delete: async () => {},
+  }
+}
+
+function buildPromptContextBuilder(): PromptContextBuilder {
+  return {
+    build: async () => ({
+      systemPrompt: "Eres un personaje.",
+      messages: [{ role: "user", content: "Hola" }],
+    }),
+  }
+}
+
+function buildLogger(): Logger {
+  return {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(function (this: Logger) {
+      return this
+    }),
+  }
+}
+
+function buildDefaultProvider(): GetDefaultProviderUseCase {
+  return {
+    execute: async () => ({
+      provider: "ollama" as ProviderId,
+      providerInstanceId: null,
+      model: "llama3",
+    }),
+  } as unknown as GetDefaultProviderUseCase
+}
+
+const providerInstanceRepository: ProviderInstanceRepository = {
+  findById: async () => null,
+  list: async () => [],
+  create: async () => ({} as any),
+  update: async () => ({} as any),
+  delete: async () => {},
+}
+
+function buildMemoryRepo(): MemoryRepository {
+  return {
+    findById: async () => null,
+    findByConversationId: async () => [],
+    create: async (m) => m,
+    update: async (m) => m,
+    deleteById: async () => {},
+  }
+}
+
+describe("ContinueConversationUseCase - tool calls", () => {
+  it("extrae propuestas desde tool calls", async () => {
+    const savedProposals: any[] = []
+
+    const proposalRepo: MemoryChangeProposalRepository = {
+      create: async (p: any) => p,
+      createMany: async (entities: any[]) => {
+        entities.forEach((e) => savedProposals.push(e))
+      },
+      findById: async () => null,
+      findPendingByConversationId: async () => savedProposals,
+      findByConversationId: async () => [],
+      update: async (p: any) => p,
+      markProcessed: async () => {},
+      discardPendingByConversationId: async () => {},
+    }
+
+    const providerWithToolCalls: ProviderRegistry = {
+      listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
+      getAdapter: async () => ({
+        validateConnection: async () => "available" as const,
+        listModels: async () => ({ models: [], manualEntryRequired: false }),
+        generateStreaming: function (): AsyncIterable<StreamChunk> {
+          return {
+            [Symbol.asyncIterator]: () => {
+              const chunks: StreamChunk[] = [
+                {
+                  toolCalls: [
+                    {
+                      index: 0,
+                      id: "c1",
+                      functionName: "propose_memory_changes",
+                      argumentsDelta: '{"operation":"CREATE","actor":"Carol","title":"T","description":"D","priority":6}',
+                    },
+                  ],
+                },
+                { content: "Continuación" },
+              ]
+              let i = 0
+              return {
+                next: async () => {
+                  if (i < chunks.length) {
+                    return { value: chunks[i++], done: false } as const
+                  }
+                  return { value: undefined, done: true } as const
+                },
+              }
+            },
+          }
+        },
+      }),
+    }
+
+    const applyAll = {
+      execute: async () => [],
+    } as unknown as ApplyAllMemoryChangesUseCase
+
+    const useCase = new ContinueConversationUseCase(
+      buildConversationRepo(),
+      buildMessageRepo(),
+      buildCharacterRepo(),
+      buildMemoryRepo(),
+      proposalRepo,
+      buildPromptContextBuilder(),
+      providerWithToolCalls,
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      applyAll,
+    )
+
+    for await (const _ of useCase.execute({ conversationId: "conv-1" })) {
+      // consume
+    }
+
+    expect(savedProposals).toHaveLength(1)
+    expect(savedProposals[0].operation).toBe("CREATE")
+    expect(savedProposals[0].actor).toBe("Carol")
+  })
+})
