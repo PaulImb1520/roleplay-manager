@@ -141,16 +141,22 @@ export class OllamaAdapter implements ProviderPort {
       this.options.streamingTimeoutMs,
     )
 
+    const body: Record<string, unknown> = {
+      model: options?.model ?? "llama3",
+      messages: this.toOllamaMessages(context),
+      stream: true,
+      options: this.toOllamaOptions(options),
+    }
+
+    if (options?.tools && options.tools.length > 0) {
+      body.tools = options.tools
+    }
+
     try {
       const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: options?.model ?? "llama3",
-          messages: this.toOllamaMessages(context),
-          stream: true,
-          options: this.toOllamaOptions(options),
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       })
 
@@ -187,7 +193,13 @@ export class OllamaAdapter implements ProviderPort {
 
           try {
             const parsed = JSON.parse(trimmed) as {
-              message?: { content?: string }
+              message?: {
+                content?: string
+                tool_calls?: Array<{
+                  id?: string
+                  function?: { name?: string; arguments?: unknown }
+                }>
+              }
               done?: boolean
               error?: string
             }
@@ -199,8 +211,36 @@ export class OllamaAdapter implements ProviderPort {
               )
             }
 
-            if (parsed.message?.content) {
-              yield { content: parsed.message.content }
+            const content = parsed.message?.content ?? undefined
+            const rawToolCalls = parsed.message?.tool_calls
+            const toolCalls = rawToolCalls
+              ?.map((tc, idx) => ({
+                index: idx,
+                id: tc.id,
+                functionName: tc.function?.name,
+                argumentsDelta:
+                  typeof tc.function?.arguments === "string"
+                    ? tc.function.arguments
+                    : tc.function?.arguments !== undefined
+                      ? JSON.stringify(tc.function.arguments)
+                      : undefined,
+              }))
+              .filter(
+                (tc) =>
+                  tc.id !== undefined ||
+                  tc.functionName !== undefined ||
+                  tc.argumentsDelta !== undefined,
+              )
+
+            if (
+              content ||
+              (toolCalls && toolCalls.length > 0)
+            ) {
+              yield {
+                content,
+                toolCalls:
+                  toolCalls && toolCalls.length > 0 ? toolCalls : undefined,
+              }
             }
           } catch (error) {
             if (error instanceof ProviderError) throw error
