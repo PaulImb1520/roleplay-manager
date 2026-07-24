@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FieldLegend, FieldSet } from "@workspace/ui/components/field"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
@@ -34,6 +34,11 @@ export function MemoryList({ conversationId }: MemoryListProps) {
   const createMemory = useMemoryStore((s) => s.createMemory)
   const updateMemory = useMemoryStore((s) => s.updateMemory)
   const deleteMemory = useMemoryStore((s) => s.deleteMemory)
+  const loadMemories = useMemoryStore((s) => s.loadMemories)
+
+  useEffect(() => {
+    loadMemories(conversationId)
+  }, [conversationId, loadMemories])
 
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [target, setTarget] = useState<MemoryDTO | null>(null)

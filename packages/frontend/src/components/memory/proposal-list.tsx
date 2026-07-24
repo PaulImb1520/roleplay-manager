@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FieldLegend, FieldSet } from "@workspace/ui/components/field"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
@@ -37,6 +37,11 @@ export function ProposalList({ conversationId }: ProposalListProps) {
   const loading = useMemoryStore((s) => s.loading)
   const applyProposals = useMemoryStore((s) => s.applyProposals)
   const loadMemories = useMemoryStore((s) => s.loadMemories)
+  const loadProposals = useMemoryStore((s) => s.loadProposals)
+
+  useEffect(() => {
+    loadProposals(conversationId)
+  }, [conversationId, loadProposals])
 
   const [editingProposal, setEditingProposal] = useState<MemoryChangeProposalDTO | null>(null)
   const [actor, setActor] = useState("")

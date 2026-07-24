@@ -31,6 +31,7 @@ import {
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
 import { SettingsPanel } from "./settings-panel"
+import { useMemoryStore } from "@/lib/stores/memory.store"
 
 export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const [conv, setConv] = useState(conversation)
@@ -59,6 +60,9 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     setError,
   } = useChatStore()
 
+  const loadMemories = useMemoryStore((s) => s.loadMemories)
+  const loadProposals = useMemoryStore((s) => s.loadProposals)
+
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -85,6 +89,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           addMessage(message)
           setStreamingContent("")
           setStreaming(false)
+          loadMemories(conv.id)
+          loadProposals(conv.id)
         },
         onError: (err) => {
           setError(err.message)
@@ -93,7 +99,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
       })
     },
-    [conv.id, addMessage, appendToStreamingContent, setError, setStreaming, setStreamingContent],
+    [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, setError, setStreaming, setStreamingContent],
   )
 
   const handleContinue = useCallback(async () => {
@@ -109,6 +115,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         addMessage(message)
         setStreamingContent("")
         setStreaming(false)
+        loadMemories(conv.id)
+        loadProposals(conv.id)
       },
       onError: (err) => {
         setError(err.message)
@@ -116,7 +124,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         setStreamingContent("")
       },
     })
-  }, [conv.id, addMessage, appendToStreamingContent, setError, setStreaming, setStreamingContent])
+  }, [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, setError, setStreaming, setStreamingContent])
 
   const handleRegenerate = useCallback(
     async (messageId: string) => {
@@ -132,6 +140,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           replaceMessage(messageId, message)
           setStreamingContent("")
           setStreaming(false)
+          loadMemories(conv.id)
+          loadProposals(conv.id)
         },
         onError: (err) => {
           setError(err.message)
@@ -140,7 +150,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
       })
     },
-    [conv.id, appendToStreamingContent, replaceMessage, setError, setStreaming, setStreamingContent],
+    [conv.id, appendToStreamingContent, loadMemories, loadProposals, replaceMessage, setError, setStreaming, setStreamingContent],
   )
 
   const handleEdit = useCallback(
