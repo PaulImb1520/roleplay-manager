@@ -120,7 +120,7 @@ export function MessageBubble({
                             key={i}
                             className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
                           >
-                            //{segment.content}
+                            //{segment.content}//
                           </code>
                         )
                       default:
