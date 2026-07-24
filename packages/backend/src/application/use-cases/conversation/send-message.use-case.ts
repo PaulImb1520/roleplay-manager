@@ -154,6 +154,7 @@ export class SendMessageUseCase {
       recentMessageCount: conversation.recentMessageCount,
       memories,
       enableMemoryProposalTool: true,
+      filterOocFromHistory: true,
     })
 
     let providerId = conversation.provider as ProviderId | null

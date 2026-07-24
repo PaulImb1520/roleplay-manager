@@ -130,6 +130,7 @@ export class ContinueConversationUseCase {
       recentMessageCount: conversation.recentMessageCount,
       memories,
       enableMemoryProposalTool: true,
+      filterOocFromHistory: true,
     })
 
     let providerId = conversation.provider as ProviderId | null
