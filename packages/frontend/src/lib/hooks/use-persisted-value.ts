@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 function buildStorageKey(key: string, scope: string): string {
   return `${key}:${scope}`
@@ -20,19 +20,23 @@ export function usePersistedValue<T>({
   const storageKey = buildStorageKey(key, scope)
   const [value, setValue] = useState<T>(defaultValue)
 
+  const validateRef = useRef(validate)
+  validateRef.current = validate
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey)
       if (raw !== null) {
         const parsed = JSON.parse(raw) as unknown
-        if (validate ? validate(parsed) : true) {
+        const v = validateRef.current
+        if (v ? v(parsed) : true) {
           setValue(parsed as T)
         }
       }
     } catch {
       // localStorage unavailable or corrupt value — stick with default
     }
-  }, [storageKey, validate])
+  }, [storageKey])
 
   const setAndPersist = useCallback(
     (next: T | ((prev: T) => T)) => {
