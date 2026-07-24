@@ -1,3 +1,8 @@
+import {
+  OOC_REGEX_SOURCE,
+  extractOocInner,
+} from "@workspace/shared/lib/ooc-parser"
+
 export type MessageSegmentType = "dialogue" | "action" | "ooc"
 
 export interface MessageSegment {
@@ -5,25 +10,54 @@ export interface MessageSegment {
   content: string
 }
 
-export function parseMessage(content: string): MessageSegment[] {
-  const segments: MessageSegment[] = []
-  const regex = /(\*[^*]+\*)|(\/\/[^\n]*)/g
-  let lastIndex = 0
-  let match: RegExpExecArray | null
+const ACTION_REGEX = /\*[^*\n]+\*/g
+const OOC_REGEX = new RegExp(OOC_REGEX_SOURCE, "g")
 
-  while ((match = regex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      const before = content.slice(lastIndex, match.index)
+export function parseMessage(content: string): MessageSegment[] {
+  if (!content) {
+    return []
+  }
+
+  const segments: MessageSegment[] = []
+  const actionRegex = new RegExp(ACTION_REGEX.source, "g")
+  const oocRegex = new RegExp(OOC_REGEX.source, "g")
+  const matches: Array<{ start: number; end: number; type: "action" | "ooc"; inner: string }> = []
+
+  let match: RegExpExecArray | null
+  while ((match = actionRegex.exec(content)) !== null) {
+    matches.push({
+      start: match.index,
+      end: actionRegex.lastIndex,
+      type: "action",
+      inner: match[0].slice(1, -1),
+    })
+  }
+
+  while ((match = oocRegex.exec(content)) !== null) {
+    matches.push({
+      start: match.index,
+      end: oocRegex.lastIndex,
+      type: "ooc",
+      inner: extractOocInner(match[0]),
+    })
+  }
+
+  matches.sort((a, b) => a.start - b.start)
+
+  let lastIndex = 0
+  for (const m of matches) {
+    if (m.start > lastIndex) {
+      const before = content.slice(lastIndex, m.start)
       if (before) segments.push({ type: "dialogue", content: before })
     }
-
-    if (match[1]) {
-      segments.push({ type: "action", content: match[1].slice(1, -1) })
-    } else if (match[2]) {
-      segments.push({ type: "ooc", content: match[2].slice(2) })
+    if (m.type === "ooc") {
+      if (m.inner.length > 0) {
+        segments.push({ type: "ooc", content: m.inner })
+      }
+    } else {
+      segments.push({ type: "action", content: m.inner })
     }
-
-    lastIndex = regex.lastIndex
+    lastIndex = m.end
   }
 
   if (lastIndex < content.length) {
@@ -31,5 +65,9 @@ export function parseMessage(content: string): MessageSegment[] {
     if (remaining) segments.push({ type: "dialogue", content: remaining })
   }
 
-  return segments.length === 0 ? [{ type: "dialogue", content }] : segments
+  if (segments.length === 0) {
+    segments.push({ type: "dialogue", content })
+  }
+
+  return segments
 }
