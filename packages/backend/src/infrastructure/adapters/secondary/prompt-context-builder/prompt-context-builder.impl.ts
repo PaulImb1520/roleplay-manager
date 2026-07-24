@@ -10,12 +10,20 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
     messages: Message[]
     recentMessageCount: number
     memories?: Memory[]
+    enableMemoryProposalTool?: boolean
   }): Promise<PromptContext> {
-    const { characterVersion: cv, messages, recentMessageCount, memories } = params
+    const {
+      characterVersion: cv,
+      messages,
+      recentMessageCount,
+      memories,
+      enableMemoryProposalTool = false,
+    } = params
 
     const systemParts: string[] = [
       `Eres ${cv.name}. ${cv.description}`,
       "",
+
       `## Personalidad`,
       `Nombre: ${cv.name}`,
     ]
@@ -49,26 +57,28 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
       systemParts.push("")
       systemParts.push("## Memoria dinámica")
       systemParts.push(
-        "Los siguientes hechos sobre la historia o los personajes se han almacenado previamente. Úsalos para mantener coherencia."
+        "Los siguientes hechos sobre la historia o los personajes se han almacenado previamente. Úsalos para mantener coherencia.",
       )
       for (const mem of memories) {
         systemParts.push(`- [${mem.id}] ${mem.actor} → ${mem.title}: ${mem.description} (prioridad ${mem.priority})`)
       }
     }
 
-    systemParts.push("")
-    systemParts.push("## Propuestas de modificación de memoria")
-    systemParts.push(
-      "Si en tu respuesta introduces hechos nuevos relevantes o modificas algunos existentes, puedes proponer cambios sobre la memoria dinámica al final de tu mensaje. Usa este formato exacto:"
-    )
-    systemParts.push("")
-    systemParts.push('```memory_proposals')
-    systemParts.push('[')
-    systemParts.push('  { "operation": "CREATE", "actor": "...", "title": "...", "description": "...", "priority": 5 }')
-    systemParts.push(']')
-    systemParts.push('```')
-    systemParts.push("")
-    systemParts.push("Operaciones válidas: CREATE, UPDATE, DELETE. Para UPDATE o DELETE debes incluir el id de la memoria existente como \"targetMemoryId\". Si no hay cambios que proponer, no incluyas el bloque.")
+    if (!enableMemoryProposalTool) {
+      systemParts.push("")
+      systemParts.push("## Propuestas de modificación de memoria")
+      systemParts.push(
+        "Si en tu respuesta introduces hechos nuevos relevantes o modificas algunos existentes, puedes proponer cambios sobre la memoria dinámica al final de tu mensaje. Usa este formato exacto:",
+      )
+      systemParts.push("")
+      systemParts.push('```memory_proposals')
+      systemParts.push('[')
+      systemParts.push('  { "operation": "CREATE", "actor": "...", "title": "...", "description": "...", "priority": 5 }')
+      systemParts.push(']')
+      systemParts.push('```')
+      systemParts.push("")
+      systemParts.push("Operaciones válidas: CREATE, UPDATE, DELETE. Para UPDATE o DELETE debes incluir el id de la memoria existente como \"targetMemoryId\". Si no hay cambios que proponer, no incluyas el bloque.")
+    }
 
     systemParts.push("")
     systemParts.push(`## Estilo de respuesta`)

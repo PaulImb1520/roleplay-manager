@@ -194,4 +194,29 @@ describe("PromptContextBuilderImpl", () => {
     expect(result.messages[1].role).toBe("assistant")
     expect(result.messages[1].content).toBe("Adios")
   })
+
+  it("incluye seccion de propuestas de memoria por default (enableMemoryProposalTool=false)", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+    })
+
+    expect(result.systemPrompt).toContain("Propuestas de modificación de memoria")
+    expect(result.systemPrompt).toContain("```memory_proposals")
+  })
+
+  it("omite seccion de propuestas de memoria cuando enableMemoryProposalTool=true", async () => {
+    const builder = new PromptContextBuilderImpl()
+    const result = await builder.build({
+      characterVersion: baseVersion,
+      messages: [],
+      recentMessageCount: 10,
+      enableMemoryProposalTool: true,
+    })
+
+    expect(result.systemPrompt).not.toContain("Propuestas de modificación de memoria")
+    expect(result.systemPrompt).not.toContain("```memory_proposals")
+  })
 })
