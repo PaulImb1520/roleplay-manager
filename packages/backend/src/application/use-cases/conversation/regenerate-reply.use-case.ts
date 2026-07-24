@@ -16,7 +16,13 @@ import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
-import { extractProposals } from "../../../lib/memory-proposal-extractor"
+import { extractProposals, createCleanStream, type CleanStreamState } from "../../../lib/memory-proposal-extractor"
+import { propagateToolCalls, type ToolCallState } from "../../../lib/propagate-tool-calls"
+import {
+  accumulateToolCallDeltas,
+  buildProposeMemoryChangesTool,
+  toolCallsToRawProposals,
+} from "../../../lib/propose-memory-changes.tool"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
@@ -129,6 +135,7 @@ export class RegenerateReplyUseCase {
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
       memories,
+      enableMemoryProposalTool: true,
     })
 
     let providerId = conversation.provider as ProviderId | null
@@ -176,19 +183,27 @@ export class RegenerateReplyUseCase {
     }
 
     const model = resolvedModel ?? undefined
-    let fullContent = ""
+    const cleanState: CleanStreamState = { fullContent: "" }
+    const toolCallState: ToolCallState = { deltas: [] }
+    const tools = [buildProposeMemoryChangesTool()]
 
     try {
-      for await (const chunk of adapter.generateStreaming(context, {
-        model,
-        temperature: conversation.temperature,
-        maxTokens: conversation.maxTokens,
-        topP: conversation.topP,
-        frequencyPenalty: conversation.frequencyPenalty,
-        presencePenalty: conversation.presencePenalty,
-        stopSequences: conversation.stopSequences,
-      })) {
-        fullContent += chunk.content
+      for await (const chunk of createCleanStream(
+        propagateToolCalls(
+          adapter.generateStreaming(context, {
+            model,
+            temperature: conversation.temperature,
+            maxTokens: conversation.maxTokens,
+            topP: conversation.topP,
+            frequencyPenalty: conversation.frequencyPenalty,
+            presencePenalty: conversation.presencePenalty,
+            stopSequences: conversation.stopSequences,
+            tools,
+          }),
+          toolCallState,
+        ),
+        cleanState,
+      )) {
         yield { type: "chunk", content: chunk.content }
       }
     } catch (error) {
@@ -206,7 +221,16 @@ export class RegenerateReplyUseCase {
       return
     }
 
-    const { cleanedContent, proposals } = extractProposals(fullContent)
+    let cleanedContent: string
+    let proposals: import("../../../lib/memory-proposal-extractor").RawProposal[]
+    if (toolCallState.deltas.length > 0) {
+      cleanedContent = cleanState.fullContent
+      proposals = toolCallsToRawProposals(accumulateToolCallDeltas(toolCallState.deltas))
+    } else {
+      const fallback = extractProposals(cleanState.fullContent)
+      cleanedContent = fallback.cleanedContent
+      proposals = fallback.proposals
+    }
 
     const regenerated = message.regenerate(cleanedContent)
     await this.messageRepository.update(regenerated)
