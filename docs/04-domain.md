@@ -258,6 +258,7 @@ Algunos ejemplos de configuración son:
 * Cantidad de mensajes recientes incluidos en el contexto.
 * Frecuencia de generación de resúmenes.
 * Parámetros de inferencia del modelo.
+* Modo de gestión de propuestas de memoria (`auto` o `manual`).
 
 Estas configuraciones forman parte de la conversación y deben preservarse junto con ella.
 
@@ -542,7 +543,7 @@ Cuando esto ocurra, la IA podrá detectar el conflicto y proponer una solución.
 
 ### Eliminación
 
-Las memorias nunca desaparecen automáticamente.
+Las memorias pueden configurarse para desaparecer automáticamente según reglas definidas por el usuario (ver S10).
 
 El sistema podrá sugerir su eliminación siguiendo reglas configurables definidas para cada conversación.
 
@@ -577,7 +578,7 @@ El `PromptContextBuilder` utiliza las memorias como una de las principales fuent
 
 ### Observaciones futuras
 
-En futuras versiones podrán incorporarse mecanismos más avanzados para la gestión automática de memorias, incluyendo detección de relaciones entre actores, consolidación de hechos repetidos, actualización automática de información redundante y algoritmos de recuperación selectiva de contexto.
+En futuras versiones podrán incorporarse mecanismos más avanzados para la gestión automática de memorias, incluyendo detección de relaciones entre actores, consolidación de hechos repetidos y algoritmos de recuperación selectiva de contexto.
 
 La versión inicial del sistema prioriza un modelo simple, transparente y completamente supervisado por el usuario.
 
@@ -776,7 +777,6 @@ Cada propuesta puede contener:
 * **title**: título propuesto para la memoria.
 * **description**: descripción propuesta para la memoria.
 * **priority**: prioridad propuesta (1–10).
-* **reason**: motivo de la propuesta (opcional, generado por la IA).
 * **status**: estado actual (`pending`, `applied`, `discarded`).
 * **createdAt**: fecha y hora de generación de la propuesta.
 * **processedAt**: fecha y hora en la que fue revisada (aceptada o descartada).

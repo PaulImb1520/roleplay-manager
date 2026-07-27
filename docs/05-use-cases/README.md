@@ -31,8 +31,8 @@ Los casos de uso se agrupan en subcarpetas **por dominio** (entidad principal qu
 | Subcarpeta | Casos de uso contenidos | Entidad principal |
 |---|---|---|
 | `character/` | `CreateCharacter`, `CreateCharacterVersion`, `UpdateCharacter`, `DeleteCharacter` | `Character`, `CharacterVersion`, `CharacterCard` |
-| `conversation/` | `CreateConversation`, `SendMessage`, `RegenerateReply`, `EditMessage`, `RewindConversation`, `ArchiveConversation`, `UpdateConversationSettings`, `GenerateConversationTitle` | `Conversation`, `Message` |
-| `memory/` | `ProposeMemoryChanges`, `ApplyMemoryChanges`, `CreateMemory`, `UpdateMemory`, `DeleteMemory` | `Memory`, `MemoryChangeProposal` |
+| `conversation/` | `CreateConversation`, `SendMessage`, `RegenerateReply`, `EditMessage`, `RewindConversation`, `ArchiveConversation`, `UpdateConversationSettings`, `GenerateConversationTitle`, `HandleOOC` | `Conversation`, `Message` |
+| `memory/` | `ProposeMemoryChanges`, `ApplyMemoryChanges`, `ApplyAllMemoryChanges`, `CreateMemory`, `UpdateMemory`, `DeleteMemory` | `Memory`, `MemoryChangeProposal` |
 | `summary/` | `GenerateSummary`, `UpdateSummary`, `DeleteSummary` | `Summary` |
 | `provider/` | `PromptContextBuilder`, `GenerateCharacterResponse`, `ConfigureDefaultProvider`, `ValidateProviderConnection`, `ListProviderModels` | `ProviderPort`, `PromptContext`, `InferenceConfig` |
 
@@ -99,6 +99,7 @@ Ejemplos:
 * ArchiveConversation
 * UpdateConversationSettings
 * ApplyMemoryChanges
+* ApplyAllMemoryChanges
 * ConfigureDefaultProvider
 * ValidateProviderConnection
 * ListProviderModels
@@ -120,6 +121,7 @@ Ejemplos:
 * GenerateSummary
 * ProposeMemoryChanges
 * GenerateConversationTitle
+* HandleOOC
 
 Estos casos de uso no poseen una interfaz propia y normalmente son invocados desde otros casos de uso.
 

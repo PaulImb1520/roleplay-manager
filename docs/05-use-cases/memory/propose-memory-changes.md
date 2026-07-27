@@ -73,14 +73,13 @@ Este caso de uso actúa como puente entre la evolución natural de la historia y
 
 7. El modelo analiza el intercambio y genera una o varias propuestas estructuradas.
 
-8. El sistema interpreta la respuesta del modelo y construye una lista de objetos `MemoryChangeProposal`, cada uno con:
+8. El sistema interpreta la respuesta del modelo mediante uno de los siguientes formatos y construye una lista de objetos `MemoryChangeProposal`, cada uno con:
 
    * Operación (CREATE, UPDATE o DELETE).
    * Actor al que pertenece la memoria.
    * Título.
    * Descripción.
    * Prioridad propuesta.
-   * Motivo de la propuesta (opcional).
 
 9. Las propuestas se asocian temporalmente a la conversación, quedando disponibles para que el usuario las revise.
 
@@ -135,7 +134,7 @@ Si no existe ningún proveedor configurado o este no puede establecer conexión,
 * Cada propuesta representa una única operación (CREATE, UPDATE o DELETE).
 * Varias propuestas pueden referirse a una misma memoria existente.
 * El sistema no debe aplicar ninguna propuesta automáticamente durante este caso de uso.
-* El motivo de la propuesta es opcional pero recomendado para facilitar la decisión del usuario.
+* El sistema soporta dos formatos de propuesta: bloque delimitado y tool call (ver "Formatos de propuesta soportados").
 * La prioridad propuesta debe respetar el rango definido por el dominio (1-10).
 * El análisis del modelo debe limitarse al intercambio más reciente; no debe reanalizar el historial completo.
 * Este caso de uso no modifica ninguna entidad del dominio.
@@ -162,6 +161,47 @@ Las memorias activas de la conversación permanecen inalteradas.
 
 ---
 
+## Formatos de propuesta soportados
+
+El sistema acepta propuestas de modificación de memoria en dos formatos intercambiables. El formato utilizado depende de las capacidades del adaptador del proveedor de IA conectado.
+
+### Formato bloque delimitado
+
+El modelo incluye un bloque de código con lenguaje `memory_proposals` al final de su respuesta:
+
+```text
+```memory_proposals
+[
+  { "operation": "CREATE", "actor": "Alice", "title": "Ubicación", "description": "Se encuentra en la biblioteca.", "priority": 5 },
+  { "operation": "UPDATE", "targetMemoryId": "mem-1", "actor": "Bob", "title": "Estado", "description": "Ahora está preocupado.", "priority": 6 }
+]
+``` ```
+
+El sistema parsea el contenido del bloque como JSON. Cada objeto del array debe contener `operation`, `actor`, `title` y `description`. `targetMemoryId` es obligatorio para UPDATE y DELETE. `priority` es opcional.
+
+### Formato tool call
+
+Cuando el adaptador del proveedor soporta herramientas nativas (OpenAI-compatible, Ollama), el modelo puede utilizar la herramienta `propose_memory_changes` para generar propuestas estructuradas. Cada llamada a la herramienta representa una propuesta individual.
+
+**Schema de la herramienta:**
+
+| Campo | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| `operation` | `string` (enum) | Sí | `CREATE`, `UPDATE` o `DELETE` |
+| `targetMemoryId` | `string` | Sí (en el schema) | Obligatorio para UPDATE y DELETE; debe omitirse o ir vacío para CREATE |
+| `actor` | `string` | Sí | Actor al que pertenece la memoria |
+| `title` | `string` | Sí | Título de la memoria |
+| `description` | `string` | Sí | Descripción detallada |
+| `priority` | `number` | No | Entero entre 1 y 10 |
+
+**Comportamiento del parser:**
+
+- Si una tool call tiene `operation: "UPDATE"` o `"DELETE"` sin `targetMemoryId` (o con valor vacío), la propuesta se descarta silenciosamente y se registra una advertencia en el backend.
+- Las tool calls se acumulan durante el streaming (tool call deltas) y se procesan al completarse la generación.
+- Si el adaptador no soporta tool calls, el sistema recurre automáticamente al formato bloque delimitado como fallback.
+
+---
+
 ## Casos de uso relacionados
 
 * SendMessage (invoca este caso de uso tras la generación de la respuesta y el resumen).
@@ -177,10 +217,7 @@ Las memorias activas de la conversación permanecen inalteradas.
 En versiones posteriores este caso de uso podrá ampliarse para soportar:
 
 * Detección de conflictos entre memorias con resolución automática propuesta.
-* Análisis de relevancia temporal para sugerir eliminación de memorias con baja prioridad mantenida durante varios mensajes.
 * Propuestas que abarquen múltiples intercambios en lugar de únicamente el más reciente.
 * Creación automática de nuevos actores para la memoria dinámica.
 * Consolidación de memorias redundantes o contradictorias.
 * Propuestas condicionales que dependan de eventos futuros de la conversación.
-
-Estas funcionalidades no forman parte de la primera versión del proyecto.

@@ -26,6 +26,7 @@ flowchart TB
         UC25[ContinueConversation]:::doc
         UC26[DeleteMessage]:::doc
         UC27[CycleAlternative]:::doc
+        UC28[ApplyAllMemoryChanges]:::doc
     end
 
     subgraph SystemInitiated["Casos de uso iniciados por el sistema"]
@@ -36,6 +37,7 @@ flowchart TB
         UC14[GenerateSummary]:::doc
         UC15[ProposeMemoryChanges]:::doc
         UC16[GenerateConversationTitle]:::doc
+        UC29[HandleOOC]:::doc
     end
 
     subgraph Entities["Entidades del dominio"]
@@ -74,6 +76,7 @@ flowchart TB
     UC3 -->|invoca| UC13
     UC3 -->|invoca| UC14
     UC3 -->|invoca| UC15
+    UC3 -->|invoca| UC28
     UC3 -->|invoca| UC16
     UC9 --> Conversation
     UC10 --> Conversation
@@ -95,6 +98,7 @@ flowchart TB
     UC27 -->|actualiza alternativesCursor| Message
 
     %% Contexto y generación
+    UC12 -->|invoca| UC29
     UC12 --> PromptContext
     UC12 --> CharVersion
     UC12 --> CharCard
@@ -114,6 +118,8 @@ flowchart TB
     UC15 -->|crea propuestas pending| MemoryProposal
     UC7 -->|aplica cambios| Memory
     UC7 -->|marca estado| MemoryProposal
+    UC28 -->|aplica todos| Memory
+    UC28 -->|marca todos| MemoryProposal
     UC18 -->|crea| Memory
     UC19 -->|modifica| Memory
     UC20 -->|elimina| Memory
@@ -127,7 +133,7 @@ flowchart TB
 
     classDef doc fill:#1b5e20,color:#fff,stroke:#2e7d32
     classDef entity fill:#0d47a1,color:#fff,stroke:#1565c0
-    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24,UC25,UC26,UC27 doc
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29 doc
     class Character,CharVersion,CharCard,Conversation,Message,Memory,MemoryProposal,Summary,Settings,PromptContext,GeneratedResponse entity
 ```
 
@@ -203,4 +209,6 @@ Los siguientes detalles no se representan gráficamente para no saturar el diagr
 4. **`GenerateSummary`** — solo si el umbral `summaryFrequency` se ha alcanzado; al terminar, invoca de nuevo `GenerateConversationTitle` para refrescar el título con el estado narrativo actualizado.
 5. **`ProposeMemoryChanges`** — analiza la nueva interacción y genera cero o más `MemoryChangeProposal` en estado `pending`.
 
-Los pasos 3, 4 y 5 se ejecutan de forma no bloqueante respecto al streaming de la respuesta, pero el frontend recibe la confirmación de cada uno mediante los eventos SSE correspondientes.
+6. **`ApplyAllMemoryChanges`** — solo en modo `auto`; acepta todas las propuestas generadas en el paso anterior con `processedBy: 'system'`.
+
+Los pasos 3, 4, 5 y 6 se ejecutan de forma no bloqueante respecto al streaming de la respuesta, pero el frontend recibe la confirmación de cada uno mediante los eventos SSE correspondientes.

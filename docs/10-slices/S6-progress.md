@@ -1,6 +1,6 @@
 # S6 — Memoria dinámica con modos Auto/Manual
 
-**Estado:** en progreso (S6.1 activo).
+**Estado:** completado.
 
 ## Objetivo
 Implementar memoria dinámica persistente por conversación con dos modos de gestión de propuestas: `auto` (el sistema acepta automáticamente las propuestas del LLM) y `manual` (el usuario revisa y decide cada propuesta). El usuario siempre puede crear/editar/eliminar memorias manualmente, independientemente del modo.
@@ -9,18 +9,18 @@ Implementar memoria dinámica persistente por conversación con dos modos de ges
 - **memoryProposalMode**: per-conversation, columna en `conversations`, default `auto`.
 - **Modo auto**: propuestas generadas por LLM → auto-aceptadas (`processedBy: 'system'`) tras cada mensaje.
 - **Modo manual**: propuestas quedan `pending` para que el usuario las revise y decida.
-- **Formato de propuestas**: bloque delimitado en la respuesta del LLM: `` ```memory_proposals [...] ``` ``.
+- **Formatos de propuestas**: bloque delimitado en la respuesta del LLM (` `` ```memory_proposals [...] ``` `` `) y formato tool call (`propose_memory_changes` con JSON schema).
 - **UI**: 3 secciones en Accordion (multiple) en pestaña "historia" del SettingsPanel.
 - **ChoiceCard**: se usa `RadioGroup` (no `Switch`) para el selector auto/manual por ser mutuamente excluyente.
-- **Parser tolerante**: si el JSON del bloque está malformado, se descartan propuestas inválidas individualmente; no se aborta el flujo.
-- **Props inválidas**: incluso si el LLM genera propuestas inválidas, se persisten como `pending` (con operation 'CREATE' por defecto) para que el usuario las vea en modo manual.
+- **Parser tolerante**: si el JSON está malformado, se descartan propuestas inválidas individualmente; no se aborta el flujo.
+- **Tool calling**: se añadió soporte de tool calls con `propose_memory_changes` (`operation`, `targetMemoryId`, `actor`, `title`, `description`, `priority`) para adaptadores OpenAI-compatible y Ollama, con acumulación de tool call deltas y fallback a bloque regex.
 
 ## Sub-slices
 
-### S6.1 — Backend: Data Layer (activo)
+### S6.1 — Backend: Data Layer (completado)
 Schema, entidades de dominio, puertos (repositorios), implementación Drizzle, tipos compartidos.
 
-**Archivos a crear/modificar:**
+**Archivos creados/modificados:**
 - `packages/backend/src/infrastructure/.../schema/conversations.schema.ts` — añadir `memoryProposalMode`
 - `packages/backend/src/domain/entities/memory.entity.ts`
 - `packages/backend/src/domain/entities/memory-change-proposal.entity.ts`
@@ -35,11 +35,10 @@ Schema, entidades de dominio, puertos (repositorios), implementación Drizzle, t
 
 **Migración:** añadir columna `memory_proposal_mode text NOT NULL DEFAULT 'auto'`
 
-### S6.2 — Backend: Business Logic
+### S6.2 — Backend: Business Logic (completado)
 Casos de uso de memoria, modificación de PromptContextBuilder, integración en SendMessage, controladores y rutas.
 
-**Archivos a crear:**
-- `packages/backend/src/application/use-cases/memory/propose-memory-changes.use-case.ts`
+**Archivos creados:**
 - `packages/backend/src/application/use-cases/memory/apply-memory-changes.use-case.ts`
 - `packages/backend/src/application/use-cases/memory/apply-all-memory-changes.use-case.ts`
 - `packages/backend/src/application/use-cases/memory/create-memory.use-case.ts`
@@ -48,29 +47,45 @@ Casos de uso de memoria, modificación de PromptContextBuilder, integración en 
 - `packages/backend/src/application/use-cases/memory/list-memories.use-case.ts`
 - `packages/backend/src/application/use-cases/memory/list-proposals.use-case.ts`
 - `packages/backend/src/infrastructure/.../memory.routes.ts`
+- `packages/backend/src/lib/memory-proposal-extractor.ts` — parser inline de bloques `` ```memory_proposals ``` ``
+- `packages/backend/src/lib/propose-memory-changes.tool.ts` — builder del tool schema + `toolCallsToRawProposals`
 
-**Archivos a modificar:**
-- `packages/backend/src/infrastructure/.../prompt-context-builder.impl.ts` — añadir instrucción del bloque
-- `packages/backend/src/application/use-cases/conversation/send-message.use-case.ts` — invocar Propose+Apply según modo
+**Archivos modificados:**
+- `packages/backend/src/infrastructure/.../prompt-context-builder.impl.ts` — añadir instrucción del bloque + instrucciones obligatorias de `targetMemoryId`
+- `packages/backend/src/application/use-cases/conversation/send-message.use-case.ts` — invocar Propose+Apply según modo, extraer propuestas inline
+- `packages/backend/src/application/use-cases/conversation/regenerate-reply.use-case.ts` — extraer propuestas inline
+- `packages/backend/src/application/use-cases/conversation/continue-conversation.use-case.ts` — extraer propuestas inline
 - `packages/backend/src/infrastructure/.../conversation.routes.ts` — añadir `memoryProposalMode` a PATCH settings
 - `packages/backend/src/application/di.container.ts` — registrar nuevos casos de uso y repos
 
-### S6.3 — Frontend
+### S6.3 — Frontend (completado)
 Cliente API, store, componentes UI necesarios, componentes de memoria, integración en SettingsPanel.
 
-**Archivos a crear:**
+**Archivos creados:**
 - `packages/frontend/src/lib/api/memories.ts`
 - `packages/frontend/src/lib/stores/memory.store.ts`
 - `packages/frontend/src/components/memory/memory-mode-card.tsx`
 - `packages/frontend/src/components/memory/proposal-list.tsx`
 - `packages/frontend/src/components/memory/memory-list.tsx`
+- `packages/ui/src/components/radio-group.tsx`, `accordion.tsx`
 
-**Archivos a modificar:**
-- `packages/frontend/src/components/conversation/settings-panel.tsx` — reemplazar Empty por Accordion
-- `packages/ui/src/components/` — añadir `radio-group.tsx`, `accordion.tsx`
+**Archivos modificados:**
+- `packages/frontend/src/components/conversation/settings-panel.tsx` — reemplazar Empty por Accordion con 3 secciones
+
+## Extensiones alcanzadas dentro de S6
+
+Además del objetivo original, S6 incluyó las siguientes funcionalidades:
+
+- **Soporte de tool calling**: `propose_memory_changes` como tool JSON schema soportado por adaptadores OpenAI-compatible y Ollama, con acumulación de tool call deltas y propagación vía `propagateToolCalls`.
+- **Parser OOC** (`//...//`): parser compartido en `@workspace/shared`, filtrado de OOC del historial, salvaguardas en system prompt y renderizado decorativo en frontend.
+- **Badges en cabecera del chat**: indicador de estado de conexión del proveedor y contador de propuestas pendientes (filtrado por `status === "pending"`).
+- **Configuración persistente del panel**: el estado de las pestañas y acordeones del SettingsPanel se persiste por conversación vía `usePersistedValue`.
+- **Eliminación del campo `reason`**: columna `reason` eliminada de `memory_change_proposals` (no se usaba en UI, consumía tokens innecesariamente).
+- **Defensive reads**: `Message.fromPersistence` como factory leniente, validación en `regenerate`/`withContent`.
 
 ## Cambios en schema (Drizzle)
 - `conversations`: añadir `memoryProposalMode text NOT NULL DEFAULT 'auto'`
+- `memory_change_proposals`: eliminar columna `reason`
 
 ## Nuevos endpoints
 | Método | Ruta | Descripción |
@@ -90,6 +105,6 @@ Cliente API, store, componentes UI necesarios, componentes de memoria, integraci
 - `settings-panel.tsx`: reemplazar "Próximamente" por Accordion con las 3 secciones
 
 ## Pendientes para slices futuros
-- **Indicador de propuestas pendientes en botón de Settings**: mostrar badge en el engranaje si hay propuestas sin revisar en modo manual. Se implementará en un slice posterior de UX.
-- **Tests unitarios**: los casos de uso de memoria deben tener tests siguiendo el patrón existente. Pendiente para un slice de testing.
+- **Auto-degradación de memorias**: eliminación automática de memorias con baja prioridad mantenida durante varios mensajes. Pendiente para S10.
+- **Tests unitarios de memoria**: los casos de uso de memoria actualmente no tienen tests siguiendo el patrón existente. Pendiente para un slice de testing.
 - **Parser de bloque memory_proposals más robusto**: si el LLM varía el formato, mejorar el parser. Pendiente para iteración de robustez.

@@ -179,12 +179,9 @@ No se modifica ninguna otra entidad del dominio.
 
 En versiones posteriores este caso de uso podrá ampliarse para soportar:
 
-* Aceptación global de todas las propuestas con una sola acción.
 * Configuración para aplicar automáticamente propuestas por debajo de un umbral de prioridad.
 * Historial de cambios aplicados sobre la memoria dinámica.
 * Deshacer cambios aplicados recientemente.
 * Resolución automática de conflictos entre propuestas superpuestas.
 * Notificaciones al usuario cuando existan propuestas pendientes sin revisar.
 * Programación de revisión diferida de propuestas.
-
-Estas funcionalidades no forman parte de la primera versión del proyecto.
