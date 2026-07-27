@@ -93,6 +93,13 @@ const buildMessageRepo = (initialMessages: Message[]): MessageRepository => {
 }
 
 const buildMemoryRepo = (): MemoryChangeProposalRepository => ({
+  create: async (p) => p,
+  createMany: async () => {},
+  findById: async () => null,
+  findPendingByConversationId: async () => [],
+  findByConversationId: async () => [],
+  update: async (p) => p,
+  markProcessed: async () => {},
   discardPendingByConversationId: async () => {},
 })
 
