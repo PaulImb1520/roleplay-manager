@@ -12,6 +12,8 @@ import type { RegenerateReplyUseCase } from "../../../../application/use-cases/c
 import type { RewindConversationUseCase } from "../../../../application/use-cases/conversation/rewind-conversation.use-case"
 import type { ContinueConversationUseCase } from "../../../../application/use-cases/conversation/continue-conversation.use-case"
 import type { CycleAlternativeUseCase } from "../../../../application/use-cases/conversation/cycle-alternative.use-case"
+import type { ConversationRepository } from "../../../../domain/ports/conversation.repository"
+import type { GenerateConversationTitleUseCase } from "../../../../application/use-cases/conversation/generate-conversation-title.use-case"
 import type { UpdateConversationSettingsUseCase } from "../../../../application/use-cases/conversation/update-conversation-settings.use-case"
 import { validate } from "../middlewares/validation"
 
@@ -60,6 +62,8 @@ export const buildConversationRouter = (deps: {
   continueConversation: ContinueConversationUseCase
   cycleAlternative: CycleAlternativeUseCase
   updateConversationSettings: UpdateConversationSettingsUseCase
+  generateConversationTitle: GenerateConversationTitleUseCase
+  conversationRepository: ConversationRepository
 }): Router => {
   const router = Router()
 
@@ -142,7 +146,10 @@ export const buildConversationRouter = (deps: {
             break
           }
           case "done": {
-            res.write(`event: done\ndata: ${JSON.stringify(event.message)}\n\n`)
+            const doneData: Record<string, unknown> = { message: event.message }
+            if (event.title) doneData.title = event.title
+            if (event.titleSource) doneData.titleSource = event.titleSource
+            res.write(`event: done\ndata: ${JSON.stringify(doneData)}\n\n`)
             break
           }
           case "summary-generated": {
@@ -357,6 +364,32 @@ export const buildConversationRouter = (deps: {
           body,
         )
         res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.post(
+    "/conversations/:id/title",
+    async (req, res, next) => {
+      try {
+        const { id } = req.params as { id: string }
+        const { title } = z.object({ title: z.string().optional() }).parse(req.body)
+
+        if (title) {
+          const conv = await deps.conversationRepository.findById(id)
+          if (!conv) {
+            res.status(404).json({ error: "Conversation not found" })
+            return
+          }
+          const updated = conv.withTitle(title, "manual")
+          await deps.conversationRepository.update(updated)
+          res.json({ title, titleSource: "manual" })
+        } else {
+          const result = await deps.generateConversationTitle.execute(id)
+          res.json({ title: result.title, titleSource: "auto" })
+        }
       } catch (error) {
         next(error)
       }

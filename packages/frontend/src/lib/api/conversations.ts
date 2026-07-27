@@ -3,6 +3,7 @@ import type {
   ConversationSettingsUpdate,
   ConversationSummary,
   CreateConversationInput,
+  TitleSource,
 } from "@workspace/shared/types/conversation"
 import type { MessageDTO } from "@workspace/shared/types/message"
 import type { SummaryDTO } from "@workspace/shared/types/summary"
@@ -27,6 +28,15 @@ export const createConversation = (
 
 export const archiveConversation = (id: string): Promise<ConversationDetail> =>
   apiRequest(`/api/conversations/${id}/archive`, { method: "POST" })
+
+export const setConversationTitle = (
+  id: string,
+  title?: string,
+): Promise<{ title: string; titleSource: TitleSource }> =>
+  apiRequest(`/api/conversations/${id}/title`, {
+    method: "POST",
+    body: JSON.stringify(title ? { title } : {}),
+  })
 
 export const unarchiveConversation = (id: string): Promise<ConversationDetail> =>
   apiRequest(`/api/conversations/${id}/unarchive`, { method: "POST" })
@@ -81,6 +91,7 @@ export interface SendMessageCallbacks {
   onSaved?: (message: MessageDTO) => void
   onChunk: (content: string) => void
   onDone: (message: MessageDTO) => void
+  onTitleGenerated?: (title: string, titleSource: TitleSource) => void
   onSummaryGenerated?: (summary: SummaryDTO) => void
   onError: (error: { code: string; message: string }) => void
 }
@@ -140,7 +151,10 @@ const streamEventSource = async (
               break
             }
             case "done": {
-              callbacks.onDone(data)
+              callbacks.onDone(data.message ?? data)
+              if (data.title && data.titleSource) {
+                callbacks.onTitleGenerated?.(data.title, data.titleSource)
+              }
               break
             }
             case "summary-generated": {

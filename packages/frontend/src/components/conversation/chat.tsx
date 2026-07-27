@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ConversationDetail } from "@workspace/shared/types/conversation"
+import type { PromptContextDTO } from "@workspace/shared/types/context"
 import {
   MessageScrollerProvider,
   MessageScroller,
@@ -9,7 +10,14 @@ import {
 } from "@workspace/ui/components/message-scroller"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import { SettingsIcon } from "lucide-react"
+import { Input } from "@workspace/ui/components/input"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@workspace/ui/components/context-menu"
+import { SettingsIcon, Pencil, RefreshCw } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -28,9 +36,12 @@ import {
   deleteMessage,
   rewindConversation,
   cycleAlternative,
+  setConversationTitle,
 } from "../../lib/api/conversations"
+import { getPromptContext } from "../../lib/api/context"
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
+import { ContextPreviewDialog } from "./context-preview-dialog"
 import { SettingsPanel } from "./settings-panel"
 import { useMemoryStore } from "@/lib/stores/memory.store"
 import { useSummaryStore } from "@/lib/stores/summary.store"
@@ -41,6 +52,12 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const [confirmRewind, setConfirmRewind] = useState<string | null>(null)
   const [rewindDraft, setRewindDraft] = useState("")
   const [inputKey, setInputKey] = useState(0)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewContext, setPreviewContext] = useState<PromptContextDTO | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewContent, setPreviewContent] = useState<string | undefined>()
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleInput, setTitleInput] = useState("")
 
   const {
     messages,
@@ -105,6 +122,9 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           loadMemories(conv.id)
           loadProposals(conv.id)
           loadSummaries(conv.id)
+        },
+        onTitleGenerated: (title, _titleSource) => {
+          setConv((prev) => ({ ...prev, title }))
         },
         onSummaryGenerated: () => {
           loadSummaries(conv.id)
@@ -247,6 +267,53 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     [conv.id, replaceMessage, setError],
   )
 
+  const handleRegenerateTitle = useCallback(async () => {
+    try {
+      const result = await setConversationTitle(conv.id)
+      setConv((prev) => ({ ...prev, title: result.title }))
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }, [conv.id, setError])
+
+  const handleManualTitle = useCallback(async () => {
+    if (!titleInput.trim()) return
+    try {
+      const result = await setConversationTitle(conv.id, titleInput.trim())
+      setConv((prev) => ({ ...prev, title: result.title }))
+      setEditingTitle(false)
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }, [conv.id, titleInput, setError])
+
+  const handlePreview = useCallback(
+    async (content?: string) => {
+      setPreviewContent(content)
+      setPreviewLoading(true)
+      setPreviewOpen(true)
+      try {
+        const ctx = await getPromptContext(conv.id, content)
+        setPreviewContext(ctx)
+      } catch (err) {
+        setError((err as Error).message)
+        setPreviewOpen(false)
+      } finally {
+        setPreviewLoading(false)
+      }
+    },
+    [conv.id, setError],
+  )
+
+  const handleSendFromPreview = useCallback(() => {
+    setPreviewOpen(false)
+    if (previewContent !== undefined) {
+      handleSend(previewContent)
+    } else {
+      handleContinue()
+    }
+  }, [previewContent, handleSend, handleContinue])
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b px-4 py-3">
@@ -260,12 +327,49 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           ) : null}
         </div>
         <div className="flex flex-col">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            {conv.title ?? conv.characterName}
-            {pendingCount > 0 && (
-              <Badge variant="destructive">{pendingCount}</Badge>
-            )}
-          </h2>
+          {editingTitle ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleManualTitle()
+              }}
+              className="flex items-center gap-1"
+            >
+              <Input
+                value={titleInput}
+                onChange={(e) => setTitleInput(e.target.value)}
+                className="h-7 text-sm"
+                autoFocus
+                onBlur={() => setEditingTitle(false)}
+              />
+            </form>
+          ) : (
+            <ContextMenu>
+              <ContextMenuTrigger>
+                <h2 className="flex items-center gap-2 text-sm font-semibold">
+                  {conv.title ?? conv.characterName}
+                  {pendingCount > 0 && (
+                    <Badge variant="destructive">{pendingCount}</Badge>
+                  )}
+                </h2>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  onClick={() => {
+                    setTitleInput(conv.title ?? "")
+                    setEditingTitle(true)
+                  }}
+                >
+                  <Pencil className="size-4" />
+                  Editar manualmente
+                </ContextMenuItem>
+                <ContextMenuItem onClick={handleRegenerateTitle}>
+                  <RefreshCw className="size-4" />
+                  Regenerar automáticamente
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+          )}
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             {conv.characterName}
             <Badge variant={conv.status === "active" ? "default" : "secondary"}>
@@ -351,6 +455,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           key={inputKey}
           onSend={handleSend}
           onContinue={handleContinue}
+          onPreview={handlePreview}
           disabled={isStreaming || conv.status === "archived"}
           rewindDraft={rewindDraft}
         />
@@ -393,6 +498,16 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ContextPreviewDialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          if (!open) setPreviewOpen(false)
+        }}
+        context={previewContext}
+        onSend={handleSendFromPreview}
+        loading={previewLoading}
+      />
     </div>
   )
 }
