@@ -4,6 +4,7 @@ import { Message } from "../../../domain/entities/message.entity"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
+import type { SummaryRepository } from "../../../domain/ports/summary.repository"
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
@@ -19,6 +20,7 @@ export class RewindConversationUseCase {
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly memoryChangeProposalRepository: MemoryChangeProposalRepository,
+    private readonly summaryRepository: SummaryRepository,
   ) {}
 
   async execute(
@@ -42,6 +44,33 @@ export class RewindConversationUseCase {
     )
     if (!targetMessage) {
       throw new Error("Target message not found")
+    }
+
+    // Determine which message IDs will be deleted
+    const deletedMessageIds = new Set<string>()
+    for (const m of allMessages) {
+      if (m.position > targetMessage.position) {
+        deletedMessageIds.add(m.id)
+      }
+    }
+    if (targetMessage.role === "user") {
+      deletedMessageIds.add(targetMessage.id)
+    }
+
+    // Delete summaries whose range intersects with the deleted messages
+    const summaries = await this.summaryRepository.findByConversationId(
+      input.conversationId,
+    )
+    const affectedSummaryIds = summaries
+      .filter(
+        (s) =>
+          deletedMessageIds.has(s.firstMessageId) ||
+          deletedMessageIds.has(s.lastMessageId),
+      )
+      .map((s) => s.id)
+
+    if (affectedSummaryIds.length > 0) {
+      await this.summaryRepository.deleteByIds(affectedSummaryIds)
     }
 
     await this.messageRepository.deleteAfterPosition(

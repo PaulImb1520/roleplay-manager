@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, inArray } from "drizzle-orm"
 
 import { Summary } from "../../../../../domain/entities/summary.entity"
 import type { SummaryRepository } from "../../../../../domain/ports/summary.repository"
@@ -88,5 +88,12 @@ export class DrizzleSummaryRepository implements SummaryRepository {
     await this.db
       .delete(summaries)
       .where(eq(summaries.id, id))
+  }
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) return
+    await this.db
+      .delete(summaries)
+      .where(inArray(summaries.id, ids))
   }
 }

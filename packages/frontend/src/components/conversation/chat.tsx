@@ -82,13 +82,32 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const loadMemories = useMemoryStore((s) => s.loadMemories)
   const loadProposals = useMemoryStore((s) => s.loadProposals)
   const proposals = useMemoryStore((s) => s.proposals)
+  const summaries = useSummaryStore((s) => s.summaries)
   const loadSummaries = useSummaryStore((s) => s.loadSummaries)
-  const summaryCount = useSummaryStore((s) => s.summaries.length)
+  const summaryCount = summaries.length
 
   const pendingCount = useMemo(
-    () => proposals.filter((p) => p.status === "pending").length,
+    () => proposals.filter(p => p.status === "pending").length,
     [proposals],
   )
+
+  const affectedSummaries = useMemo(() => {
+    if (!confirmRewind) return []
+    const targetMsg = messages.find((m) => m.id === confirmRewind)
+    if (!targetMsg) return []
+    const deletedIds = new Set<string>()
+    for (const m of messages) {
+      if (m.position > targetMsg.position) {
+        deletedIds.add(m.id)
+      }
+    }
+    if (targetMsg.role === "user") {
+      deletedIds.add(targetMsg.id)
+    }
+    return summaries.filter(
+      (s) => deletedIds.has(s.firstMessageId) || deletedIds.has(s.lastMessageId),
+    )
+  }, [confirmRewind, messages, summaries])
 
   const initialized = useRef(false)
 
@@ -237,11 +256,12 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         setInputKey(k => k + 1)
       }
 
+      loadSummaries(conv.id)
       setConfirmRewind(null)
     } catch (err) {
       setError((err as Error).message)
     }
-  }, [conv.id, confirmRewind, messages, setMessages, setError])
+  }, [conv.id, confirmRewind, messages, setMessages, setError, loadSummaries])
 
   const handleCyclePrev = useCallback(
     async (messageId: string) => {
@@ -487,6 +507,12 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
             <DialogDescription>
               Se eliminarán todos los mensajes posteriores a este punto. Esta acción no se puede deshacer.
             </DialogDescription>
+            {affectedSummaries.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                También se eliminará{affectedSummaries.length === 1 ? "" : "n"}{" "}
+                {affectedSummaries.length} resumen{affectedSummaries.length === 1 ? "" : "es"} cuyo rango queda afectado.
+              </p>
+            )}
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmRewind(null)}>

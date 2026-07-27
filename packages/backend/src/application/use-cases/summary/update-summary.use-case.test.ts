@@ -35,6 +35,7 @@ const buildRepo = (existing: boolean): SummaryRepository => ({
   create: async (s) => s,
   update: async (s) => s,
   deleteById: async () => {},
+  deleteByIds: async () => {},
 })
 
 describe("UpdateSummaryUseCase", () => {

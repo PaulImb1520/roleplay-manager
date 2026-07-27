@@ -124,6 +124,7 @@ const buildSummaryRepo = (hasLatest: boolean): SummaryRepository => ({
   create: async (s) => s,
   update: async (s) => s,
   deleteById: async () => {},
+  deleteByIds: async () => {},
 })
 
 let capturedContext: PromptContext | null = null

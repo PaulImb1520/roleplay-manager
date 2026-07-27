@@ -173,6 +173,7 @@ const buildSummaryRepo = (): SummaryRepository => ({
   create: async (s) => s,
   update: async (s) => s,
   deleteById: async () => {},
+  deleteByIds: async () => {},
 })
 
 const buildGenerateSummary = (): GenerateSummaryUseCase =>

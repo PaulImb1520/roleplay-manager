@@ -324,6 +324,7 @@ export const buildContainer = ({
       conversationRepository,
       messageRepository,
       memoryChangeProposalRepository,
+      summaryRepository,
     ),
     continueConversation,
     generateConversationTitle,

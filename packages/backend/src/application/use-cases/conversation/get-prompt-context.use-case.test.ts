@@ -148,6 +148,7 @@ const buildSummaryRepo = (summary: Summary | null): SummaryRepository => ({
   create: async (s) => s,
   update: async (s) => s,
   deleteById: async () => {},
+  deleteByIds: async () => {},
 })
 
 const buildPromptContextBuilder = (): PromptContextBuilder => ({
