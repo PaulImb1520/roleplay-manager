@@ -14,6 +14,7 @@ import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/d
 import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
 import { DrizzleMemoryRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory.repository"
 import { DrizzleMemoryChangeProposalRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory-change-proposal.repository"
+import { DrizzleHealthRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-health.repository"
 import { DrizzleSummaryRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-summary.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
@@ -246,7 +247,7 @@ export const buildContainer = ({
     logger,
     pino,
     database,
-    healthCheck: new HealthCheckUseCase(database, logger),
+    healthCheck: new HealthCheckUseCase(new DrizzleHealthRepository(database)),
     listProviders: new ListProvidersUseCase(providerRegistry),
     validateProviderConnection: new ValidateProviderConnectionUseCase(
       providerRegistry,
