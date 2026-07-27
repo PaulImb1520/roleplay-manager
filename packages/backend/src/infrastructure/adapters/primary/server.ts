@@ -11,6 +11,7 @@ import { buildProviderRouter } from "./routes/provider.routes"
 import { buildSettingsRouter } from "./routes/settings.routes"
 import { buildProviderInstanceRouter } from "./routes/provider-instance.routes"
 import { buildMemoryRouter } from "./routes/memory.routes"
+import { buildContextRouter } from "./routes/context.routes"
 import { buildSummaryRouter } from "./routes/summary.routes"
 
 export interface BuildServerOptions {
@@ -74,6 +75,8 @@ export const buildServer = ({
       regenerateReply: container.regenerateReply,
       rewindConversation: container.rewindConversation,
       continueConversation: container.continueConversation,
+      generateConversationTitle: container.generateConversationTitle,
+      conversationRepository: container.conversationRepository,
       cycleAlternative: container.cycleAlternative,
       updateConversationSettings: container.updateConversationSettings,
     }),
@@ -88,6 +91,12 @@ export const buildServer = ({
       listProposals: container.listProposals,
       applyMemoryChanges: container.applyMemoryChanges,
       applyAllMemoryChanges: container.applyAllMemoryChanges,
+    }),
+  )
+  app.use(
+    "/api",
+    buildContextRouter({
+      getPromptContext: container.getPromptContext,
     }),
   )
   app.use(

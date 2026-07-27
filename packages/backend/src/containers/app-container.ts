@@ -52,6 +52,8 @@ import { UpdateMemoryUseCase } from "../application/use-cases/memory/update-memo
 import { DeleteMemoryUseCase } from "../application/use-cases/memory/delete-memory.use-case"
 import { ListMemoriesUseCase } from "../application/use-cases/memory/list-memories.use-case"
 import { ListProposalsUseCase } from "../application/use-cases/memory/list-proposals.use-case"
+import { GenerateConversationTitleUseCase } from "../application/use-cases/conversation/generate-conversation-title.use-case"
+import { GetPromptContextUseCase } from "../application/use-cases/conversation/get-prompt-context.use-case"
 import { ListSummariesUseCase } from "../application/use-cases/summary/list-summaries.use-case"
 import { GenerateSummaryUseCase } from "../application/use-cases/summary/generate-summary.use-case"
 import { UpdateSummaryUseCase } from "../application/use-cases/summary/update-summary.use-case"
@@ -97,6 +99,8 @@ export interface AppContainer {
   regenerateReply: RegenerateReplyUseCase
   rewindConversation: RewindConversationUseCase
   continueConversation: ContinueConversationUseCase
+  getPromptContext: GetPromptContextUseCase
+  generateConversationTitle: GenerateConversationTitleUseCase
   cycleAlternative: CycleAlternativeUseCase
   updateConversationSettings: UpdateConversationSettingsUseCase
   listProviderInstances: ListProviderInstancesUseCase
@@ -167,6 +171,16 @@ export const buildContainer = ({
     logger,
   )
 
+  const generateConversationTitle = new GenerateConversationTitleUseCase(
+    conversationRepository,
+    messageRepository,
+    characterRepository,
+    providerRegistry,
+    getDefaultProvider,
+    providerInstanceRepository,
+    logger,
+  )
+
   const generateSummary = new GenerateSummaryUseCase(
     conversationRepository,
     messageRepository,
@@ -193,6 +207,7 @@ export const buildContainer = ({
     applyAllMemoryChanges,
     summaryRepository,
     generateSummary,
+    generateConversationTitle,
   )
 
   const regenerateReply = new RegenerateReplyUseCase(
@@ -297,12 +312,21 @@ export const buildContainer = ({
       messageRepository,
     ),
     regenerateReply,
+    getPromptContext: new GetPromptContextUseCase(
+      conversationRepository,
+      characterRepository,
+      messageRepository,
+      memoryRepository,
+      summaryRepository,
+      promptContextBuilder,
+    ),
     rewindConversation: new RewindConversationUseCase(
       conversationRepository,
       messageRepository,
       memoryChangeProposalRepository,
     ),
     continueConversation,
+    generateConversationTitle,
     cycleAlternative: new CycleAlternativeUseCase(
       conversationRepository,
       messageRepository,
