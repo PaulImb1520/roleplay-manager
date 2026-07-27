@@ -18,6 +18,8 @@ import type { MemoryChangeProposalRepository } from "../../../domain/ports/memor
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
+import type { SummaryRepository } from "../../../domain/ports/summary.repository"
+import type { GenerateSummaryUseCase } from "../summary/generate-summary.use-case"
 
 const now = new Date()
 
@@ -163,6 +165,20 @@ function buildMemoryRepo(): MemoryRepository {
   }
 }
 
+const buildSummaryRepo = (): SummaryRepository => ({
+  findById: async () => null,
+  findByConversationId: async () => [],
+  findLatestByConversationId: async () => null,
+  create: async (s) => s,
+  update: async (s) => s,
+  deleteById: async () => {},
+})
+
+const buildGenerateSummary = (): GenerateSummaryUseCase =>
+  ({
+    execute: async () => ({ error: { code: "NO_NEW_MESSAGES", message: "No new messages" } }),
+  }) as unknown as GenerateSummaryUseCase
+
 describe("RegenerateReplyUseCase - tool calls", () => {
   it("extrae propuestas desde tool calls", async () => {
     const savedProposals: any[] = []
@@ -233,6 +249,8 @@ describe("RegenerateReplyUseCase - tool calls", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAll,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     for await (const _ of useCase.execute({

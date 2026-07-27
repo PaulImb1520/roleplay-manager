@@ -1,4 +1,10 @@
-// Stub de puerto para SummaryRepository.
-// Se implementa en el slice S7 (Resúmenes).
+import type { Summary } from "../entities/summary.entity"
 
-export type SummaryRepository = unknown
+export interface SummaryRepository {
+  findById(id: string): Promise<Summary | null>
+  findByConversationId(conversationId: string): Promise<Summary[]>
+  findLatestByConversationId(conversationId: string): Promise<Summary | null>
+  create(summary: Summary): Promise<Summary>
+  update(summary: Summary): Promise<Summary>
+  deleteById(id: string): Promise<void>
+}

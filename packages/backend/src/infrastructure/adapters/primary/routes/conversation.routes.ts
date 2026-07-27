@@ -36,7 +36,7 @@ const UpdateConversationSettingsSchema = z.object({
   providerInstanceId: z.string().nullable().optional(),
   model: z.string().nullable().optional(),
   recentMessageCount: z.number().int().min(1).optional(),
-  summaryFrequency: z.number().int().min(1).optional(),
+  summaryFrequency: z.number().int().min(10).optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().min(1).optional(),
   topP: z.number().min(0).max(1).optional(),
@@ -145,6 +145,10 @@ export const buildConversationRouter = (deps: {
             res.write(`event: done\ndata: ${JSON.stringify(event.message)}\n\n`)
             break
           }
+          case "summary-generated": {
+            res.write(`event: summary-generated\ndata: ${JSON.stringify(event.summary)}\n\n`)
+            break
+          }
           case "error": {
             res.write(`event: error\ndata: ${JSON.stringify(event.error)}\n\n`)
             break
@@ -227,6 +231,10 @@ export const buildConversationRouter = (deps: {
               res.write(`event: done\ndata: ${JSON.stringify(event.message)}\n\n`)
               break
             }
+            case "summary-generated": {
+              res.write(`event: summary-generated\ndata: ${JSON.stringify(event.summary)}\n\n`)
+              break
+            }
             case "error": {
               res.write(`event: error\ndata: ${JSON.stringify(event.error)}\n\n`)
               break
@@ -291,6 +299,10 @@ export const buildConversationRouter = (deps: {
             }
             case "done": {
               res.write(`event: done\ndata: ${JSON.stringify(event.message)}\n\n`)
+              break
+            }
+            case "summary-generated": {
+              res.write(`event: summary-generated\ndata: ${JSON.stringify(event.summary)}\n\n`)
               break
             }
             case "error": {

@@ -2,6 +2,7 @@ import { v7 as randomUUIDv7 } from "uuid"
 
 import type { MessageDTO } from "@workspace/shared/types/message"
 import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
+import type { SummaryDTO } from "@workspace/shared/types/summary"
 
 import { Message } from "../../../domain/entities/message.entity"
 import { MemoryChangeProposal } from "../../../domain/entities/memory-change-proposal.entity"
@@ -10,6 +11,8 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
+import type { SummaryRepository } from "../../../domain/ports/summary.repository"
+import type { GenerateSummaryUseCase } from "../summary/generate-summary.use-case"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
@@ -47,10 +50,16 @@ export interface StreamErrorEvent {
   error: { code: string; message: string }
 }
 
+export interface SummaryGeneratedEvent {
+  type: "summary-generated"
+  summary: SummaryDTO
+}
+
 export type ContinueConversationEvent =
   | StreamChunkEvent
   | StreamDoneEvent
   | StreamErrorEvent
+  | SummaryGeneratedEvent
 
 export class ContinueConversationUseCase {
   constructor(
@@ -65,6 +74,8 @@ export class ContinueConversationUseCase {
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
     private readonly applyAllMemoryChanges: ApplyAllMemoryChangesUseCase,
+    private readonly summaryRepository: SummaryRepository,
+    private readonly generateSummary: GenerateSummaryUseCase,
   ) {}
 
   async *execute(
@@ -124,11 +135,16 @@ export class ContinueConversationUseCase {
       input.conversationId,
     )
 
+    const latestSummary = await this.summaryRepository.findLatestByConversationId(
+      input.conversationId,
+    )
+
     const context = await this.promptContextBuilder.build({
       characterVersion: characterResult.currentVersion,
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
       memories,
+      summary: latestSummary ?? undefined,
       enableMemoryProposalTool: true,
       filterOocFromHistory: true,
     })
@@ -282,6 +298,30 @@ export class ContinueConversationUseCase {
           { conversationId: input.conversationId },
         )
       }
+    }
+
+    // Trigger summary generation if threshold is reached
+    try {
+      const lastSummaryMsgIdx = latestSummary
+        ? allMessages.findIndex((m) => m.id === latestSummary.lastMessageId)
+        : -1
+      const messagesSinceLast = lastSummaryMsgIdx >= 0
+        ? allMessages.length - lastSummaryMsgIdx - 1
+        : allMessages.length
+      if (messagesSinceLast >= conversation.summaryFrequency) {
+        const summaryResult = await this.generateSummary.execute(
+          input.conversationId,
+        )
+        if (summaryResult.summary) {
+          yield { type: "summary-generated", summary: summaryResult.summary }
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        "Failed to generate summary",
+        error as Error,
+        { conversationId: input.conversationId },
+      )
     }
   }
 }

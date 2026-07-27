@@ -3,6 +3,7 @@ import { parseOoc } from "@workspace/shared/lib/ooc-parser"
 import type { CharacterVersion } from "../../../../domain/entities/character-version.entity"
 import type { Message } from "../../../../domain/entities/message.entity"
 import type { Memory } from "../../../../domain/entities/memory.entity"
+import type { Summary } from "../../../../domain/entities/summary.entity"
 import type { PromptContextBuilder } from "../../../../domain/ports/prompt-context-builder"
 import type { PromptContext } from "../../../../domain/value-objects/prompt-context"
 
@@ -12,6 +13,7 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
     messages: Message[]
     recentMessageCount: number
     memories?: Memory[]
+    summary?: Summary
     enableMemoryProposalTool?: boolean
     filterOocFromHistory?: boolean
   }): Promise<PromptContext> {
@@ -20,6 +22,7 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
       messages,
       recentMessageCount,
       memories,
+      summary,
       enableMemoryProposalTool = false,
       filterOocFromHistory = false,
     } = params
@@ -66,6 +69,12 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
       for (const mem of memories) {
         systemParts.push(`- [${mem.id}] ${mem.actor} → ${mem.title}: ${mem.description} (prioridad ${mem.priority})`)
       }
+    }
+
+    if (summary) {
+      systemParts.push("")
+      systemParts.push("## Resumen de la conversación")
+      systemParts.push(summary.content)
     }
 
     if (!enableMemoryProposalTool) {

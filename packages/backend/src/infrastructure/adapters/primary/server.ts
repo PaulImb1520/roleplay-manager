@@ -11,6 +11,7 @@ import { buildProviderRouter } from "./routes/provider.routes"
 import { buildSettingsRouter } from "./routes/settings.routes"
 import { buildProviderInstanceRouter } from "./routes/provider-instance.routes"
 import { buildMemoryRouter } from "./routes/memory.routes"
+import { buildSummaryRouter } from "./routes/summary.routes"
 
 export interface BuildServerOptions {
   container: AppContainer
@@ -87,6 +88,15 @@ export const buildServer = ({
       listProposals: container.listProposals,
       applyMemoryChanges: container.applyMemoryChanges,
       applyAllMemoryChanges: container.applyAllMemoryChanges,
+    }),
+  )
+  app.use(
+    "/api",
+    buildSummaryRouter({
+      listSummaries: container.listSummaries,
+      generateSummary: container.generateSummary,
+      updateSummary: container.updateSummary,
+      deleteSummary: container.deleteSummary,
     }),
   )
 

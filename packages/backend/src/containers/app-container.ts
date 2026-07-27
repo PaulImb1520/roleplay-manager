@@ -14,6 +14,7 @@ import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/d
 import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
 import { DrizzleMemoryRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory.repository"
 import { DrizzleMemoryChangeProposalRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-memory-change-proposal.repository"
+import { DrizzleSummaryRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-summary.repository"
 import { ProviderRegistryImpl } from "../infrastructure/adapters/secondary/providers/provider-registry"
 import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/prompt-context-builder/prompt-context-builder.impl"
 import type { ProviderRegistry } from "../domain/ports/provider.port"
@@ -24,6 +25,7 @@ import type { MessageRepository } from "../domain/ports/message.repository"
 import type { MemoryRepository } from "../domain/ports/memory.repository"
 import type { MemoryChangeProposalRepository } from "../domain/ports/memory-change-proposal.repository"
 import type { ProviderInstanceRepository } from "../domain/ports/provider-instance.repository"
+import type { SummaryRepository } from "../domain/ports/summary.repository"
 import type { PromptContextBuilder } from "../domain/ports/prompt-context-builder"
 import { CreateCharacterUseCase } from "../application/use-cases/character/create-character.use-case"
 import { GetCharacterUseCase } from "../application/use-cases/character/get-character.use-case"
@@ -50,6 +52,10 @@ import { UpdateMemoryUseCase } from "../application/use-cases/memory/update-memo
 import { DeleteMemoryUseCase } from "../application/use-cases/memory/delete-memory.use-case"
 import { ListMemoriesUseCase } from "../application/use-cases/memory/list-memories.use-case"
 import { ListProposalsUseCase } from "../application/use-cases/memory/list-proposals.use-case"
+import { ListSummariesUseCase } from "../application/use-cases/summary/list-summaries.use-case"
+import { GenerateSummaryUseCase } from "../application/use-cases/summary/generate-summary.use-case"
+import { UpdateSummaryUseCase } from "../application/use-cases/summary/update-summary.use-case"
+import { DeleteSummaryUseCase } from "../application/use-cases/summary/delete-summary.use-case"
 import { ListProviderInstancesUseCase } from "../application/use-cases/provider/list-provider-instances.use-case"
 import { CreateProviderInstanceUseCase } from "../application/use-cases/provider/create-provider-instance.use-case"
 import { UpdateProviderInstanceUseCase } from "../application/use-cases/provider/update-provider-instance.use-case"
@@ -99,6 +105,14 @@ export interface AppContainer {
   deleteProviderInstance: DeleteProviderInstanceUseCase
   validateProviderInstance: ValidateProviderInstanceUseCase
 
+  summaryRepository: SummaryRepository
+
+  // Summary
+  listSummaries: ListSummariesUseCase
+  generateSummary: GenerateSummaryUseCase
+  updateSummary: UpdateSummaryUseCase
+  deleteSummary: DeleteSummaryUseCase
+
   // Memory
   applyMemoryChanges: ApplyMemoryChangesUseCase
   applyAllMemoryChanges: ApplyAllMemoryChangesUseCase
@@ -142,6 +156,7 @@ export const buildContainer = ({
   const memoryChangeProposalRepository: MemoryChangeProposalRepository =
     new DrizzleMemoryChangeProposalRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
+  const summaryRepository: SummaryRepository = new DrizzleSummaryRepository(database)
   const getDefaultProvider = new GetDefaultProviderUseCase(settings)
   const providerInstanceRepository: ProviderInstanceRepository =
     new DrizzleProviderInstanceRepository(database)
@@ -149,6 +164,18 @@ export const buildContainer = ({
   const applyAllMemoryChanges = new ApplyAllMemoryChangesUseCase(
     memoryRepository,
     memoryChangeProposalRepository,
+    logger,
+  )
+
+  const generateSummary = new GenerateSummaryUseCase(
+    conversationRepository,
+    messageRepository,
+    characterRepository,
+    memoryRepository,
+    summaryRepository,
+    providerRegistry,
+    getDefaultProvider,
+    providerInstanceRepository,
     logger,
   )
 
@@ -164,6 +191,8 @@ export const buildContainer = ({
     getDefaultProvider,
     providerInstanceRepository,
     applyAllMemoryChanges,
+    summaryRepository,
+    generateSummary,
   )
 
   const regenerateReply = new RegenerateReplyUseCase(
@@ -178,6 +207,8 @@ export const buildContainer = ({
     getDefaultProvider,
     providerInstanceRepository,
     applyAllMemoryChanges,
+    summaryRepository,
+    generateSummary,
   )
 
   const continueConversation = new ContinueConversationUseCase(
@@ -192,6 +223,8 @@ export const buildContainer = ({
     getDefaultProvider,
     providerInstanceRepository,
     applyAllMemoryChanges,
+    summaryRepository,
+    generateSummary,
   )
 
   return {
@@ -224,6 +257,11 @@ export const buildContainer = ({
     memoryRepository,
     memoryChangeProposalRepository,
     promptContextBuilder,
+    summaryRepository,
+    listSummaries: new ListSummariesUseCase(summaryRepository),
+    generateSummary,
+    updateSummary: new UpdateSummaryUseCase(summaryRepository),
+    deleteSummary: new DeleteSummaryUseCase(summaryRepository),
     createCharacter: new CreateCharacterUseCase(characterRepository),
     getCharacter: new GetCharacterUseCase(characterRepository),
     listCharacters: new ListCharactersUseCase(characterRepository),

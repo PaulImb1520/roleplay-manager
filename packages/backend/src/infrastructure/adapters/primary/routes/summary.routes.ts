@@ -1,0 +1,78 @@
+import { Router } from "express"
+import { z } from "zod"
+
+import type { ListSummariesUseCase } from "../../../../application/use-cases/summary/list-summaries.use-case"
+import type { GenerateSummaryUseCase } from "../../../../application/use-cases/summary/generate-summary.use-case"
+import type { UpdateSummaryUseCase } from "../../../../application/use-cases/summary/update-summary.use-case"
+import type { DeleteSummaryUseCase } from "../../../../application/use-cases/summary/delete-summary.use-case"
+import { validate } from "../middlewares/validation"
+
+const UpdateSummarySchema = z.object({
+  content: z.string().min(1),
+})
+
+export const buildSummaryRouter = (deps: {
+  listSummaries: ListSummariesUseCase
+  generateSummary: GenerateSummaryUseCase
+  updateSummary: UpdateSummaryUseCase
+  deleteSummary: DeleteSummaryUseCase
+}): Router => {
+  const router = Router()
+
+  router.get("/conversations/:id/summaries", async (req, res, next) => {
+    try {
+      const { id } = req.params as { id: string }
+      const result = await deps.listSummaries.execute(id)
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.post(
+    "/conversations/:id/summaries/generate",
+    async (req, res, next) => {
+      try {
+        const { id } = req.params as { id: string }
+        const result = await deps.generateSummary.execute(id)
+        if (result.error) {
+          res.status(400).json(result)
+          return
+        }
+        res.status(201).json(result.summary)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.put(
+    "/conversations/:id/summaries/:summaryId",
+    validate(UpdateSummarySchema),
+    async (req, res, next) => {
+      try {
+        const { id, summaryId } = req.params as { id: string; summaryId: string }
+        const body = req.body as z.infer<typeof UpdateSummarySchema>
+        const result = await deps.updateSummary.execute(id, summaryId, body)
+        res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.delete(
+    "/conversations/:id/summaries/:summaryId",
+    async (req, res, next) => {
+      try {
+        const { id, summaryId } = req.params as { id: string; summaryId: string }
+        await deps.deleteSummary.execute(id, summaryId)
+        res.status(204).end()
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  return router
+}
