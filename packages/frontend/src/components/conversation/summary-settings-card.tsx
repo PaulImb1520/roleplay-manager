@@ -26,7 +26,7 @@ export function SummarySettingsCard({
   const recentMax = Math.max(1, summaryFrequency - 1)
 
   return (
-        <FieldGroup>
+        <FieldGroup className="p-1">
           <Field>
             <FieldLabel htmlFor="summary-freq">Frecuencia de resumen</FieldLabel>
             <Input
