@@ -181,6 +181,12 @@ El orden está pensado para maximizar el feedback temprano: lo que se entrega pr
 
 **Capas tocadas (transversal):** timeouts de proveedores (configurable en `settings`); manejo unificado de errores en frontend; retroalimentación en pantalla de chat y sus interacciones; estados de carga y error consistentes; mensajes claros para el usuario; revisión de accesibilidad básica; optimización de queries Drizzle obvias; revisión de la documentación.
 
+### S10 — Auto-degradación de memorias
+
+**Entregable:** las memorias dinámicas con baja prioridad mantenida durante varios mensajes se eliminan automáticamente según reglas configurables, liberando espacio sin intervención del usuario ni del asistente.
+
+**Capas tocadas:** [diseño pendiente].
+
 ---
 
 ## Mapeo con el roadmap horizontal
@@ -198,6 +204,7 @@ El `03-roadmap.md` describe el producto en **fases horizontales** (Fase 0 a Fase
 | Fase 6 — Resúmenes | S7 |
 | Fase 7 — Herramientas de inspección | S8 |
 | Fase 8 — Pulido de la versión 1.0 | S9 |
+| Post-MVP | S10 |
 
 Esta tabla puede actualizarse si durante el desarrollo se reorganizan los slices.
 
