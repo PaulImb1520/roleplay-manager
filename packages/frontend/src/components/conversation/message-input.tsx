@@ -1,16 +1,24 @@
 import { useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
-import { Send, ArrowRight } from "lucide-react"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@workspace/ui/components/context-menu"
+import { Send, ArrowRight, Eye } from "lucide-react"
 
 export function MessageInput({
   onSend,
   onContinue,
+  onPreview,
   disabled,
   rewindDraft = "",
 }: {
   onSend: (content: string) => void
   onContinue?: () => void
+  onPreview?: (content?: string) => void
   disabled: boolean
   rewindDraft?: string
 }) {
@@ -48,25 +56,45 @@ export function MessageInput({
         disabled={disabled}
       />
       {hasText ? (
-        <Button
-          type="submit"
-          size="icon"
-          disabled={disabled || !hasText}
-          className="shrink-0"
-        >
-          <Send className="size-4" />
-        </Button>
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={disabled || !hasText}
+              className="shrink-0"
+            >
+              <Send className="size-4" />
+            </Button>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onPreview?.(content.trim())}>
+              <Eye className="size-4" />
+              Previsualizar contexto
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       ) : (
-        <Button
-          type="button"
-          size="icon"
-          variant="secondary"
-          disabled={disabled}
-          className="shrink-0"
-          onClick={handleContinue}
-        >
-          <ArrowRight className="size-4" />
-        </Button>
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              disabled={disabled}
+              className="shrink-0"
+              onClick={handleContinue}
+            >
+              <ArrowRight className="size-4" />
+            </Button>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onPreview?.()}>
+              <Eye className="size-4" />
+              Previsualizar contexto
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       )}
     </form>
   )
