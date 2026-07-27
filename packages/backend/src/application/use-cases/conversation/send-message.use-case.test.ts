@@ -15,6 +15,8 @@ import { CharacterVersion } from "../../../domain/entities/character-version.ent
 import type { PromptContext, StreamChunk } from "../../../domain/value-objects/prompt-context"
 import type { ProviderId } from "@workspace/shared/types/provider"
 import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
+import type { SummaryRepository } from "../../../domain/ports/summary.repository"
+import type { GenerateSummaryUseCase } from "../summary/generate-summary.use-case"
 
 const now = new Date()
 
@@ -41,8 +43,8 @@ const activeConversation = Conversation.create({
   model: null,
   provider: "ollama",
   providerInstanceId: null,
-  recentMessageCount: 15,
-  summaryFrequency: 15,
+  recentMessageCount: 10,
+  summaryFrequency: 20,
   temperature: 0.7,
   maxTokens: 2048,
   topP: 0.9,
@@ -62,8 +64,8 @@ const archivedConversation = Conversation.create({
   model: null,
   provider: "ollama",
   providerInstanceId: null,
-  recentMessageCount: 15,
-  summaryFrequency: 15,
+  recentMessageCount: 10,
+  summaryFrequency: 20,
   temperature: 0.7,
   maxTokens: 2048,
   topP: 0.9,
@@ -196,6 +198,20 @@ const buildMemoryRepo = () => ({
   deleteById: async () => {},
 })
 
+const buildSummaryRepo = (): SummaryRepository => ({
+  findById: async () => null,
+  findByConversationId: async () => [],
+  findLatestByConversationId: async () => null,
+  create: async (s) => s,
+  update: async (s) => s,
+  deleteById: async () => {},
+})
+
+const buildGenerateSummary = (): GenerateSummaryUseCase =>
+  ({
+    execute: async () => ({ error: { code: "NO_NEW_MESSAGES", message: "No new messages" } }),
+  }) as unknown as GenerateSummaryUseCase
+
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
 
 const applyAllMemoryChanges = {
@@ -231,6 +247,8 @@ describe("SendMessageUseCase", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAllMemoryChanges,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     await expect(
@@ -257,6 +275,8 @@ describe("SendMessageUseCase", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAllMemoryChanges,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     await expect(
@@ -282,6 +302,8 @@ describe("SendMessageUseCase", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAllMemoryChanges,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const events: string[] = []
@@ -311,6 +333,8 @@ describe("SendMessageUseCase", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAllMemoryChanges,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const chunks: string[] = []
@@ -345,6 +369,8 @@ describe("SendMessageUseCase", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAllMemoryChanges,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -444,6 +470,8 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAll,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const gen = useCase.execute({
@@ -548,6 +576,8 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAll,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const gen = useCase.execute({
@@ -665,6 +695,8 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       applyAll,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -762,6 +794,8 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildDefaultProvider(),
       providerInstanceRepository,
       buildApplyAllForOoc(),
+      buildSummaryRepo(),
+      buildGenerateSummary(),
     )
 
     const gen = useCase.execute({

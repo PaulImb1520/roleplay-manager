@@ -23,10 +23,12 @@ import { listProviderModels } from "@/lib/api/providers"
 import { getDefaultProvider } from "@/lib/api/settings"
 import { ApiClientError } from "@/lib/api/client"
 import { useMemoryStore } from "@/lib/stores/memory.store"
+import { useSummaryStore } from "@/lib/stores/summary.store"
+import { SummaryViewer } from "../summary/summary-viewer"
 import { InferenceParamsCard } from "./inference-params-card"
 import { InstanceManager } from "./instance-manager"
 import { ModelCard } from "./model-card"
-import { ContextCard } from "./context-card"
+import { SummarySettingsCard } from "./summary-settings-card"
 import { MemoryModeCard } from "../memory/memory-mode-card"
 import { ProposalList } from "../memory/proposal-list"
 import { MemoryList } from "../memory/memory-list"
@@ -75,8 +77,8 @@ export function SettingsPanel({
   const [frequencyPenalty, setFrequencyPenalty] = useState(current.frequencyPenalty ?? 0)
   const [presencePenalty, setPresencePenalty] = useState(current.presencePenalty ?? 0)
   const [stopSequences, setStopSequences] = useState(current.stopSequences?.join(", ") ?? "")
-  const [recentMessageCount, setRecentMessageCount] = useState(current.recentMessageCount ?? 15)
-  const [summaryFrequency, setSummaryFrequency] = useState(current.summaryFrequency ?? 15)
+  const [recentMessageCount, setRecentMessageCount] = useState(current.recentMessageCount ?? 10)
+  const [summaryFrequency, setSummaryFrequency] = useState(current.summaryFrequency ?? 20)
 
   const [instances, setInstances] = useState<ProviderInstance[]>([])
   const [instancesLoading, setInstancesLoading] = useState(false)
@@ -89,6 +91,7 @@ export function SettingsPanel({
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
   const pendingCount = useMemoryStore((s) => s.proposals.filter((p) => p.status === "pending").length)
+  const summaryCount = useSummaryStore((s) => s.summaries.length)
 
   const [tab, setTab] = usePersistedValue({
     scope: conversationId,
@@ -101,14 +104,14 @@ export function SettingsPanel({
     scope: conversationId,
     key: "settings-accordion",
     defaultValue: ["mode", "memories"],
-    validateItem: (v) => v === "mode" || v === "proposals" || v === "memories",
+    validateItem: (v) => v === "mode" || v === "proposals" || v === "memories" || v === "summaries",
   })
 
   const isDefaultValues =
     temperature === 0.7 && maxTokens === 2048 && topP === 0.9 &&
     frequencyPenalty === 0 && presencePenalty === 0 &&
-    stopSequences === "" && recentMessageCount === 15 &&
-    summaryFrequency === 15
+    stopSequences === "" && recentMessageCount === 10 &&
+    summaryFrequency === 20
 
   const hasChanges =
     provider !== (current.provider ?? "ollama") ||
@@ -120,8 +123,8 @@ export function SettingsPanel({
     frequencyPenalty !== (current.frequencyPenalty ?? 0) ||
     presencePenalty !== (current.presencePenalty ?? 0) ||
     stopSequences !== (current.stopSequences?.join(", ") ?? "") ||
-    recentMessageCount !== (current.recentMessageCount ?? 15) ||
-    summaryFrequency !== (current.summaryFrequency ?? 15)
+    recentMessageCount !== (current.recentMessageCount ?? 10) ||
+    summaryFrequency !== (current.summaryFrequency ?? 20)
 
   const loadInstances = useCallback(async () => {
     setInstancesLoading(true)
@@ -219,9 +222,9 @@ export function SettingsPanel({
       settings.presencePenalty = presencePenalty
     if (stopSequences !== (current.stopSequences?.join(", ") ?? ""))
       settings.stopSequences = stopSequences.split(",").map((s) => s.trim()).filter(Boolean)
-    if (recentMessageCount !== (current.recentMessageCount ?? 15))
+    if (recentMessageCount !== (current.recentMessageCount ?? 10))
       settings.recentMessageCount = recentMessageCount
-    if (summaryFrequency !== (current.summaryFrequency ?? 15))
+    if (summaryFrequency !== (current.summaryFrequency ?? 20))
       settings.summaryFrequency = summaryFrequency
     try {
       const updated = await updateConversationSettings(conversationId, settings)
@@ -244,8 +247,8 @@ export function SettingsPanel({
     setFrequencyPenalty(0)
     setPresencePenalty(0)
     setStopSequences("")
-    setRecentMessageCount(15)
-    setSummaryFrequency(15)
+    setRecentMessageCount(10)
+    setSummaryFrequency(20)
   }
 
   const doReset = () => {
@@ -308,6 +311,23 @@ export function SettingsPanel({
                     </AccordionTrigger>
                     <AccordionContent>
                       <ProposalList conversationId={conversationId} />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="summaries">
+                    <AccordionTrigger className="flex items-center gap-2">
+                      Resúmenes
+                      {summaryCount > 0 ? (
+                        <Badge>{summaryCount}</Badge>
+                      ) : null}
+                    </AccordionTrigger>
+                    <AccordionContent className="flex flex-col gap-4">
+                      <SummarySettingsCard
+                        recentMessageCount={recentMessageCount}
+                        summaryFrequency={summaryFrequency}
+                        onRecentMessageCountChange={setRecentMessageCount}
+                        onSummaryFrequencyChange={setSummaryFrequency}
+                      />
+                      <SummaryViewer conversationId={conversationId} summaryFrequency={summaryFrequency} />
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="memories">
@@ -414,13 +434,6 @@ export function SettingsPanel({
                   onPresencePenaltyChange={setPresencePenalty}
                   onMaxTokensChange={setMaxTokens}
                   onStopSequencesChange={setStopSequences}
-                />
-
-                <ContextCard
-                  recentMessageCount={recentMessageCount}
-                  summaryFrequency={summaryFrequency}
-                  onRecentMessageCountChange={setRecentMessageCount}
-                  onSummaryFrequencyChange={setSummaryFrequency}
                 />
               </TabsContent>
             </div>

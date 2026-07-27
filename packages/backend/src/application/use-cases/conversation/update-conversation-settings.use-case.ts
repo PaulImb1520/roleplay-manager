@@ -122,6 +122,10 @@ export class UpdateConversationSettingsUseCase {
     }
     if (input.recentMessageCount !== undefined) {
       input.recentMessageCount = Math.max(1, input.recentMessageCount)
+      const sf = input.summaryFrequency ?? conv.summaryFrequency
+      if (input.recentMessageCount >= sf) {
+        input.recentMessageCount = Math.max(1, sf - 1)
+      }
     }
     if (input.summaryFrequency !== undefined) {
       input.summaryFrequency = Math.max(1, input.summaryFrequency)
