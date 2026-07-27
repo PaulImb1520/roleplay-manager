@@ -11,6 +11,7 @@ import type {
   ConversationSettingsUpdate,
   ConversationStatus,
   MemoryProposalMode,
+  TitleSource,
 } from "@workspace/shared/types/conversation"
 import { conversations, messages } from "../schema"
 
@@ -22,6 +23,7 @@ const toConversation = (row: ConversationRow): Conversation =>
     id: row.id,
     versionId: row.versionId,
     title: row.title ?? null,
+    titleSource: (row.titleSource as TitleSource) ?? null,
     status: row.status as ConversationStatus,
     model: row.model ?? null,
     provider: row.provider ?? null,
@@ -125,6 +127,7 @@ export class DrizzleConversationRepository implements ConversationRepository {
       .update(conversations)
       .set({
         title: conversation.title,
+        titleSource: conversation.titleSource,
         status: conversation.status,
         updatedAt: conversation.updatedAt,
       })

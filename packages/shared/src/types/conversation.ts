@@ -2,6 +2,8 @@ export type ConversationStatus = "active" | "archived"
 
 export type MemoryProposalMode = "auto" | "manual"
 
+export type TitleSource = "auto" | "manual"
+
 export interface ConversationSummary {
   id: string
   characterName: string
@@ -19,6 +21,7 @@ export interface ConversationDetail {
   characterName: string
   characterProfileImage: string
   title: string | null
+  titleSource: TitleSource | null
   status: ConversationStatus
   model: string | null
   provider: string | null

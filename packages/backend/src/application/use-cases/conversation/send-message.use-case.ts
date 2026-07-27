@@ -3,6 +3,7 @@ import { v7 as randomUUIDv7 } from "uuid"
 import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
 import type { MessageDTO } from "@workspace/shared/types/message"
 import type { SummaryDTO } from "@workspace/shared/types/summary"
+import type { TitleSource } from "@workspace/shared/types/conversation"
 
 import { Message } from "../../../domain/entities/message.entity"
 import { MemoryChangeProposal } from "../../../domain/entities/memory-change-proposal.entity"
@@ -12,6 +13,7 @@ import type { MessageRepository } from "../../../domain/ports/message.repository
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
+import type { GenerateConversationTitleUseCase } from "./generate-conversation-title.use-case"
 import type { GenerateSummaryUseCase } from "../summary/generate-summary.use-case"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { Logger } from "../../../domain/ports/logger.port"
@@ -49,6 +51,8 @@ export interface StreamChunkEvent {
 export interface StreamDoneEvent {
   type: "done"
   message: MessageDTO
+  title?: string
+  titleSource?: TitleSource
 }
 
 export interface SummaryGeneratedEvent {
@@ -83,6 +87,7 @@ export class SendMessageUseCase {
     private readonly applyAllMemoryChanges: ApplyAllMemoryChangesUseCase,
     private readonly summaryRepository: SummaryRepository,
     private readonly generateSummary: GenerateSummaryUseCase,
+    private readonly generateConversationTitle: GenerateConversationTitleUseCase,
   ) {}
 
   async *execute(input: SendMessageInput): AsyncGenerator<SendMessageEvent> {
@@ -279,7 +284,25 @@ export class SendMessageUseCase {
     })
     await this.messageRepository.create(assistantMessage)
 
-    yield { type: "done", message: toMessageDTO(assistantMessage) }
+    let title: string | undefined
+    let titleSource: TitleSource | undefined
+    if (conversation.title === null && allMessages.length > 0) {
+      try {
+        const result = await this.generateConversationTitle.execute(
+          input.conversationId,
+        )
+        title = result.title
+        titleSource = "auto"
+      } catch (error) {
+        this.logger.error(
+          "Failed to generate conversation title",
+          error as Error,
+          { conversationId: input.conversationId },
+        )
+      }
+    }
+
+    yield { type: "done", message: toMessageDTO(assistantMessage), title, titleSource }
 
     // Save and auto-apply extracted proposals
     if (proposals.length > 0) {

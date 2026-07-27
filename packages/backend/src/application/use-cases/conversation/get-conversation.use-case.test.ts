@@ -27,6 +27,7 @@ const buildConversationRepo = (): ConversationRepository => ({
         id: "conv-1",
         versionId: "ver-1",
         title: null,
+        titleSource: null,
         status: "active",
         model: null,
         provider: null,

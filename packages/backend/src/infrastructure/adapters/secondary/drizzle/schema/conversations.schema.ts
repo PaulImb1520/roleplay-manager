@@ -10,6 +10,7 @@ export const conversations = sqliteTable("conversations", {
     .notNull()
     .references(() => characterVersions.id, { onDelete: "cascade" }),
   title: text("title"),
+  titleSource: text("title_source", { enum: ["auto", "manual"] }),
   status: text("status", { enum: ["active", "archived"] })
     .notNull()
     .default("active"),

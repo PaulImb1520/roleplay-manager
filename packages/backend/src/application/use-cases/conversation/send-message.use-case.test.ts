@@ -17,6 +17,7 @@ import type { ProviderId } from "@workspace/shared/types/provider"
 import type { MemoryChangeProposalRepository } from "../../../domain/ports/memory-change-proposal.repository"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
 import type { GenerateSummaryUseCase } from "../summary/generate-summary.use-case"
+import type { GenerateConversationTitleUseCase } from "./generate-conversation-title.use-case"
 
 const now = new Date()
 
@@ -39,6 +40,7 @@ const activeConversation = Conversation.create({
   id: "conv-1",
   versionId: "ver-1",
   title: null,
+  titleSource: null,
   status: "active",
   model: null,
   provider: "ollama",
@@ -60,6 +62,7 @@ const archivedConversation = Conversation.create({
   id: "conv-archived",
   versionId: "ver-1",
   title: null,
+  titleSource: null,
   status: "archived",
   model: null,
   provider: "ollama",
@@ -212,6 +215,9 @@ const buildGenerateSummary = (): GenerateSummaryUseCase =>
     execute: async () => ({ error: { code: "NO_NEW_MESSAGES", message: "No new messages" } }),
   }) as unknown as GenerateSummaryUseCase
 
+const buildGenerateConversationTitle = (): GenerateConversationTitleUseCase =>
+  ({ execute: vi.fn() }) as unknown as GenerateConversationTitleUseCase
+
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
 
 const applyAllMemoryChanges = {
@@ -249,6 +255,7 @@ describe("SendMessageUseCase", () => {
       applyAllMemoryChanges,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     await expect(
@@ -277,6 +284,7 @@ describe("SendMessageUseCase", () => {
       applyAllMemoryChanges,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     await expect(
@@ -304,6 +312,7 @@ describe("SendMessageUseCase", () => {
       applyAllMemoryChanges,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const events: string[] = []
@@ -335,6 +344,7 @@ describe("SendMessageUseCase", () => {
       applyAllMemoryChanges,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const chunks: string[] = []
@@ -371,6 +381,7 @@ describe("SendMessageUseCase", () => {
       applyAllMemoryChanges,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -472,6 +483,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       applyAll,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const gen = useCase.execute({
@@ -578,6 +590,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       applyAll,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const gen = useCase.execute({
@@ -697,6 +710,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       applyAll,
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -796,6 +810,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildApplyAllForOoc(),
       buildSummaryRepo(),
       buildGenerateSummary(),
+      buildGenerateConversationTitle(),
     )
 
     const gen = useCase.execute({

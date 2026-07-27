@@ -27,6 +27,7 @@ const baseConversation = Conversation.create({
   id: "conv-1",
   versionId: "ver-1",
   title: "Test",
+  titleSource: null,
   status: "active",
   provider: "ollama" as ProviderId,
   providerInstanceId: null,

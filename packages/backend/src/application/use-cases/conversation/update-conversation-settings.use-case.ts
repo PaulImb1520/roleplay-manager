@@ -150,6 +150,7 @@ export class UpdateConversationSettingsUseCase {
       characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
       characterProfileImage: result?.currentVersion.profileImage ?? "",
       title: updated.title,
+      titleSource: updated.titleSource,
       status: updated.status,
       model: updated.model,
       provider: updated.provider,

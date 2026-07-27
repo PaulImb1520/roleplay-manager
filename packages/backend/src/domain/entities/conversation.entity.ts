@@ -1,4 +1,4 @@
-import type { ConversationStatus } from "@workspace/shared/types/conversation"
+import type { ConversationStatus, TitleSource } from "@workspace/shared/types/conversation"
 
 export type MemoryProposalMode = "auto" | "manual"
 
@@ -6,6 +6,7 @@ export interface ConversationProps {
   id: string
   versionId: string
   title: string | null
+  titleSource: TitleSource | null
   status: ConversationStatus
   model: string | null
   provider: string | null
@@ -33,6 +34,7 @@ export class Conversation {
   get id(): string { return this.props.id }
   get versionId(): string { return this.props.versionId }
   get title(): string | null { return this.props.title }
+  get titleSource(): TitleSource | null { return this.props.titleSource }
   get status(): ConversationStatus { return this.props.status }
   get model(): string | null { return this.props.model }
   get provider(): string | null { return this.props.provider }
@@ -66,5 +68,14 @@ export class Conversation {
   withMemoryProposalMode(mode: MemoryProposalMode): Conversation {
     if (this.props.memoryProposalMode === mode) return this
     return new Conversation({ ...this.props, memoryProposalMode: mode, updatedAt: new Date() })
+  }
+
+  withTitle(title: string, source: TitleSource): Conversation {
+    return new Conversation({
+      ...this.props,
+      title,
+      titleSource: source,
+      updatedAt: new Date(),
+    })
   }
 }
