@@ -18,14 +18,6 @@ import {
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu"
 import { SettingsIcon, Pencil, RefreshCw } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog"
 
 import { useChatStore } from "../../lib/stores/chat.store"
 import {
@@ -43,6 +35,7 @@ import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
 import { ContextPreviewDialog } from "./context-preview-dialog"
 import { SettingsPanel } from "./settings-panel"
+import { ChatConfirmDialogs } from "./chat-confirm-dialogs"
 import { useMemoryStore } from "@/lib/stores/memory.store"
 import { useSummaryStore } from "@/lib/stores/summary.store"
 
@@ -91,10 +84,10 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     [proposals],
   )
 
-  const affectedSummaries = useMemo(() => {
-    if (!confirmRewind) return []
+  const affectedSummariesCount = useMemo(() => {
+    if (!confirmRewind) return 0
     const targetMsg = messages.find((m) => m.id === confirmRewind)
-    if (!targetMsg) return []
+    if (!targetMsg) return 0
     const deletedIds = new Set<string>()
     for (const m of messages) {
       if (m.position > targetMsg.position) {
@@ -106,7 +99,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     }
     return summaries.filter(
       (s) => deletedIds.has(s.firstMessageId) || deletedIds.has(s.lastMessageId),
-    )
+    ).length
   }, [confirmRewind, messages, summaries])
 
   const initialized = useRef(false)
@@ -481,49 +474,15 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         />
       </footer>
 
-      <Dialog open={confirmDelete !== null} onOpenChange={() => setConfirmDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar mensaje</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={confirmRewind !== null} onOpenChange={() => setConfirmRewind(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Retroceder conversación</DialogTitle>
-            <DialogDescription>
-              Se eliminarán todos los mensajes posteriores a este punto. Esta acción no se puede deshacer.
-            </DialogDescription>
-            {affectedSummaries.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                También se eliminará{affectedSummaries.length === 1 ? "" : "n"}{" "}
-                {affectedSummaries.length} resumen{affectedSummaries.length === 1 ? "" : "es"} cuyo rango queda afectado.
-              </p>
-            )}
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmRewind(null)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleRewind}>
-              Retroceder
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ChatConfirmDialogs
+        confirmDelete={confirmDelete}
+        confirmRewind={confirmRewind}
+        affectedSummariesCount={affectedSummariesCount}
+        onCloseDelete={() => setConfirmDelete(null)}
+        onCloseRewind={() => setConfirmRewind(null)}
+        onConfirmDelete={handleDelete}
+        onConfirmRewind={handleRewind}
+      />
 
       <ContextPreviewDialog
         open={previewOpen}
