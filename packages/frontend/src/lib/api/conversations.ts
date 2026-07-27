@@ -5,6 +5,7 @@ import type {
   CreateConversationInput,
 } from "@workspace/shared/types/conversation"
 import type { MessageDTO } from "@workspace/shared/types/message"
+import type { SummaryDTO } from "@workspace/shared/types/summary"
 
 import { apiRequest, getBaseUrl } from "./client"
 
@@ -80,6 +81,7 @@ export interface SendMessageCallbacks {
   onSaved?: (message: MessageDTO) => void
   onChunk: (content: string) => void
   onDone: (message: MessageDTO) => void
+  onSummaryGenerated?: (summary: SummaryDTO) => void
   onError: (error: { code: string; message: string }) => void
 }
 
@@ -139,6 +141,10 @@ const streamEventSource = async (
             }
             case "done": {
               callbacks.onDone(data)
+              break
+            }
+            case "summary-generated": {
+              callbacks.onSummaryGenerated?.(data)
               break
             }
             case "error": {

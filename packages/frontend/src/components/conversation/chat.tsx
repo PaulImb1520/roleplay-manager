@@ -33,6 +33,7 @@ import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
 import { SettingsPanel } from "./settings-panel"
 import { useMemoryStore } from "@/lib/stores/memory.store"
+import { useSummaryStore } from "@/lib/stores/summary.store"
 
 export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const [conv, setConv] = useState(conversation)
@@ -64,6 +65,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const loadMemories = useMemoryStore((s) => s.loadMemories)
   const loadProposals = useMemoryStore((s) => s.loadProposals)
   const proposals = useMemoryStore((s) => s.proposals)
+  const loadSummaries = useSummaryStore((s) => s.loadSummaries)
+  const summaryCount = useSummaryStore((s) => s.summaries.length)
 
   const pendingCount = useMemo(
     () => proposals.filter((p) => p.status === "pending").length,
@@ -77,9 +80,10 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
       setMessages(conv.messages)
       loadMemories(conv.id)
       loadProposals(conv.id)
+      loadSummaries(conv.id)
       initialized.current = true
     }
-  }, [conv, setMessages, loadMemories, loadProposals])
+  }, [conv, setMessages, loadMemories, loadProposals, loadSummaries])
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -100,6 +104,10 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           setStreaming(false)
           loadMemories(conv.id)
           loadProposals(conv.id)
+          loadSummaries(conv.id)
+        },
+        onSummaryGenerated: () => {
+          loadSummaries(conv.id)
         },
         onError: (err) => {
           setError(err.message)
@@ -108,7 +116,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
       })
     },
-    [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, setError, setStreaming, setStreamingContent],
+    [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, setError, setStreaming, setStreamingContent],
   )
 
   const handleContinue = useCallback(async () => {
@@ -126,6 +134,10 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         setStreaming(false)
         loadMemories(conv.id)
         loadProposals(conv.id)
+        loadSummaries(conv.id)
+      },
+      onSummaryGenerated: () => {
+        loadSummaries(conv.id)
       },
       onError: (err) => {
         setError(err.message)
@@ -133,7 +145,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         setStreamingContent("")
       },
     })
-  }, [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, setError, setStreaming, setStreamingContent])
+  }, [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, setError, setStreaming, setStreamingContent])
 
   const handleRegenerate = useCallback(
     async (messageId: string) => {
@@ -151,6 +163,10 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           setStreaming(false)
           loadMemories(conv.id)
           loadProposals(conv.id)
+          loadSummaries(conv.id)
+        },
+        onSummaryGenerated: () => {
+          loadSummaries(conv.id)
         },
         onError: (err) => {
           setError(err.message)
@@ -159,7 +175,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
       })
     },
-    [conv.id, appendToStreamingContent, loadMemories, loadProposals, replaceMessage, setError, setStreaming, setStreamingContent],
+    [conv.id, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, replaceMessage, setError, setStreaming, setStreamingContent],
   )
 
   const handleEdit = useCallback(
