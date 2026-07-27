@@ -4,29 +4,17 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
   Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
 import { Separator } from "@workspace/ui/components/separator"
 import { Spinner } from "@workspace/ui/components/spinner"
 import {
@@ -34,21 +22,9 @@ import {
   ToggleGroupItem,
 } from "@workspace/ui/components/toggle-group"
 import {
-  AlertCircleIcon,
   CheckCircle2Icon,
-  PlusIcon,
-  PencilIcon,
   RefreshCwIcon,
-  Trash2Icon,
 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "@workspace/ui/components/dialog"
 
 import type {
   ConfigureDefaultProviderInput,
@@ -76,6 +52,10 @@ import {
   validateProviderInstance,
 } from "@/lib/api/provider-instances"
 import { ApiClientError } from "@/lib/api/client"
+
+import { InstanceFormDialog } from "./instance-form-dialog"
+import { ProviderInstancesCard } from "./provider-instances-card"
+import { DefaultModelCard } from "./default-model-card"
 
 type StatusMap = Record<ProviderId, ProviderStatus | "loading">
 
@@ -381,200 +361,36 @@ export function ProviderManager() {
       </Card>
 
       {selected === "openai-compatible" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Instancias OpenAI-compatible</CardTitle>
-            <CardDescription>
-              Gestiona las instancias de proveedores compatibles con OpenAI.
-              Cada instancia tiene su propia URL y API key.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {instances.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No hay instancias configuradas. Crea una nueva.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {instances.map((inst) => (
-                  <div
-                    key={inst.id}
-                    className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
-                      selectedInstanceId === inst.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => setSelectedInstanceId(inst.id)}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{inst.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {inst.url || "Sin URL"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditInstanceId(inst.id)
-                          setInstanceFormName(inst.name)
-                          setInstanceFormUrl(inst.url)
-                          setInstanceFormApiKey("")
-                        }}
-                      >
-                        <PencilIcon className="size-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteInstance(inst.id)
-                        }}
-                      >
-                        <Trash2Icon className="size-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditInstanceId(null)
-                setInstanceFormName("")
-                setInstanceFormUrl("")
-                setInstanceFormApiKey("")
-                setNewInstanceDialogOpen(true)
-              }}
-            >
-              <PlusIcon /> Nueva instancia
-            </Button>
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void handleVerifyOpenAI()}
-              disabled={!selectedInstanceId}
-            >
-              Verificar conexion
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProviderInstancesCard
+          instances={instances}
+          selectedInstanceId={selectedInstanceId}
+          onSelectInstance={setSelectedInstanceId}
+          onEditInstance={(id, name, url) => {
+            setEditInstanceId(id)
+            setInstanceFormName(name)
+            setInstanceFormUrl(url)
+            setInstanceFormApiKey("")
+          }}
+          onDeleteInstance={handleDeleteInstance}
+          onCreateNew={() => {
+            setEditInstanceId(null)
+            setInstanceFormName("")
+            setInstanceFormUrl("")
+            setInstanceFormApiKey("")
+            setNewInstanceDialogOpen(true)
+          }}
+          onVerifyConnection={handleVerifyOpenAI}
+        />
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Modelo por defecto</CardTitle>
-          <CardDescription>
-            Elige un modelo de la lista, o introduce el identificador
-            manualmente si el proveedor no soporta descubrimiento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup>
-            {modelsLoading ? (
-              <Field>
-                <FieldLabel>Cargando modelos...</FieldLabel>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Spinner /> Consultando al proveedor
-                </div>
-              </Field>
-            ) : models?.manualEntryRequired ? (
-              <Field>
-                <FieldLabel htmlFor="model-input">Identificador del modelo</FieldLabel>
-                <Input
-                  id="model-input"
-                  value={modelInput}
-                  onChange={(e) => setModelInput(e.target.value)}
-                  placeholder="gpt-4o-mini, llama3:latest, ..."
-                />
-                <FieldDescription>
-                  Este proveedor no soporta descubrimiento automático de modelos.
-                </FieldDescription>
-              </Field>
-            ) : models && models.models.length > 0 ? (
-              <Field>
-                <FieldLabel htmlFor="model-select">Modelo</FieldLabel>
-                <Select
-                  value={modelInput}
-                  onValueChange={(v) => setModelInput(v ?? "")}
-                >
-                  <SelectTrigger id="model-select">
-                    <SelectValue placeholder="Selecciona un modelo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.models.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name ?? m.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldDescription>
-                  {models.models.length} modelos disponibles.
-                </FieldDescription>
-              </Field>
-            ) : (
-              <Field>
-                <FieldContent>
-                  <Alert>
-                    <AlertCircleIcon />
-                    <AlertTitle>No se pudieron listar los modelos</AlertTitle>
-                    <AlertDescription>
-                      El proveedor respondio pero no devolvio modelos. Puedes
-                      introducir el identificador manualmente abajo.
-                    </AlertDescription>
-                  </Alert>
-                </FieldContent>
-              </Field>
-            )}
-
-            {(models?.manualEntryRequired || (models && models.models.length === 0) || models === null) &&
-            !modelsLoading ? (
-              <Field>
-                <FieldLabel htmlFor="model-manual">
-                  Identificador del modelo
-                </FieldLabel>
-                <Input
-                  id="model-manual"
-                  value={modelInput}
-                  onChange={(e) => setModelInput(e.target.value)}
-                  placeholder="gpt-4o-mini, llama3:latest, ..."
-                />
-                <FieldError>
-                  Necesario para configurar el proveedor por defecto.
-                </FieldError>
-              </Field>
-            ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={() => void handleSaveDefault(false)}
-            disabled={savingDefault}
-          >
-            {savingDefault ? <Spinner /> : null}
-            Guardar como predeterminado
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void handleSaveDefault(true)}
-            disabled={savingDefault}
-          >
-            Guardar de todos modos (force)
-          </Button>
-        </CardFooter>
-      </Card>
+      <DefaultModelCard
+        models={models}
+        modelsLoading={modelsLoading}
+        modelInput={modelInput}
+        savingDefault={savingDefault}
+        onChangeModel={setModelInput}
+        onSaveDefault={handleSaveDefault}
+      />
 
       <Card>
         <CardHeader>
@@ -600,95 +416,35 @@ export function ProviderManager() {
         </CardContent>
       </Card>
 
-      <Dialog open={newInstanceDialogOpen} onOpenChange={setNewInstanceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nueva instancia OpenAI-compatible</DialogTitle>
-            <DialogDescription>
-              Configura una conexion a un proveedor compatible con OpenAI.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="inst-name">Nombre</FieldLabel>
-              <Input
-                id="inst-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-                placeholder="LM Studio local"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-url">URL base</FieldLabel>
-              <Input
-                id="inst-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-                placeholder="http://localhost:1234/v1"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-key">API key (opcional)</FieldLabel>
-              <Input
-                id="inst-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="sk-..."
-              />
-            </Field>
-          </FieldGroup>
-          <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleCreateInstance}>Crear instancia</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InstanceFormDialog
+        open={newInstanceDialogOpen}
+        mode="create"
+        initialName={instanceFormName}
+        initialUrl={instanceFormUrl}
+        initialApiKey={instanceFormApiKey}
+        onClose={() => setNewInstanceDialogOpen(false)}
+        onSave={(name, url, apiKey) => {
+          setInstanceFormName(name)
+          setInstanceFormUrl(url)
+          setInstanceFormApiKey(apiKey)
+          handleCreateInstance()
+        }}
+      />
 
-      <Dialog open={editInstanceId !== null} onOpenChange={(o) => { if (!o) setEditInstanceId(null) }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar instancia</DialogTitle>
-            <DialogDescription>
-              Modifica los datos de la conexion.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="edit-name">Nombre</FieldLabel>
-              <Input
-                id="edit-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-url">URL base</FieldLabel>
-              <Input
-                id="edit-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-key">API key (dejar vacio para mantener)</FieldLabel>
-              <Input
-                id="edit-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="(dejar vacio para mantener)"
-              />
-            </Field>
-          </FieldGroup>
-          <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InstanceFormDialog
+        open={editInstanceId !== null}
+        mode="edit"
+        initialName={instanceFormName}
+        initialUrl={instanceFormUrl}
+        initialApiKey={instanceFormApiKey}
+        onClose={() => setEditInstanceId(null)}
+        onSave={(name, url, apiKey) => {
+          setInstanceFormName(name)
+          setInstanceFormUrl(url)
+          setInstanceFormApiKey(apiKey)
+          handleUpdateInstance()
+        }}
+      />
     </div>
   )
 }
