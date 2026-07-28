@@ -25,28 +25,67 @@ export interface OpenAICompatibleAdapterOptions {
  * Adaptador para cualquier proveedor que exponga la API de OpenAI
  * (LM Studio, vLLM, Text Generation WebUI, OpenAI, Groq, etc.).
  *
- * En S1 se usa unicamente `client.models.list()` para descubrimiento.
- * La generacion llega en S4 usando `client.chat.completions.create`.
- *
- * Decision documentada: usar el SDK oficial `openai` con `baseURL`
- * configurable (ver `docs/09-tooling.md`).
+ * Se usa `fetch` directo para `listModels()` y `validateConnection()`
+ * (el SDK openai no expone correctamente la respuesta cruda en v4.x).
+ * La generacion sigue usando `client.chat.completions.create` para
+ * streaming, ya que ahi el SDK es confiable.
  */
 export class OpenAICompatibleAdapter implements ProviderPort {
+  private readonly baseUrl: string
+  private readonly apiKey: string
   private readonly client: OpenAI
 
   constructor(private readonly options: OpenAICompatibleAdapterOptions) {
+    this.baseUrl = this.normalizeBaseUrl(options.baseUrl, options.logger)
+    this.apiKey = options.apiKey ?? "not-required"
     this.client = new OpenAI({
-      baseURL: options.baseUrl,
-      apiKey: options.apiKey ?? "not-required",
+      baseURL: this.baseUrl,
+      apiKey: this.apiKey,
       timeout: options.timeoutMs,
       maxRetries: 0,
     })
   }
 
+  private normalizeBaseUrl(url: string, logger: Logger): string {
+    const trimmed = url.replace(/\/+$/, "")
+    if (!/\/v1$/.test(trimmed)) {
+      const normalized = `${trimmed}/v1`
+      logger.info("OpenAI-compatible base URL does not end with /v1; appending it", {
+        original: url,
+        normalized,
+      })
+      return normalized
+    }
+    return trimmed
+  }
+
+  private async fetchWithTimeout(
+    path: string,
+    init: RequestInit = {},
+  ): Promise<Response> {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs)
+    const url = `${this.baseUrl}${path}`
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+          ...init.headers,
+        },
+      })
+      return response
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
   async validateConnection(): Promise<ProviderStatus> {
     try {
-      await this.client.models.list()
-      return "available"
+      const response = await this.fetchWithTimeout("/models")
+      return response.ok ? "available" : "unavailable"
     } catch (error) {
       return this.translateToUnavailable(error)
     }
@@ -57,11 +96,36 @@ export class OpenAICompatibleAdapter implements ProviderPort {
     manualEntryRequired: boolean
   }> {
     try {
-      const response = await this.client.models.list()
-      const models: ProviderModel[] = response.data.map((m) => ({
-        id: m.id,
-        name: m.id,
-      }))
+      const response = await this.fetchWithTimeout("/models")
+      if (!response.ok) {
+        const status = response.status
+        if (status === 404 || status === 405 || status === 501) {
+          this.options.logger.info(
+            "Provider does not expose /v1/models; falling back to manual entry",
+            { status },
+          )
+          return { models: [], manualEntryRequired: true }
+        }
+        throw new ProviderError(
+          "PROVIDER_CONNECTION_FAILED",
+          `Failed to list OpenAI-compatible models: HTTP ${status}`,
+        )
+      }
+      const body = (await response.json()) as Record<string, unknown>
+      const raw = (body.data ?? body.models ?? []) as Array<unknown>
+      const models: ProviderModel[] = raw.map((m) => {
+        if (typeof m === "string") {
+          return { id: m, name: m }
+        }
+        const obj = m as Record<string, string>
+        const id = obj.id ?? obj.key ?? obj.name ?? obj.display_name
+        if (!id) {
+          this.options.logger.warn("OpenAI-compatible model entry missing identifier", { entry: m })
+          return { id: String(m), name: String(m) }
+        }
+        const name = obj.display_name ?? obj.name ?? id
+        return { id, name }
+      })
       return { models, manualEntryRequired: false }
     } catch (error) {
       const status = this.errorStatus(error)
@@ -72,6 +136,7 @@ export class OpenAICompatibleAdapter implements ProviderPort {
         )
         return { models: [], manualEntryRequired: true }
       }
+      if (error instanceof ProviderError) throw error
       if (error instanceof ProviderTimeoutError) throw error
       throw new ProviderError(
         "PROVIDER_CONNECTION_FAILED",
