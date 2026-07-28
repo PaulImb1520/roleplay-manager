@@ -238,10 +238,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     if (!confirmRewind) return
     try {
       const targetMsg = messages.find(m => m.id === confirmRewind)
-
       const result = await rewindConversation(conv.id, confirmRewind)
-      setMessages(result.messages)
-
       setMessages(result.messages)
 
       if (targetMsg?.role === "user") {
@@ -435,20 +432,14 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
                       />
                     </MessageScrollerItem>
                   ))}
+                  {isStreaming && !streamingContent && (
+                    <MessageScrollerItem key="typing" scrollAnchor>
+                      <MessageBubble message={{ id: "typing", role: "assistant", content: "", position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} />
+                    </MessageScrollerItem>
+                  )}
                   {streamingContent && (
                     <MessageScrollerItem key="streaming" scrollAnchor>
-                      <MessageBubble
-                        message={{
-                          id: "streaming",
-                          role: "assistant",
-                          content: streamingContent,
-                          position: 0,
-                          createdAt: "",
-                          alternatives: [],
-                          alternativesCursor: 0,
-                        }}
-                        isStreaming
-                      />
+                      <MessageBubble message={{ id: "streaming", role: "assistant", content: streamingContent, position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} isStreaming />
                     </MessageScrollerItem>
                   )}
                 </>
