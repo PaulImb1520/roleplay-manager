@@ -7,6 +7,7 @@ export interface ChatState {
   streamingContent: string
   editingMessageId: string | null
   editingContent: string
+  regeneratingMessageId: string | null
   error: string | null
 
   setMessages: (messages: MessageDTO[]) => void
@@ -20,6 +21,7 @@ export interface ChatState {
   startEditing: (messageId: string, content: string) => void
   setEditingContent: (content: string) => void
   cancelEditing: () => void
+  setRegeneratingMessageId: (messageId: string | null) => void
   setError: (error: string | null) => void
   reset: () => void
 }
@@ -30,6 +32,7 @@ export const useChatStore = create<ChatState>((set) => ({
   streamingContent: "",
   editingMessageId: null,
   editingContent: "",
+  regeneratingMessageId: null,
   error: null,
 
   setMessages: (messages) => set({ messages, error: null }),
@@ -70,6 +73,8 @@ export const useChatStore = create<ChatState>((set) => ({
   cancelEditing: () =>
     set({ editingMessageId: null, editingContent: "" }),
 
+  setRegeneratingMessageId: (messageId) => set({ regeneratingMessageId: messageId }),
+
   setError: (error) => set({ error }),
 
   reset: () =>
@@ -79,6 +84,7 @@ export const useChatStore = create<ChatState>((set) => ({
       streamingContent: "",
       editingMessageId: null,
       editingContent: "",
+      regeneratingMessageId: null,
       error: null,
     }),
 }))
