@@ -13,8 +13,8 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 
 ### UX / UI
 
-- [ ] **S9.1** — Reemplazar las letras "RM" del SidebarMenu por un logo real de tamaño cuadrado, acorde a los demás íconos del menú.
-- [ ] **S9.2** — Reemplazar la plantilla de lista vacía de personajes por el componente `Empty` de Shadcn.
+- [x] **S9.1** — Reemplazar las letras "RM" del SidebarMenu por un logo real de tamaño cuadrado, acorde a los demás íconos del menú.
+- [x] **S9.2** — Reemplazar la plantilla de lista vacía de personajes por el componente `Empty` de Shadcn.
 - [ ] **S9.3** — Añadir animación de "puntos suspensivos" mientras la IA responde, indicando que está generando.
 - [ ] **S9.4** — Aplicar buffering de streaming para que los mensajes del asistente se muestren de forma más fluida (ej. acumular chunks y renderizar por párrafos completos).
 - [ ] **S9.5** — Añadir un selector de versiones en la pantalla de edición/creación de personajes (dropdown o lista para elegir la versión activa).
