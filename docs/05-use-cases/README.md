@@ -108,6 +108,11 @@ Ejemplos:
 * DeleteMemory
 * UpdateSummary
 * DeleteSummary
+* ContinueConversation
+* DeleteMessage
+* CycleAlternative
+* ApplyAllMemoryChanges
+* GetPromptContext
 
 ### Casos de uso iniciados por el sistema
 
