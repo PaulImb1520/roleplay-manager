@@ -158,7 +158,7 @@ export function ProviderManager() {
     let cancelled = false
     ;(async () => {
       try {
-        const result = await listProviderModels(selected)
+        const result = await listProviderModels(selected, selectedInstanceId ?? undefined)
         if (cancelled) return
         setModels(result)
         if (defaultConfig.provider === selected && defaultConfig.model) {
@@ -176,7 +176,7 @@ export function ProviderManager() {
     return () => {
       cancelled = true
     }
-  }, [selected, defaultConfig.provider, defaultConfig.model])
+  }, [selected, selectedInstanceId, defaultConfig.provider, defaultConfig.model])
 
   const handleVerifyOpenAI = async () => {
     if (!selectedInstanceId) {

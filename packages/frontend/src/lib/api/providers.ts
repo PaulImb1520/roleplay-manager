@@ -18,6 +18,8 @@ export const validateProvider = async (
 
 export const listProviderModels = async (
   id: ProviderId,
+  instanceId?: string,
 ): Promise<ListModelsResult> => {
-  return apiRequest(`/api/providers/${id}/models`)
+  const params = instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ""
+  return apiRequest(`/api/providers/${id}/models${params}`)
 }
