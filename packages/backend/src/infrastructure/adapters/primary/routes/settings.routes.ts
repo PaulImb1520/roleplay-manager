@@ -7,6 +7,7 @@ import { validate } from "../middlewares/validation"
 
 const ConfigureBodySchema = z.object({
   provider: z.enum(["ollama", "openai-compatible"]),
+  providerInstanceId: z.string().nullable().optional(),
   model: z.string().trim().min(1),
   force: z.boolean().optional(),
 })
