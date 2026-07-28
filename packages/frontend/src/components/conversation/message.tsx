@@ -173,7 +173,7 @@ export function MessageBubble({
             )}
           </ContextMenu>
         )}
-        {!isStreaming && (message.createdAt || (totalAlternatives > 1 && message.role === "assistant")) && (
+        {!isStreaming && message.content && (message.createdAt || (totalAlternatives > 1 && message.role === "assistant")) && (
           <MessageFooter>
             {message.createdAt && (
               <span>{new Date(message.createdAt).toLocaleTimeString()}</span>

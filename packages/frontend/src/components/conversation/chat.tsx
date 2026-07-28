@@ -59,6 +59,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     error,
     editingMessageId,
     editingContent,
+    regeneratingMessageId,
     setMessages,
     addMessage,
     replaceMessage,
@@ -70,6 +71,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     setEditingContent,
     cancelEditing,
     setError,
+    setRegeneratingMessageId,
   } = useChatStore()
 
   const loadMemories = useMemoryStore((s) => s.loadMemories)
@@ -182,6 +184,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const handleRegenerate = useCallback(
     async (messageId: string) => {
       setError(null)
+      setRegeneratingMessageId(messageId)
       setStreaming(true)
       setStreamingContent("")
 
@@ -191,6 +194,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
         onDone: (message) => {
           replaceMessage(messageId, message)
+          setRegeneratingMessageId(null)
           setStreamingContent("")
           setStreaming(false)
           loadMemories(conv.id)
@@ -202,12 +206,13 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         },
         onError: (err) => {
           setError(err.message)
+          setRegeneratingMessageId(null)
           setStreaming(false)
           setStreamingContent("")
         },
       })
     },
-    [conv.id, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, replaceMessage, setError, setStreaming, setStreamingContent],
+    [conv.id, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, replaceMessage, setError, setRegeneratingMessageId, setStreaming, setStreamingContent],
   )
 
   const handleEdit = useCallback(
@@ -338,20 +343,8 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         </div>
         <div className="flex flex-col">
           {editingTitle ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleManualTitle()
-              }}
-              className="flex items-center gap-1"
-            >
-              <Input
-                value={titleInput}
-                onChange={(e) => setTitleInput(e.target.value)}
-                className="h-7 text-sm"
-                autoFocus
-                onBlur={() => setEditingTitle(false)}
-              />
+            <form onSubmit={(e) => { e.preventDefault(); handleManualTitle() }} className="flex items-center gap-1">
+              <Input value={titleInput} onChange={(e) => setTitleInput(e.target.value)} className="h-7 text-sm" autoFocus onBlur={() => setEditingTitle(false)} />
             </form>
           ) : (
             <ContextMenu>
@@ -410,36 +403,44 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
                 </div>
               ) : (
                 <>
-                  {messages.map((msg, i) => (
-                    <MessageScrollerItem
-                      key={msg.id}
-                      scrollAnchor={i === messages.length - 1 && !isStreaming}
-                    >
-                      <MessageBubble
-                        message={msg}
-                        isLastMessage={i === messages.length - 1 && !streamingContent}
-                        isEditing={editingMessageId === msg.id}
-                        editContent={editingMessageId === msg.id ? editingContent : undefined}
-                        onEditContentChange={setEditingContent}
-                        onStartEdit={(id, content) => startEditing(id, content)}
-                        onCancelEdit={cancelEditing}
-                        onSaveEdit={handleEdit}
-                        onDelete={(id) => setConfirmDelete(id)}
-                        onRegenerate={handleRegenerate}
-                        onRewind={(id) => setConfirmRewind(id)}
-                        onCyclePrev={handleCyclePrev}
-                        onCycleNext={handleCycleNext}
-                      />
-                    </MessageScrollerItem>
-                  ))}
-                  {isStreaming && !streamingContent && (
-                    <MessageScrollerItem key="typing" scrollAnchor>
-                      <MessageBubble message={{ id: "typing", role: "assistant", content: "", position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} />
-                    </MessageScrollerItem>
-                  )}
-                  {streamingContent && (
-                    <MessageScrollerItem key="streaming" scrollAnchor>
-                      <MessageBubble message={{ id: "streaming", role: "assistant", content: streamingContent, position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} isStreaming />
+                  {messages.map((msg, i) => {
+                    if (msg.id === regeneratingMessageId) {
+                      return (
+                        <MessageScrollerItem key={msg.id} scrollAnchor={i === messages.length - 1}>
+                          {streamingContent
+                            ? <MessageBubble message={{ ...msg, content: streamingContent }} isStreaming />
+                            : <MessageBubble message={{ ...msg, content: "" }} />}
+                        </MessageScrollerItem>
+                      )
+                    }
+                    return (
+                      <MessageScrollerItem
+                        key={msg.id}
+                        scrollAnchor={i === messages.length - 1 && !isStreaming}
+                      >
+                        <MessageBubble
+                          message={msg}
+                          isLastMessage={i === messages.length - 1 && !streamingContent}
+                          isEditing={editingMessageId === msg.id}
+                          editContent={editingMessageId === msg.id ? editingContent : undefined}
+                          onEditContentChange={setEditingContent}
+                          onStartEdit={(id, content) => startEditing(id, content)}
+                          onCancelEdit={cancelEditing}
+                          onSaveEdit={handleEdit}
+                          onDelete={(id) => setConfirmDelete(id)}
+                          onRegenerate={handleRegenerate}
+                          onRewind={(id) => setConfirmRewind(id)}
+                          onCyclePrev={handleCyclePrev}
+                          onCycleNext={handleCycleNext}
+                        />
+                      </MessageScrollerItem>
+                    )
+                  })}
+                  {isStreaming && !regeneratingMessageId && (
+                    <MessageScrollerItem key={streamingContent ? "streaming" : "typing"} scrollAnchor>
+                      {streamingContent
+                        ? <MessageBubble message={{ id: "streaming", role: "assistant", content: streamingContent, position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} isStreaming />
+                        : <MessageBubble message={{ id: "typing", role: "assistant", content: "", position: 0, createdAt: "", alternatives: [], alternativesCursor: 0 }} />}
                     </MessageScrollerItem>
                   )}
                 </>
