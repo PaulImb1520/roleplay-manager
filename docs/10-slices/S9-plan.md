@@ -26,6 +26,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 ### Bugs y estados boundary
 
 - [ ] **S9.10** — El botón de rebobinar no debe aparecer en el último mensaje.
+- [ ] **S9.10.5** — El historial de mensajes el regenerar está roto. Los mensajes no están apilados correctamente, el contador no funciona como debería y al avanzar y retroceder con las flechas, un mensaje se vuelve inaccesible.
 - [ ] **S9.11** — Manejar la recarga de página mientras se está realizando streaming de una respuesta (ej. reintentar, mostrar estado, o preservar el stream in progress).
 - [ ] **S9.12** — Añadir retroalimentación de errores al guardar un personaje (ej. validar tarjetas vacías, mostrar errores de campo específicos).
 
