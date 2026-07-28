@@ -49,6 +49,27 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
     --font-sans: 'Geist Variable', sans-serif;
+    --animate-dot1: dot1 1.5s ease-in-out infinite;
+    --animate-dot2: dot2 1.5s ease-in-out infinite;
+    --animate-dot3: dot3 1.5s ease-in-out infinite;
+}
+
+@keyframes dot1 {
+  0%, 100% { transform: translateY(0); }
+  10% { transform: translateY(-4px); }
+  20% { transform: translateY(0); }
+}
+
+@keyframes dot2 {
+  0%, 10%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-4px); }
+  30% { transform: translateY(0); }
+}
+
+@keyframes dot3 {
+  0%, 20%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+  40% { transform: translateY(0); }
 }
 
 :root {
