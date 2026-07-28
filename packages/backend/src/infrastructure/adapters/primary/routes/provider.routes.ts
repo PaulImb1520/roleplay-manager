@@ -44,6 +44,10 @@ export const buildProviderRouter = (deps: {
     }
   })
 
+  const ModelsQuerySchema = z.object({
+    instanceId: z.string().optional(),
+  })
+
   router.get("/providers/:id/models", async (req, res, next) => {
     try {
       const idResult = ProviderIdSchema.safeParse(req.params.id)
@@ -56,7 +60,12 @@ export const buildProviderRouter = (deps: {
         })
         return
       }
-      const result = await deps.listProviderModels.execute(idResult.data)
+      const queryResult = ModelsQuerySchema.safeParse(req.query)
+      const instanceId = queryResult.success ? queryResult.data.instanceId : undefined
+      const result = await deps.listProviderModels.execute(
+        idResult.data,
+        instanceId,
+      )
       res.json(result)
     } catch (error) {
       next(error)

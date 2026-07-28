@@ -255,6 +255,7 @@ export const buildContainer = ({
     ),
     listProviderModels: new ListProviderModelsUseCase(
       providerRegistry,
+      providerInstanceRepository,
       logger,
     ),
     getDefaultProvider,
