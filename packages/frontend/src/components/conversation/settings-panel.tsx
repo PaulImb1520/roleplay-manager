@@ -131,7 +131,7 @@ export function SettingsPanel({
     try {
       const result = await listProviderInstances()
       setInstances(result)
-    } catch (e) {
+    } catch {
       toast.error("No se pudieron cargar las instancias")
     } finally {
       setInstancesLoading(false)
@@ -193,13 +193,17 @@ export function SettingsPanel({
         }
       })
     }
-    loadModels(provider ?? "ollama", providerInstanceId)
-    verifyConnection()
+    ;(async () => {
+      await loadModels(provider ?? "ollama", providerInstanceId)
+      await verifyConnection()
+    })()
   }, [open, provider, providerInstanceId, loadModels, verifyConnection, current.provider, current.model])
 
   useEffect(() => {
     if (open) {
-      loadInstances()
+      ;(async () => {
+        await loadInstances()
+      })()
     }
   }, [open, loadInstances])
 

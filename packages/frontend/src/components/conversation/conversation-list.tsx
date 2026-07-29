@@ -23,7 +23,9 @@ export function ConversationList() {
   }
 
   useEffect(() => {
-    fetchConversations(filter)
+    ;(async () => {
+      await fetchConversations(filter)
+    })()
   }, [filter])
 
   const handleToggleArchive = async (id: string, action: "archive" | "unarchive") => {

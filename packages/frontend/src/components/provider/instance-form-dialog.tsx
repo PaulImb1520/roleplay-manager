@@ -40,10 +40,13 @@ export function InstanceFormDialog({
 
   useEffect(() => {
     if (!open) return
-    setName(initialName)
-    setUrl(initialUrl)
-    setApiKey(initialApiKey)
-  }, [open])
+    const timer = setTimeout(() => {
+      setName(initialName)
+      setUrl(initialUrl)
+      setApiKey(initialApiKey)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [open, initialName, initialUrl, initialApiKey])
 
   const handleSave = () => {
     if (import.meta.env.DEV) {

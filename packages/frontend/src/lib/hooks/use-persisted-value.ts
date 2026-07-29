@@ -4,6 +4,21 @@ function buildStorageKey(key: string, scope: string): string {
   return `${key}:${scope}`
 }
 
+function readStorageValue<T>(storageKey: string, defaultValue: T, validate?: (value: unknown) => value is T): T {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (raw !== null) {
+      const parsed = JSON.parse(raw) as unknown
+      if (validate ? validate(parsed) : true) {
+        return parsed as T
+      }
+    }
+  } catch {
+    // localStorage unavailable or corrupt value — stick with default
+  }
+  return defaultValue
+}
+
 export interface UsePersistedValueOptions<T> {
   scope: string
   key: string
@@ -18,25 +33,12 @@ export function usePersistedValue<T>({
   validate,
 }: UsePersistedValueOptions<T>): [T, React.Dispatch<React.SetStateAction<T>>] {
   const storageKey = buildStorageKey(key, scope)
-  const [value, setValue] = useState<T>(defaultValue)
-
+  const [value, setValue] = useState<T>(() => readStorageValue(storageKey, defaultValue, validate))
   const validateRef = useRef(validate)
-  validateRef.current = validate
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey)
-      if (raw !== null) {
-        const parsed = JSON.parse(raw) as unknown
-        const v = validateRef.current
-        if (v ? v(parsed) : true) {
-          setValue(parsed as T)
-        }
-      }
-    } catch {
-      // localStorage unavailable or corrupt value — stick with default
-    }
-  }, [storageKey])
+    validateRef.current = validate
+  }, [validate])
 
   const setAndPersist = useCallback(
     (next: T | ((prev: T) => T)) => {
