@@ -178,10 +178,6 @@ Runs `check:arch` + `turbo typecheck` + `turbo lint` across all packages. Use th
 
 `.husky/pre-commit` runs `pnpm check:arch`. To skip: `git commit --no-verify` (use sparingly).
 
-### CI
-
-`.github/workflows/architecture.yml` runs `pnpm check:arch` on every push and PR to `main`/`master`.
-
 ---
 
 ## 7. Common pitfalls

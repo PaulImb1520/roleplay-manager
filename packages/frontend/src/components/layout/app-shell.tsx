@@ -14,6 +14,7 @@ import {
 } from "@workspace/ui/components/sidebar"
 import { UsersIcon, MessageSquareTextIcon, CogIcon } from "lucide-react"
 import { useSidebar } from "@workspace/ui/components/sidebar"
+import { Logo } from "@workspace/ui/components/logo"
 
 function SidebarLogo() {
   const { state } = useSidebar()
@@ -21,7 +22,8 @@ function SidebarLogo() {
 
   return (
     <SidebarHeader className="overflow-hidden p-4 font-semibold text-sm">
-      <span className="relative inline-flex items-center">
+      <span className="flex items-center gap-2">
+        <Logo className="shrink-0" />
         <span
           className="inline-block transition-all duration-300 ease-in-out"
           style={{
@@ -31,15 +33,6 @@ function SidebarLogo() {
           }}
         >
           Roleplay Manager
-        </span>
-        <span
-          className="absolute inline-block transition-all duration-300 ease-in-out"
-          style={{
-            opacity: collapsed ? 1 : 0,
-            transform: collapsed ? "translateX(0)" : "translateX(8px)",
-          }}
-        >
-          RM
         </span>
       </span>
     </SidebarHeader>

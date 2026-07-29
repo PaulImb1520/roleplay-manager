@@ -27,6 +27,7 @@ flowchart TB
         UC26[DeleteMessage]:::doc
         UC27[CycleAlternative]:::doc
         UC28[ApplyAllMemoryChanges]:::doc
+        UC30[GetPromptContext]:::doc
     end
 
     subgraph SystemInitiated["Casos de uso iniciados por el sistema"]
@@ -125,6 +126,16 @@ flowchart TB
     UC20 -->|elimina| Memory
     UC20 -.->|set null targetMemoryId| MemoryProposal
 
+    %% Previsualización de contexto
+    UC30 -->|invoca| UC12
+    UC30 --> Conversation
+    UC30 --> CharVersion
+    UC30 --> CharCard
+    UC30 --> Summary
+    UC30 --> Memory
+    UC30 --> Message
+    UC30 --> PromptContext
+
     %% Título
     UC16 --> Conversation
 
@@ -133,7 +144,7 @@ flowchart TB
 
     classDef doc fill:#1b5e20,color:#fff,stroke:#2e7d32
     classDef entity fill:#0d47a1,color:#fff,stroke:#1565c0
-    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29 doc
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29,UC30 doc
     class Character,CharVersion,CharCard,Conversation,Message,Memory,MemoryProposal,Summary,Settings,PromptContext,GeneratedResponse entity
 ```
 
@@ -191,6 +202,13 @@ Los siguientes detalles no se representan gráficamente para no saturar el diagr
 ### Eliminación de personaje (`DeleteCharacter`)
 
 * La eliminación se propaga en cascada: `Character → CharacterVersion → CharacterCard` y `CharacterVersion → Conversation → Message, Memory, Summary, MemoryChangeProposal`. No quedan referencias huérfanas.
+
+### Previsualización de contexto (`GetPromptContext`)
+
+* Es un caso de uso de solo lectura: no modifica ninguna entidad del dominio.
+* Devuelve el `PromptContext` completo que se utilizaría para generar una respuesta en ese instante.
+* Acepta un parámetro opcional `pendingMessage` para incluir un mensaje no enviado en la previsualización.
+* El `PromptContextBuilder` (UC12) se invoca internamente para ensamblar el system prompt.
 
 ### Configuración del proveedor por defecto (`ConfigureDefaultProvider`)
 

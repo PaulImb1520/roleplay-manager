@@ -26,6 +26,7 @@ import {
   RefreshCcw,
   Copy,
 } from "lucide-react"
+import { TypingIndicator } from "@workspace/ui/components/typing-indicator"
 import { parseMessage } from "../../lib/format-message"
 
 export function MessageBubble({
@@ -106,27 +107,31 @@ export function MessageBubble({
             <ContextMenuTrigger className="select-text">
               <Bubble variant={isUser ? "default" : "muted"} align={isUser ? "end" : "start"} className={isUser ? "ml-auto" : ""}>
                 <BubbleContent>
-                  {segments.map((segment, i) => {
-                    switch (segment.type) {
-                      case "action":
-                        return (
-                          <span key={i} className="italic text-muted-foreground/70">
-                            {segment.content}
-                          </span>
-                        )
-                      case "ooc":
-                        return (
-                          <code
-                            key={i}
-                            className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
-                          >
-                            //{segment.content}//
-                          </code>
-                        )
-                      default:
-                        return <span key={i}>{segment.content}</span>
-                    }
-                  })}
+                  {segments.length > 0 ? (
+                    segments.map((segment, i) => {
+                      switch (segment.type) {
+                        case "action":
+                          return (
+                            <span key={i} className="italic text-muted-foreground/70">
+                              {segment.content}
+                            </span>
+                          )
+                        case "ooc":
+                          return (
+                            <code
+                              key={i}
+                              className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
+                            >
+                              //{segment.content}//
+                            </code>
+                          )
+                        default:
+                          return <span key={i}>{segment.content}</span>
+                      }
+                    })
+                  ) : message.role === "assistant" ? (
+                    <TypingIndicator />
+                  ) : null}
                   {isStreaming && (
                     <span className="inline-block w-0.5 h-4 bg-foreground ml-0.5 animate-pulse" />
                   )}
@@ -168,7 +173,7 @@ export function MessageBubble({
             )}
           </ContextMenu>
         )}
-        {!isStreaming && (message.createdAt || (totalAlternatives > 1 && message.role === "assistant")) && (
+        {!isStreaming && message.content && (message.createdAt || (totalAlternatives > 1 && message.role === "assistant")) && (
           <MessageFooter>
             {message.createdAt && (
               <span>{new Date(message.createdAt).toLocaleTimeString()}</span>
