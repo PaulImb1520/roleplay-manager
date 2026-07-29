@@ -48,10 +48,6 @@ const FORBIDDEN_SHARED_IMPORTS = [
   "better-sqlite3",
 ]
 
-// Known smell: use cases import error classes from infrastructure.
-// Allowed but reported as a warning, not a failure.
-const KNOWN_ERROR_HANDLER_IMPORT = "infrastructure/adapters/primary/middlewares/error-handler"
-
 // --- ANSI helpers ----------------------------------------------------------
 
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR
@@ -132,7 +128,6 @@ async function checkFrontendSize() {
 
 async function checkBackendHexagonal() {
   const violations = []
-  const warnings = []
 
   const domainDir = join(ROOT, "packages", "backend", "src", "domain")
   const applicationDir = join(ROOT, "packages", "backend", "src", "application")
@@ -172,19 +167,11 @@ async function checkBackendHexagonal() {
           detail: spec,
         })
       } else if (spec.includes("/infrastructure/")) {
-        if (spec.includes(KNOWN_ERROR_HANDLER_IMPORT)) {
-          warnings.push({
-            file: relative(ROOT, file).split(sep).join(posix.sep),
-            rule: "application-uses-error-handler",
-            detail: spec,
-          })
-        } else {
-          violations.push({
-            file: relative(ROOT, file).split(sep).join(posix.sep),
-            rule: "application-no-infrastructure",
-            detail: spec,
-          })
-        }
+        violations.push({
+          file: relative(ROOT, file).split(sep).join(posix.sep),
+          rule: "application-no-infrastructure",
+          detail: spec,
+        })
       }
     }
   }
@@ -193,7 +180,6 @@ async function checkBackendHexagonal() {
     name: "Backend hexagonal (domain/application purity)",
     pass: violations.length === 0,
     violations,
-    warnings,
   }
 }
 
