@@ -352,6 +352,8 @@ export const buildContainer = ({
     ),
     deleteProviderInstance: new DeleteProviderInstanceUseCase(
       providerInstanceRepository,
+      conversationRepository,
+      settings,
     ),
     validateProviderInstance: new ValidateProviderInstanceUseCase(
       providerInstanceRepository,

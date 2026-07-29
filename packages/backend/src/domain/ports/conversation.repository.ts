@@ -25,4 +25,6 @@ export interface ConversationRepository {
     id: string,
     settings: ConversationSettingsUpdate,
   ): Promise<Conversation>
+
+  clearProviderInstanceId(providerInstanceId: string): Promise<void>
 }

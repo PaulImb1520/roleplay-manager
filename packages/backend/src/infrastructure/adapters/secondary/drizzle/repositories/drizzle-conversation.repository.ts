@@ -136,6 +136,13 @@ export class DrizzleConversationRepository implements ConversationRepository {
     return conversation
   }
 
+  async clearProviderInstanceId(providerInstanceId: string): Promise<void> {
+    await this.db
+      .update(conversations)
+      .set({ providerInstanceId: null })
+      .where(eq(conversations.providerInstanceId, providerInstanceId))
+  }
+
   async updateSettings(
     id: string,
     settings: ConversationSettingsUpdate,

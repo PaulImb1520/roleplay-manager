@@ -105,6 +105,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   list: async () => [],
   update: async (c) => c,
   updateSettings: vi.fn(async (_id: string, _settings: any) => activeConversation),
+  clearProviderInstanceId: vi.fn(),
 })
 
 const buildMessageRepo = (): MessageRepository => ({

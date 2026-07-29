@@ -88,6 +88,7 @@ function buildConversationRepo(): ConversationRepository {
     create: async () => baseConversation,
     update: async () => baseConversation,
     updateSettings: async () => baseConversation,
+    clearProviderInstanceId: vi.fn(),
   }
 }
 

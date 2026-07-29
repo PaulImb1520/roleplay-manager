@@ -108,6 +108,7 @@ const buildConversationRepo = (conv: Conversation, nonexistentIds: string[] = []
   list: async () => [],
   update: async (c) => c,
   updateSettings: async (_id, _s) => conv,
+  clearProviderInstanceId: async () => {},
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

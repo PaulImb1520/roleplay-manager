@@ -23,6 +23,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   findById: async () => null,
   findByIdWithMessages: async () => null,
   updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
+  clearProviderInstanceId: async () => {},
   list: async (status) => {
     const all = [
       Conversation.create({

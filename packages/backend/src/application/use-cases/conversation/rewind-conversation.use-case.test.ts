@@ -67,6 +67,7 @@ const buildConversationRepo = (conversation: Conversation | null): ConversationR
   list: async () => [],
   update: async (c) => c,
   updateSettings: async (_id, _s) => ({} as Conversation),
+  clearProviderInstanceId: async () => {},
 })
 
 const buildMessageRepo = (initialMessages: Message[]): MessageRepository => {

@@ -62,6 +62,7 @@ const buildConversationRepo = (): ConversationRepository => ({
   list: async () => [],
   update: async (c) => c,
   updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
+  clearProviderInstanceId: async () => {},
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

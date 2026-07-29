@@ -53,6 +53,7 @@ const buildConversationRepo = (conversation: Conversation): ConversationReposito
     capturedSettings = settings
     return conversation
   },
+  clearProviderInstanceId: async () => {},
 })
 
 const buildCharacterRepo = (): CharacterRepository => ({

@@ -96,6 +96,7 @@ const convRepo: ConversationRepository = {
     return c
   },
   updateSettings: async (_id, _s) => activeConv,
+  clearProviderInstanceId: vi.fn(),
 }
 
 let updatedConv: Conversation | null = null
