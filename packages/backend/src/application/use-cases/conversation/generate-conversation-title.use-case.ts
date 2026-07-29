@@ -8,7 +8,7 @@ import type { Logger } from "../../../domain/ports/logger.port"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 import type { PromptContext } from "../../../domain/value-objects/prompt-context"
 
 export class GenerateConversationTitleUseCase {

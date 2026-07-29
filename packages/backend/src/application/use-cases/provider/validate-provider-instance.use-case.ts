@@ -3,7 +3,7 @@ import type { ProviderInstanceStatus } from "@workspace/shared/types/provider-in
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { Logger } from "../../../domain/ports/logger.port"
-import { DomainError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { DomainError } from "../../../domain/errors"
 
 export class ValidateProviderInstanceUseCase {
   constructor(

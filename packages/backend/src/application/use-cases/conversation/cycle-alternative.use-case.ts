@@ -7,7 +7,7 @@ import {
   ConversationArchivedError,
   ConversationNotFoundError,
   MessageNotFoundError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export interface CycleAlternativeInput {
   conversationId: string

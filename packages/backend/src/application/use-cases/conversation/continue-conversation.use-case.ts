@@ -29,7 +29,7 @@ import {
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export interface ContinueConversationInput {
   conversationId: string

@@ -10,7 +10,7 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
-import { CharacterNotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { CharacterNotFoundError } from "../../../domain/errors"
 
 export class CreateConversationUseCase {
   constructor(

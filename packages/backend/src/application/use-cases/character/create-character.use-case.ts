@@ -11,7 +11,7 @@ import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
 import { CharacterCard } from "../../../domain/entities/character-card.entity"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
-import { CharacterValidationError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { CharacterValidationError } from "../../../domain/errors"
 
 export class CreateCharacterUseCase {
   constructor(private readonly characterRepository: CharacterRepository) {}

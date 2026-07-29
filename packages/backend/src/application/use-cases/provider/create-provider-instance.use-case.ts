@@ -5,7 +5,7 @@ import type {
 import type { ProviderId } from "@workspace/shared/types/provider"
 
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
-import { DomainError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { DomainError } from "../../../domain/errors"
 
 const VALID_KINDS: ProviderId[] = ["ollama", "openai-compatible"]
 

@@ -1,6 +1,6 @@
 import type { SummaryDTO, UpdateSummaryInput } from "@workspace/shared/types/summary"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
-import { NotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { NotFoundError } from "../../../domain/errors"
 
 export class UpdateSummaryUseCase {
   constructor(private readonly summaryRepository: SummaryRepository) {}

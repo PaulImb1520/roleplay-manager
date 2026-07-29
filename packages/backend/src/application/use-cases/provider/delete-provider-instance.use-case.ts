@@ -1,5 +1,5 @@
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
-import { DomainError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { DomainError } from "../../../domain/errors"
 
 export class DeleteProviderInstanceUseCase {
   constructor(

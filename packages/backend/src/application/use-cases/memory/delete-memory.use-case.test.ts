@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 
 import { DeleteMemoryUseCase } from "./delete-memory.use-case"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
-import { NotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { NotFoundError } from "../../../domain/errors"
 
 const buildRepo = (existing: boolean): MemoryRepository => ({
   findById: async () => (existing ? ({ id: "mem-1" } as never) : null),
@@ -30,7 +30,7 @@ describe("DeleteMemoryUseCase", () => {
       expect.unreachable()
     } catch (e) {
       expect(e).toBeInstanceOf(NotFoundError)
-      expect((e as NotFoundError).status).toBe(404)
+      expect((e as NotFoundError).statusCode).toBe(404)
       expect((e as NotFoundError).code).toBe("MEMORY_NOT_FOUND")
     }
   })

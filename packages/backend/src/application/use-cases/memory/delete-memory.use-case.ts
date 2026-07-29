@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { NotFoundError } from "../../../domain/errors"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 
 export class DeleteMemoryUseCase {

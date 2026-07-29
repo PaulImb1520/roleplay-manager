@@ -12,8 +12,8 @@ import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
-import { DomainError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+  DomainError,
+} from "../../../domain/errors"
 
 const VALID_PROVIDERS: ProviderId[] = ["ollama", "openai-compatible"]
 

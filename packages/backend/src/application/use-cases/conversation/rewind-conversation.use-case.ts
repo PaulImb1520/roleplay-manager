@@ -8,7 +8,7 @@ import type { SummaryRepository } from "../../../domain/ports/summary.repository
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export interface RewindConversationInput {
   conversationId: string

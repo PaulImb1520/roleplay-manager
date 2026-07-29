@@ -12,7 +12,7 @@ import {
   CharacterNotFoundError,
   CharacterValidationError,
   NoChangesDetectedError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export class UpdateCharacterUseCase {
   constructor(private readonly characterRepository: CharacterRepository) {}

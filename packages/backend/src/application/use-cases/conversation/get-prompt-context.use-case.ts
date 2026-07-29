@@ -8,7 +8,7 @@ import type { PromptContextDTO, PromptContextMetadataDTO } from "@workspace/shar
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export class GetPromptContextUseCase {
   constructor(

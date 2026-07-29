@@ -31,7 +31,7 @@ import {
 import {
   ConversationArchivedError,
   ConversationNotFoundError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 
 export interface SendMessageInput {
   conversationId: string

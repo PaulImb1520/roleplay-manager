@@ -1,7 +1,7 @@
 import type { CharacterVersionDTO } from "@workspace/shared/types/character"
 
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
-import { CharacterNotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { CharacterNotFoundError } from "../../../domain/errors"
 
 export class ListCharacterVersionsUseCase {
   constructor(private readonly characterRepository: CharacterRepository) {}

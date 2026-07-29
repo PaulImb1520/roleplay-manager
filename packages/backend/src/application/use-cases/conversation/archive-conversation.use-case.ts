@@ -7,7 +7,7 @@ import {
   ConversationNotFoundError,
   ConversationArchivedError,
   ConversationAlreadyActiveError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 import type { Message } from "../../../domain/entities/message.entity"
 
 export class ArchiveConversationUseCase {

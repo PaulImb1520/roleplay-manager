@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 
 import { UpdateSummaryUseCase } from "./update-summary.use-case"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
-import { NotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { NotFoundError } from "../../../domain/errors"
 
 const buildRepo = (existing: boolean): SummaryRepository => ({
   findById: async () =>

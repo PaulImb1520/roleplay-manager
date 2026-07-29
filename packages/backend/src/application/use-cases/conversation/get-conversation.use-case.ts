@@ -3,7 +3,7 @@ import type { MessageDTO } from "@workspace/shared/types/message"
 
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
-import { ConversationNotFoundError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { ConversationNotFoundError } from "../../../domain/errors"
 import type { Message } from "../../../domain/entities/message.entity"
 
 export class GetConversationUseCase {

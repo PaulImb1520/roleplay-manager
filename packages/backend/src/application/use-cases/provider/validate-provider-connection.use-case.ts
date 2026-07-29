@@ -1,6 +1,6 @@
 import type { ProviderId, ProviderStatus } from "@workspace/shared/types/provider"
 
-import { ProviderUnavailableError } from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+import { ProviderUnavailableError } from "../../../domain/errors"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 

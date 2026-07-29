@@ -6,7 +6,7 @@ import type {
 import {
   DomainError,
   ProviderUnavailableError,
-} from "../../../infrastructure/adapters/primary/middlewares/error-handler"
+} from "../../../domain/errors"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
