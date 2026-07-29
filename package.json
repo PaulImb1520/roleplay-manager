@@ -18,7 +18,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "shadcn": "^4.13.1",
-    "turbo": "^2.9.18",
+    "turbo": "^2.10.7",
     "typescript": "~6"
   },
   "packageManager": "pnpm@11.17.0",
