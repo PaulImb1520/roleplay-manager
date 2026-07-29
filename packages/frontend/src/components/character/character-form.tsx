@@ -34,6 +34,13 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 
 import type { CharacterDetail } from "@workspace/shared/types/character"
 import { useCharacterForm } from "./use-character-form"
@@ -56,6 +63,7 @@ export function CharacterForm({ character }: Props) {
     activeTab, setActiveTab,
     saving,
     showDeleteDialog, setShowDeleteDialog,
+    selectedVersionId, setSelectedVersionId,
     dirty,
     addCard,
     removeCard,
@@ -77,6 +85,23 @@ export function CharacterForm({ character }: Props) {
             {isEditing ? `v${versionNumber}` : "Nuevo personaje"}
           </p>
         </div>
+        {isEditing && character && character.versions.length > 1 ? (
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground">Versión:</label>
+            <Select value={selectedVersionId} onValueChange={(v) => { if (v) setSelectedVersionId(v) }}>
+              <SelectTrigger className="h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {character.versions.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    v{v.versionNumber} · {v.createdAt.slice(0, 10)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>

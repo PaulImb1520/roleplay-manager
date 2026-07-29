@@ -45,6 +45,7 @@ export function useCharacterForm(character?: CharacterDetail) {
       })) ?? [],
   )
   const [versionNumber, setVersionNumber] = useState(version?.versionNumber ?? 1)
+  const [selectedVersionId, setSelectedVersionId] = useState(character?.currentVersion.id ?? "")
   const [activeTab, setActiveTab] = useState("general")
   const [saving, setSaving] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -146,6 +147,7 @@ export function useCharacterForm(character?: CharacterDetail) {
           active: c.active,
         })))
         setVersionNumber(result.currentVersion.versionNumber)
+        setSelectedVersionId(result.currentVersion.id)
         setLastSnapshot(buildSnapshot(
           result.name,
           result.currentVersion.subtitle,
@@ -207,7 +209,10 @@ export function useCharacterForm(character?: CharacterDetail) {
   const handleStartConversation = async () => {
     if (!character) return
     try {
-      const conv = await createConversation({ characterId: character.id })
+      const conv = await createConversation({
+        characterId: character.id,
+        versionId: selectedVersionId !== character.currentVersion.id ? selectedVersionId : undefined,
+      })
       location.href = `/conversations/${conv.id}`
     } catch {
       toast.error("Error al crear la conversación")
@@ -228,6 +233,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     activeTab, setActiveTab,
     saving,
     showDeleteDialog, setShowDeleteDialog,
+    selectedVersionId, setSelectedVersionId,
     dirty,
     addCard,
     removeCard,
