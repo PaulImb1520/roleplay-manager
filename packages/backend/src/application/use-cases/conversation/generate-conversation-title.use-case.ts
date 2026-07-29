@@ -1,7 +1,7 @@
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
-import type { ProviderRegistry } from "../../../domain/ports/provider.port"
+import type { ProviderId, ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { Logger } from "../../../domain/ports/logger.port"
@@ -59,7 +59,7 @@ export class GenerateConversationTitleUseCase {
       }
     }
     if (!adapter && providerId) {
-      adapter = await this.providerRegistry.getAdapter(providerId as any)
+      adapter = await this.providerRegistry.getAdapter(providerId as ProviderId)
     }
     if (!adapter) {
       throw new Error(`No provider available for conversation '${conversationId}'.`)
@@ -102,7 +102,7 @@ export class GenerateConversationTitleUseCase {
       }
     } catch (err) {
       this.logger.error("Failed to generate conversation title", err as Error)
-      throw new Error("Failed to generate title.")
+      throw new Error("Failed to generate title.", { cause: err })
     }
 
     const title = fullContent.trim()

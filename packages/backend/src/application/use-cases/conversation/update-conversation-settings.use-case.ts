@@ -2,16 +2,13 @@ import type {
   ConversationDetail,
   ConversationSettingsUpdate,
 } from "@workspace/shared/types/conversation"
-import type { MessageDTO } from "@workspace/shared/types/message"
 import type { ProviderId } from "@workspace/shared/types/provider"
-import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
-import type { Message } from "../../../domain/entities/message.entity"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,

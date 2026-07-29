@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 
 import { Memory } from "../../../../../domain/entities/memory.entity"
 import type { MemoryRepository } from "../../../../../domain/ports/memory.repository"

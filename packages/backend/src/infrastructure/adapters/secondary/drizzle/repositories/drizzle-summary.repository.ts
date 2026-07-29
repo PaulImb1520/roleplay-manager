@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm"
+import { desc, eq, inArray } from "drizzle-orm"
 
 import { Summary } from "../../../../../domain/entities/summary.entity"
 import type { SummaryRepository } from "../../../../../domain/ports/summary.repository"

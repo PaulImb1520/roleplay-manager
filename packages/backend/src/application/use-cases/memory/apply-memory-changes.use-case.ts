@@ -6,7 +6,6 @@ import type { Logger } from "../../../domain/ports/logger.port"
 import { Memory } from "../../../domain/entities/memory.entity"
 import type { ApplyProposalDecision } from "@workspace/shared/types/memory-change-proposal"
 import type { MemoryDTO } from "@workspace/shared/types/memory"
-import type { MemoryChangeProposal } from "../../../domain/entities/memory-change-proposal.entity"
 
 export interface ApplyMemoryChangesInput {
   conversationId: string
