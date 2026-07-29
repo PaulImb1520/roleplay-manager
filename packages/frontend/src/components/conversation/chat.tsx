@@ -21,15 +21,13 @@ import { SettingsIcon, Pencil, RefreshCw } from "lucide-react"
 
 import { useChatStore } from "../../lib/stores/chat.store"
 import {
-  sendMessageStreaming,
-  regenerateReplyStreaming,
-  continueConversationStreaming,
   editMessage,
   deleteMessage,
   rewindConversation,
   cycleAlternative,
   setConversationTitle,
 } from "../../lib/api/conversations"
+import { useChatStreaming } from "../../lib/hooks/use-chat-streaming"
 import { getPromptContext } from "../../lib/api/context"
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
@@ -61,17 +59,12 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     editingContent,
     regeneratingMessageId,
     setMessages,
-    addMessage,
     replaceMessage,
     removeMessage,
-    appendToStreamingContent,
-    setStreaming,
-    setStreamingContent,
     startEditing,
     setEditingContent,
     cancelEditing,
     setError,
-    setRegeneratingMessageId,
   } = useChatStore()
 
   const loadMemories = useMemoryStore((s) => s.loadMemories)
@@ -114,104 +107,19 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     }
   }, [conv, setMessages, loadMemories, loadProposals, loadSummaries])
 
-  const handleSend = useCallback(
-    async (content: string) => {
-      setError(null)
-      setStreaming(true)
-      setStreamingContent("")
-
-      await sendMessageStreaming(conv.id, content, {
-        onSaved: (message) => {
-          addMessage(message)
-        },
-        onChunk: (chunk) => {
-          appendToStreamingContent(chunk)
-        },
-        onDone: (message) => {
-          addMessage(message)
-          setStreamingContent("")
-          setStreaming(false)
-          loadMemories(conv.id)
-          loadProposals(conv.id)
-          loadSummaries(conv.id)
-        },
-        onTitleGenerated: (title) => {
-          setConv((prev) => ({ ...prev, title }))
-        },
-        onSummaryGenerated: () => {
-          loadSummaries(conv.id)
-        },
-        onError: (err) => {
-          setError(err.message)
-          setStreaming(false)
-          setStreamingContent("")
-        },
-      })
+  const { handleSend, handleContinue, handleRegenerate } = useChatStreaming(conv.id, {
+    onDone: () => {
+      loadMemories(conv.id)
+      loadProposals(conv.id)
+      loadSummaries(conv.id)
     },
-    [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, setError, setStreaming, setStreamingContent],
-  )
-
-  const handleContinue = useCallback(async () => {
-    setError(null)
-    setStreaming(true)
-    setStreamingContent("")
-
-    await continueConversationStreaming(conv.id, {
-      onChunk: (chunk) => {
-        appendToStreamingContent(chunk)
-      },
-      onDone: (message) => {
-        addMessage(message)
-        setStreamingContent("")
-        setStreaming(false)
-        loadMemories(conv.id)
-        loadProposals(conv.id)
-        loadSummaries(conv.id)
-      },
-      onSummaryGenerated: () => {
-        loadSummaries(conv.id)
-      },
-      onError: (err) => {
-        setError(err.message)
-        setStreaming(false)
-        setStreamingContent("")
-      },
-    })
-  }, [conv.id, addMessage, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, setError, setStreaming, setStreamingContent])
-
-  const handleRegenerate = useCallback(
-    async (messageId: string) => {
-      setError(null)
-      setRegeneratingMessageId(messageId)
-      setStreaming(true)
-      setStreamingContent("")
-
-      await regenerateReplyStreaming(conv.id, messageId, {
-        onChunk: (chunk) => {
-          appendToStreamingContent(chunk)
-        },
-        onDone: (message) => {
-          replaceMessage(messageId, message)
-          setRegeneratingMessageId(null)
-          setStreamingContent("")
-          setStreaming(false)
-          loadMemories(conv.id)
-          loadProposals(conv.id)
-          loadSummaries(conv.id)
-        },
-        onSummaryGenerated: () => {
-          loadSummaries(conv.id)
-        },
-        onError: (err) => {
-          setError(err.message)
-          setRegeneratingMessageId(null)
-          setStreaming(false)
-          setStreamingContent("")
-        },
-      })
+    onTitleGenerated: (title) => {
+      setConv((prev) => ({ ...prev, title }))
     },
-    [conv.id, appendToStreamingContent, loadMemories, loadProposals, loadSummaries, replaceMessage, setError, setRegeneratingMessageId, setStreaming, setStreamingContent],
-  )
+    onSummaryGenerated: () => {
+      loadSummaries(conv.id)
+    },
+  })
 
   const handleEdit = useCallback(
     async (messageId: string, content: string) => {
