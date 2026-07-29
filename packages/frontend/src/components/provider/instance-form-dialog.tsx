@@ -39,10 +39,11 @@ export function InstanceFormDialog({
   const [apiKey, setApiKey] = useState(initialApiKey)
 
   useEffect(() => {
+    if (!open) return
     setName(initialName)
     setUrl(initialUrl)
     setApiKey(initialApiKey)
-  }, [initialName, initialUrl, initialApiKey])
+  }, [open])
 
   const title = mode === "create" ? "Nueva instancia OpenAI-compatible" : "Editar instancia"
   const description =
@@ -52,6 +53,7 @@ export function InstanceFormDialog({
   const apiKeyPlaceholder =
     mode === "create" ? "sk-..." : "(dejar vacio para mantener)"
   const saveLabel = mode === "create" ? "Crear instancia" : "Guardar cambios"
+  const idPrefix = mode
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -62,18 +64,18 @@ export function InstanceFormDialog({
         </DialogHeader>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="inst-name">Nombre</FieldLabel>
+            <FieldLabel htmlFor={`${idPrefix}-name`}>Nombre</FieldLabel>
             <Input
-              id="inst-name"
+              id={`${idPrefix}-name`}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="LM Studio local"
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="inst-url">URL base</FieldLabel>
+            <FieldLabel htmlFor={`${idPrefix}-url`}>URL base</FieldLabel>
             <Input
-              id="inst-url"
+              id={`${idPrefix}-url`}
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -81,9 +83,9 @@ export function InstanceFormDialog({
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="inst-key">API key {mode === "edit" ? "(opcional)" : ""}</FieldLabel>
+            <FieldLabel htmlFor={`${idPrefix}-key`}>API key {mode === "edit" ? "(opcional)" : ""}</FieldLabel>
             <Input
-              id="inst-key"
+              id={`${idPrefix}-key`}
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
