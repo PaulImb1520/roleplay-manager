@@ -19,6 +19,7 @@ import { validate } from "../middlewares/validation"
 
 const CreateConversationSchema = z.object({
   characterId: z.string().min(1, "characterId is required"),
+  versionId: z.string().min(1).optional(),
 })
 
 const SendMessageSchema = z.object({

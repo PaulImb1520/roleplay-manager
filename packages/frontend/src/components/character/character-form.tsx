@@ -63,7 +63,7 @@ export function CharacterForm({ character }: Props) {
     activeTab, setActiveTab,
     saving,
     showDeleteDialog, setShowDeleteDialog,
-    selectedVersionId, setSelectedVersionId,
+    selectedVersionId, handleVersionChange,
     dirty,
     addCard,
     removeCard,
@@ -81,27 +81,25 @@ export function CharacterForm({ character }: Props) {
           <h1 className="text-2xl font-semibold">
             {isEditing ? "Editar personaje" : "Crear personaje"}
           </h1>
-          <p className="text-muted-foreground text-sm">
-            {isEditing ? `v${versionNumber}` : "Nuevo personaje"}
-          </p>
-        </div>
-        {isEditing && character && character.versions.length > 1 ? (
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Versión:</label>
-            <Select value={selectedVersionId} onValueChange={(v) => { if (v) setSelectedVersionId(v) }}>
-              <SelectTrigger className="h-7 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {character.versions.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    v{v.versionNumber} · {v.createdAt.slice(0, 10)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="text-muted-foreground text-sm">
+            {isEditing && character && character.versions.length > 1 ? (
+              <Select value={selectedVersionId} onValueChange={(v) => { if (v) handleVersionChange(v) }}>
+                <SelectTrigger className="h-6 text-xs px-2 w-auto min-w-0 inline-flex">
+                  <SelectValue>v{versionNumber}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {character.versions.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      v{v.versionNumber} · {v.createdAt.slice(0, 10)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              isEditing ? `v${versionNumber}` : "Nuevo personaje"
+            )}
           </div>
-        ) : null}
+        </div>
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>

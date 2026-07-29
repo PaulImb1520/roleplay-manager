@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { toast } from "@workspace/ui/components/sonner"
 import type {
   CharacterDetail,
@@ -61,6 +61,34 @@ export function useCharacterForm(character?: CharacterDetail) {
       (version?.cards ?? []).map(c => ({ title: c.title, content: c.content, active: c.active })),
     ),
   )
+
+  const handleVersionChange = useCallback((versionId: string) => {
+    setSelectedVersionId(versionId)
+    const v = character?.versions.find((v) => v.id === versionId)
+    if (!v) return
+    setName(v.name)
+    setSubtitle(v.subtitle ?? "")
+    setProfileImage(v.profileImage)
+    setDescription(v.description)
+    setInstructions(v.instructions ?? "")
+    setGreeting(v.greeting)
+    setCards(v.cards.map((c) => ({
+      id: c.id,
+      title: c.title,
+      content: c.content,
+      active: c.active,
+    })))
+    setVersionNumber(v.versionNumber)
+    setLastSnapshot(buildSnapshot(
+      v.name,
+      v.subtitle,
+      v.profileImage,
+      v.description,
+      v.instructions,
+      v.greeting,
+      v.cards.map((c) => ({ title: c.title, content: c.content, active: c.active })),
+    ))
+  }, [character])
 
   const addCard = () => setCards((prev) => [...prev, emptyCard()])
 
@@ -233,7 +261,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     activeTab, setActiveTab,
     saving,
     showDeleteDialog, setShowDeleteDialog,
-    selectedVersionId, setSelectedVersionId,
+    selectedVersionId, handleVersionChange,
     dirty,
     addCard,
     removeCard,
