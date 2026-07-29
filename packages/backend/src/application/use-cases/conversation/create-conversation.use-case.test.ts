@@ -23,6 +23,18 @@ const version = CharacterVersion.create({
   description: "A test character", instructions: null,
   greeting: "Hello!", versionNumber: 1, createdAt: now, cards: [],
 })
+const versionV2 = CharacterVersion.create({
+  id: "ver-2", characterId: "char-1", name: "Test",
+  subtitle: null, profileImage: "https://example.com/avatar.png",
+  description: "A test character", instructions: null,
+  greeting: "Bonjour!", versionNumber: 2, createdAt: now, cards: [],
+})
+const otherVersion = CharacterVersion.create({
+  id: "ver-3", characterId: "char-other", name: "Other",
+  subtitle: null, profileImage: "https://example.com/other.png",
+  description: "Another character", instructions: null,
+  greeting: "Hi!", versionNumber: 1, createdAt: now, cards: [],
+})
 
 const buildCharacterRepo = (): CharacterRepository => ({
   createWithFirstVersion: async () => ({ character, version }),
@@ -91,5 +103,57 @@ describe("CreateConversationUseCase", () => {
     await expect(
       useCase.execute({ characterId: "nonexistent" }),
     ).rejects.toThrow("Character with id 'nonexistent' not found.")
+  })
+
+  it("usa la versionId solicitada para el greeting", async () => {
+    const repo = buildCharacterRepo()
+    repo.findVersionById = async (id) =>
+      id === "ver-2" ? versionV2 : version
+
+    const useCase = new CreateConversationUseCase(
+      buildConversationRepo(),
+      buildMessageRepo(),
+      repo,
+      buildDefaultProvider(),
+    )
+
+    const result = await useCase.execute({ characterId: "char-1", versionId: "ver-2" })
+
+    expect(result.messages[0].content).toBe("Bonjour!")
+    expect(result.characterName).toBe("Test")
+  })
+
+  it("lanza CharacterVersionNotFoundError si la versionId no existe", async () => {
+    const repo = buildCharacterRepo()
+    repo.findVersionById = async () => null
+
+    const useCase = new CreateConversationUseCase(
+      buildConversationRepo(),
+      buildMessageRepo(),
+      repo,
+      buildDefaultProvider(),
+    )
+
+    await expect(
+      useCase.execute({ characterId: "char-1", versionId: "nonexistent" }),
+    ).rejects.toThrow("Character version with id 'nonexistent' not found.")
+  })
+
+  it("lanza InvalidVersionForCharacterError si la versionId pertenece a otro personaje", async () => {
+    const repo = buildCharacterRepo()
+    repo.findVersionById = async () => otherVersion
+
+    const useCase = new CreateConversationUseCase(
+      buildConversationRepo(),
+      buildMessageRepo(),
+      repo,
+      buildDefaultProvider(),
+    )
+
+    await expect(
+      useCase.execute({ characterId: "char-1", versionId: "ver-3" }),
+    ).rejects.toThrow(
+      "Version 'ver-3' does not belong to character 'char-1'.",
+    )
   })
 })

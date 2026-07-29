@@ -10,7 +10,11 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
-import { CharacterNotFoundError } from "../../../domain/errors"
+import {
+  CharacterNotFoundError,
+  CharacterVersionNotFoundError,
+  InvalidVersionForCharacterError,
+} from "../../../domain/errors"
 
 export class CreateConversationUseCase {
   constructor(
@@ -27,6 +31,10 @@ export class CreateConversationUseCase {
       throw new CharacterNotFoundError(input.characterId)
     }
 
+    const version = input.versionId
+      ? await this.resolveVersion(input.versionId, result.character.id)
+      : result.currentVersion
+
     const now = new Date()
     const conversationId = randomUUIDv7()
     const defaultConfig: DefaultProviderConfig =
@@ -34,7 +42,7 @@ export class CreateConversationUseCase {
 
     const conversation = Conversation.create({
       id: conversationId,
-      versionId: result.currentVersion.id,
+      versionId: version.id,
       title: null,
       titleSource: null,
       status: "active",
@@ -58,7 +66,7 @@ export class CreateConversationUseCase {
       id: randomUUIDv7(),
       conversationId,
       role: "assistant",
-      content: result.currentVersion.greeting,
+      content: version.greeting,
       position: 0,
       alternatives: [],
       alternativesCursor: 0,
@@ -72,8 +80,8 @@ export class CreateConversationUseCase {
     return {
       id: conversation.id,
       characterId: result.character.id,
-      characterName: result.currentVersion.name,
-      characterProfileImage: result.currentVersion.profileImage,
+      characterName: version.name,
+      characterProfileImage: version.profileImage,
       title: conversation.title,
       titleSource: conversation.titleSource,
       status: conversation.status,
@@ -93,6 +101,20 @@ export class CreateConversationUseCase {
       updatedAt: conversation.updatedAt.toISOString(),
       messages: [toMessageDTO(greeting)],
     }
+  }
+
+  private async resolveVersion(
+    versionId: string,
+    characterId: string,
+  ) {
+    const version = await this.characterRepository.findVersionById(versionId)
+    if (!version) {
+      throw new CharacterVersionNotFoundError(versionId)
+    }
+    if (version.characterId !== characterId) {
+      throw new InvalidVersionForCharacterError(versionId, characterId)
+    }
+    return version
   }
 }
 

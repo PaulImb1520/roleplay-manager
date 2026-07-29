@@ -78,3 +78,13 @@ export class ProviderUnavailableError extends DomainError {
     this.name = "ProviderUnavailableError"
   }
 }
+
+export class InvalidVersionForCharacterError extends DomainError {
+  constructor(versionId: string, characterId: string) {
+    super(
+      "INVALID_VERSION_FOR_CHARACTER",
+      `Version '${versionId}' does not belong to character '${characterId}'.`,
+    )
+    this.name = "InvalidVersionForCharacterError"
+  }
+}

@@ -70,4 +70,5 @@ export interface MessageDTO {
 
 export interface CreateConversationInput {
   characterId: string
+  versionId?: string
 }

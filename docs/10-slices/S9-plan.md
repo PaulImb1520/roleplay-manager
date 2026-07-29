@@ -17,7 +17,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 - [x] **S9.2** — Reemplazar la plantilla de lista vacía de personajes por el componente `Empty` de Shadcn.
 - [x] **S9.3** — Añadir animación de "puntos suspensivos" mientras la IA responde, indicando que está generando.
 - [x] **S9.4** — Aplicar buffering de streaming para que los mensajes del asistente se muestren de forma más fluida (ej. acumular chunks y renderizar por párrafos completos). *Reemplazado — el buffer provocaba que el texto se almacenara hasta completarse. Se eliminó el buffer, los chunks se renderizan directamente chunk por chunk.*
-- [ ] **S9.5** — Añadir un selector de versiones en la pantalla de edición/creación de personajes (dropdown o lista para elegir la versión activa).
+- [x] **S9.5** — Añadir un selector de versiones en la pantalla de edición/creación de personajes (dropdown o lista para elegir la versión activa).
 - [ ] **S9.6** — Organizar mejor la pantalla de Proveedores (revisar espaciado, jerarquía visual y agrupación de secciones, mejorar la UX, corregir error de O-llama al entrar a la pantalla y reemplazasr select por Combobox).
 - [ ] **S9.7** — Mantener el estado de la última configuración abierta en el panel de ajustes (SettingsPanel recordar qué tab/accordion estaba abierto).
 - [ ] **S9.8** — Añadir funcionalidad para que al hacer clic en el Avatar del chat navegue a la pantalla de definición del personaje.
