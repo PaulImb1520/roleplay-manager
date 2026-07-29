@@ -1,29 +1,15 @@
-import { useCallback, useEffect, useState } from "react"
-import { Toaster, toast } from "@workspace/ui/components/sonner"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-import { Badge } from "@workspace/ui/components/badge"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "@workspace/ui/components/sonner"
 import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@workspace/ui/components/badge"
+import { Spinner } from "@workspace/ui/components/spinner"
 import { Separator } from "@workspace/ui/components/separator"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group"
-import {
-  CheckCircle2Icon,
-  RefreshCwIcon,
-} from "lucide-react"
 
 import type {
   ConfigureDefaultProviderInput,
   DefaultProviderConfig,
-  ListModelsResult,
   ProviderId,
+  ProviderModel,
   ProviderStatus,
 } from "@workspace/shared/types/provider"
 import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
@@ -38,42 +24,23 @@ import {
   validateProvider,
 } from "@/lib/api/providers"
 import {
-  listProviderInstances,
   createProviderInstance,
-  updateProviderInstance,
   deleteProviderInstance,
+  listProviderInstances,
+  updateProviderInstance,
   validateProviderInstance,
 } from "@/lib/api/provider-instances"
 import { ApiClientError } from "@/lib/api/client"
 
+import { ProviderCard, type CardStatus } from "./provider-card"
 import { InstanceFormDialog } from "./instance-form-dialog"
-import { ProviderInstancesCard } from "./provider-instances-card"
-import { DefaultModelCard } from "./default-model-card"
+import { useInstanceDialog } from "./use-instance-dialog"
 
-type StatusMap = Record<ProviderId, ProviderStatus | "loading">
-
-const STATUS_LABELS: Record<ProviderStatus | "loading", string> = {
-  available: "Disponible",
-  unavailable: "No disponible",
-  unconfigured: "Sin configurar",
-  unknown: "Desconocido",
-  loading: "Verificando...",
+function isError(e: unknown): e is ApiClientError {
+  return e instanceof ApiClientError
 }
 
-const STATUS_VARIANT: Record<
-  ProviderStatus | "loading",
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  available: "default",
-  unavailable: "destructive",
-  unconfigured: "outline",
-  unknown: "secondary",
-  loading: "secondary",
-}
-
-const isError = (e: unknown): e is ApiClientError => e instanceof ApiClientError
-
-const formatError = (e: unknown): string => {
+function formatError(e: unknown): string {
   if (isError(e)) return `[${e.code}] ${e.message}`
   if (e instanceof Error) return e.message
   return "Error desconocido"
@@ -81,41 +48,104 @@ const formatError = (e: unknown): string => {
 
 export function ProviderManager() {
   const [registeredIds, setRegisteredIds] = useState<ProviderId[]>([])
-  const [statuses, setStatuses] = useState<StatusMap>({
-    ollama: "unknown",
-    "openai-compatible": "unknown",
-  })
   const [defaultConfig, setDefaultConfig] =
     useState<DefaultProviderConfig>({ provider: null, providerInstanceId: null, model: null })
-  const [selected, setSelected] = useState<ProviderId>("ollama")
-  const [models, setModels] = useState<ListModelsResult | null>(null)
-  const [modelsLoading, setModelsLoading] = useState(false)
-  const [modelInput, setModelInput] = useState("")
-  const [savingDefault, setSavingDefault] = useState(false)
 
   const [instances, setInstances] = useState<ProviderInstance[]>([])
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null)
 
-  const [newInstanceDialogOpen, setNewInstanceDialogOpen] = useState(false)
-  const [editInstanceId, setEditInstanceId] = useState<string | null>(null)
-  const [instanceFormName, setInstanceFormName] = useState("")
-  const [instanceFormUrl, setInstanceFormUrl] = useState("")
-  const [instanceFormApiKey, setInstanceFormApiKey] = useState("")
+  const [ollamaStatus, setOllamaStatus] = useState<CardStatus>("unknown")
+  const [ollamaMessage, setOllamaMessage] = useState<string | undefined>(undefined)
+  const [ollamaVerifying, setOllamaVerifying] = useState(false)
+  const [ollamaModels, setOllamaModels] = useState<ProviderModel[]>([])
+  const [ollamaModelsLoading, setOllamaModelsLoading] = useState(false)
+  const [ollamaModel, setOllamaModel] = useState("")
 
-  const refreshAllStatuses = useCallback(async () => {
-    setStatuses({ ollama: "loading", "openai-compatible": "loading" })
-    const settled = await Promise.allSettled(
-      registeredIds.map((id) => validateProvider(id)),
-    )
-    setStatuses((prev) => {
-      const next = { ...prev }
-      registeredIds.forEach((id, idx) => {
-        const r = settled[idx]
-        next[id] = r.status === "fulfilled" ? r.value.status : "unavailable"
-      })
-      return next
-    })
-  }, [registeredIds])
+  const [openaiStatus, setOpenaiStatus] = useState<CardStatus>("unknown")
+  const [openaiMessage, setOpenaiMessage] = useState<string | undefined>(undefined)
+  const [openaiVerifying, setOpenaiVerifying] = useState(false)
+  const [openaiModels, setOpenaiModels] = useState<ProviderModel[]>([])
+  const [openaiModelsLoading, setOpenaiModelsLoading] = useState(false)
+  const [openaiModel, setOpenaiModel] = useState("")
+
+  const [saving, setSaving] = useState(false)
+  const [forceSaveAvailable, setForceSaveAvailable] = useState(false)
+
+  const dialog = useInstanceDialog()
+
+  const ollamaEnabled = registeredIds.includes("ollama")
+  const openaiEnabled = registeredIds.includes("openai-compatible")
+
+  const verifyOllama = useCallback(async () => {
+    setOllamaVerifying(true)
+    setOllamaStatus("loading")
+    setOllamaMessage(undefined)
+    setForceSaveAvailable(false)
+    try {
+      const result = await validateProvider("ollama")
+      setOllamaStatus(result.status)
+      setOllamaMessage(result.message)
+      if (result.status === "available") {
+        setOllamaModelsLoading(true)
+        try {
+          const r = await listProviderModels("ollama")
+          setOllamaModels(r.models)
+        } catch (e) {
+          toast.warning("No se pudieron listar los modelos", {
+            description: formatError(e),
+          })
+          setOllamaModels([])
+        } finally {
+          setOllamaModelsLoading(false)
+        }
+        toast.success("Conexión exitosa", { description: "Modelos cargados" })
+      } else {
+        setForceSaveAvailable(true)
+      }
+    } catch (e) {
+      setOllamaStatus("unavailable")
+      setOllamaMessage(formatError(e))
+      setForceSaveAvailable(true)
+    } finally {
+      setOllamaVerifying(false)
+    }
+  }, [])
+
+  const verifyOpenAIForInstance = useCallback(async (instanceId: string) => {
+    setOpenaiVerifying(true)
+    setOpenaiStatus("loading")
+    setOpenaiMessage(undefined)
+    setForceSaveAvailable(false)
+    try {
+      const result = await validateProviderInstance(instanceId)
+      const status: ProviderStatus = result.status
+      setOpenaiStatus(status)
+      setOpenaiMessage(result.message)
+      if (status === "available") {
+        setOpenaiModelsLoading(true)
+        try {
+          const r = await listProviderModels("openai-compatible", instanceId)
+          setOpenaiModels(r.models)
+        } catch (e) {
+          toast.warning("No se pudieron listar los modelos", {
+            description: formatError(e),
+          })
+          setOpenaiModels([])
+        } finally {
+          setOpenaiModelsLoading(false)
+        }
+        toast.success("Conexión exitosa", { description: "Modelos cargados" })
+      } else {
+        setForceSaveAvailable(true)
+      }
+    } catch (e) {
+      setOpenaiStatus("unavailable")
+      setOpenaiMessage(formatError(e))
+      setForceSaveAvailable(true)
+    } finally {
+      setOpenaiVerifying(false)
+    }
+  }, [])
 
   useEffect(() => {
     ;(async () => {
@@ -128,324 +158,271 @@ export function ProviderManager() {
         setRegisteredIds(ids.map((p) => p.id))
         setDefaultConfig(def)
         setInstances(insts)
-        if (def.provider) setSelected(def.provider)
         if (def.provider === "openai-compatible" && def.providerInstanceId) {
           setSelectedInstanceId(def.providerInstanceId)
         }
-      } catch (e) {
-        toast.error("No se pudo cargar la configuracion inicial", {
-          description: formatError(e),
-        })
-      }
-    })()
-  }, [])
-
-  useEffect(() => {
-    if (registeredIds.length === 0) return
-    ;(async () => {
-      await refreshAllStatuses()
-    })()
-  }, [registeredIds, refreshAllStatuses])
-
-  useEffect(() => {
-    if (!selected) return
-    let cancelled = false
-    ;(async () => {
-      setModelsLoading(true)
-      try {
-        const result = await listProviderModels(selected, selectedInstanceId ?? undefined)
-        if (cancelled) return
-        setModels(result)
-        if (defaultConfig.provider === selected && defaultConfig.model) {
-          setModelInput(defaultConfig.model)
+        if (def.model) {
+          if (def.provider === "ollama") {
+            setOllamaModel(def.model)
+            void verifyOllama()
+          }
+          if (def.provider === "openai-compatible") {
+            setOpenaiModel(def.model)
+            if (def.providerInstanceId) void verifyOpenAIForInstance(def.providerInstanceId)
+          }
         }
       } catch (e) {
-        if (cancelled) return
-        toast.error("No se pudo listar los modelos", {
+        toast.error("No se pudo cargar la configuración inicial", {
           description: formatError(e),
         })
-      } finally {
-        if (!cancelled) setModelsLoading(false)
       }
     })()
-    return () => {
-      cancelled = true
-    }
-  }, [selected, selectedInstanceId, defaultConfig.provider, defaultConfig.model])
+  }, [verifyOllama, verifyOpenAIForInstance])
 
-  const handleVerifyOpenAI = async () => {
-    if (!selectedInstanceId) {
-      toast.error("Selecciona una instancia primero")
-      return
-    }
-    try {
-      setStatuses((prev) => ({ ...prev, "openai-compatible": "loading" }))
-      const result = await validateProviderInstance(selectedInstanceId)
-      const s: ProviderStatus = result.status === "available" ? "available" : "unavailable"
-      setStatuses((prev) => ({ ...prev, "openai-compatible": s }))
-      if (s === "available") {
-        toast.success("Conexion exitosa")
-      } else {
-        toast.warning("Instancia no disponible", { description: result.message })
-      }
-    } catch (e) {
-      setStatuses((prev) => ({ ...prev, "openai-compatible": "unavailable" }))
-      toast.error("No se pudo verificar la conexion", { description: formatError(e) })
-    }
-  }
+  const handleSelectInstance = useCallback((id: string) => {
+    setSelectedInstanceId(id)
+    setOpenaiModels([])
+    setOpenaiStatus("unknown")
+    setOpenaiMessage(undefined)
+  }, [])
 
-  const handleSaveDefault = async (force: boolean) => {
-    const model = modelInput.trim()
-    if (model === "") {
-      toast.error("Indica un modelo antes de guardar")
-      return
-    }
-    if (selected === "openai-compatible" && !selectedInstanceId) {
-      toast.error("Selecciona una instancia de proveedor")
-      return
-    }
-    setSavingDefault(true)
-    const body: ConfigureDefaultProviderInput = {
-      provider: selected,
-      providerInstanceId: selected === "openai-compatible" ? selectedInstanceId : null,
-      model,
-      ...(force ? { force: true } : {}),
-    }
-    try {
-      const result = await configureDefaultProvider(body)
-      setDefaultConfig(result)
-      toast.success("Proveedor por defecto actualizado", {
-        description: `${result.provider} - ${result.model}`,
-      })
-      void refreshAllStatuses()
-    } catch (e) {
-      if (isError(e) && e.code === "PROVIDER_CONNECTION_FAILED") {
-        toast.warning("El proveedor no responde", {
-          description:
-            "Reintenta cuando este activo o pulsa 'Guardar de todos modos' para forzar el guardado.",
+  const handleCreateInstance = useCallback(
+    async (name: string, url: string, apiKey: string) => {
+      try {
+        const instance = await createProviderInstance({
+          kind: "openai-compatible",
+          name: name.trim(),
+          url: url.trim(),
+          apiKey: apiKey.trim() || undefined,
         })
-      } else {
-        toast.error("No se pudo guardar el proveedor por defecto", {
-          description: formatError(e),
+        setInstances((prev) => [...prev, instance])
+        dialog.close()
+        toast.success("Instancia creada", { description: instance.name })
+      } catch (e) {
+        toast.error("No se pudo crear la instancia", { description: formatError(e) })
+      }
+    },
+    [dialog]
+  )
+
+  const handleUpdateInstance = useCallback(
+    async (id: string, name: string, url: string, apiKey: string) => {
+      try {
+        const updated = await updateProviderInstance(id, {
+          name: name.trim() || undefined,
+          url: url.trim() || undefined,
+          apiKey: apiKey.trim() || undefined,
         })
+        setInstances((prev) => prev.map((i) => (i.id === id ? updated : i)))
+        dialog.close()
+        toast.success("Instancia actualizada")
+      } catch (e) {
+        toast.error("No se pudo actualizar la instancia", { description: formatError(e) })
       }
-    } finally {
-      setSavingDefault(false)
-    }
-  }
+    },
+    [dialog]
+  )
 
-  const handleCreateInstance = async (name?: string, url?: string, apiKey?: string) => {
-    const finalName = (name ?? instanceFormName).trim()
-    const finalUrl = (url ?? instanceFormUrl).trim()
-    const finalApiKey = (apiKey ?? instanceFormApiKey).trim() || undefined
-    if (import.meta.env.DEV) {
-      console.log("[ProviderManager] handleCreateInstance:", { finalName, finalUrl, finalApiKey })
-    }
-    try {
-      const instance = await createProviderInstance({
-        kind: "openai-compatible",
-        name: finalName,
-        url: finalUrl,
-        apiKey: finalApiKey,
-      })
-      setInstances((prev) => [...prev, instance])
-      setNewInstanceDialogOpen(false)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
-      toast.success("Instancia creada", { description: instance.name })
-    } catch (e) {
-      toast.error("No se pudo crear la instancia", { description: formatError(e) })
-    }
-  }
-
-  const handleUpdateInstance = async (name?: string, url?: string, apiKey?: string) => {
-    if (!editInstanceId) return
-    const finalName = (name ?? instanceFormName).trim() || undefined
-    const finalUrl = (url ?? instanceFormUrl).trim() || undefined
-    const finalApiKey = (apiKey ?? instanceFormApiKey).trim() || undefined
-    if (import.meta.env.DEV) {
-      console.log("[ProviderManager] handleUpdateInstance:", { finalName, finalUrl, finalApiKey })
-    }
-    try {
-      const updated = await updateProviderInstance(editInstanceId, {
-        name: finalName,
-        url: finalUrl,
-        apiKey: finalApiKey,
-      })
-      setInstances((prev) => prev.map((i) => (i.id === editInstanceId ? updated : i)))
-      setEditInstanceId(null)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
-      toast.success("Instancia actualizada")
-    } catch (e) {
-      toast.error("No se pudo actualizar la instancia", { description: formatError(e) })
-    }
-  }
-
-  const handleDeleteInstance = async (id: string) => {
-    try {
-      await deleteProviderInstance(id)
-      setInstances((prev) => prev.filter((i) => i.id !== id))
-      if (selectedInstanceId === id) {
-        setSelectedInstanceId(null)
+  const handleDeleteInstance = useCallback(
+    async (id: string) => {
+      try {
+        await deleteProviderInstance(id)
+        setInstances((prev) => prev.filter((i) => i.id !== id))
+        if (selectedInstanceId === id) setSelectedInstanceId(null)
+        toast.success("Instancia eliminada")
+      } catch (e) {
+        toast.error("No se pudo eliminar la instancia", { description: formatError(e) })
       }
-      toast.success("Instancia eliminada")
-    } catch (e) {
-      toast.error("No se pudo eliminar la instancia", { description: formatError(e) })
-    }
-  }
+    },
+    [selectedInstanceId]
+  )
+
+  const handleDialogSave = useCallback(
+    (name: string, url: string, apiKey: string) => {
+      if (dialog.state.mode === "edit" && dialog.state.editingInstance) {
+        void handleUpdateInstance(dialog.state.editingInstance.id, name, url, apiKey)
+      } else {
+        void handleCreateInstance(name, url, apiKey)
+      }
+    },
+    [dialog.state, handleCreateInstance, handleUpdateInstance]
+  )
+
+  const selectedInstanceName = useMemo(() => {
+    if (!defaultConfig.providerInstanceId) return null
+    return instances.find((i) => i.id === defaultConfig.providerInstanceId)?.name ?? null
+  }, [defaultConfig.providerInstanceId, instances])
+
+  const ollamaReady = ollamaStatus === "available"
+  const openaiReady = openaiStatus === "available" && !!selectedInstanceId
+  const ollamaDirty = ollamaModel.trim() !== (defaultConfig.provider === "ollama" ? defaultConfig.model ?? "" : "")
+  const openaiDirty =
+    openaiModel.trim() !== (defaultConfig.provider === "openai-compatible" ? defaultConfig.model ?? "" : "") ||
+    selectedInstanceId !== defaultConfig.providerInstanceId
+  const canSaveOllama = ollamaEnabled && ollamaReady && ollamaModel.trim() !== "" && ollamaDirty
+  const canSaveOpenAI = openaiEnabled && openaiReady && openaiModel.trim() !== "" && openaiDirty
+  const canSave = canSaveOllama || canSaveOpenAI
+
+  const handleSave = useCallback(
+    async (force: boolean) => {
+      const pickOllama = canSaveOllama
+      const provider: ProviderId = pickOllama ? "ollama" : "openai-compatible"
+      const model = (pickOllama ? ollamaModel : openaiModel).trim()
+      const providerInstanceId = pickOllama ? null : selectedInstanceId
+      if (provider === "openai-compatible" && !providerInstanceId) {
+        toast.error("Selecciona una instancia antes de guardar")
+        return
+      }
+      setSaving(true)
+      const body: ConfigureDefaultProviderInput = {
+        provider,
+        providerInstanceId,
+        model,
+        ...(force ? { force: true } : {}),
+      }
+      try {
+        const result = await configureDefaultProvider(body)
+        setDefaultConfig(result)
+        toast.success("Proveedor por defecto actualizado", {
+          description: `${result.provider}${result.providerInstanceId ? " · instancia" : ""} · ${result.model}`,
+        })
+        setForceSaveAvailable(false)
+      } catch (e) {
+        if (isError(e) && e.code === "PROVIDER_CONNECTION_FAILED") {
+          toast.warning("El proveedor no responde", {
+            description:
+              "Reintenta cuando esté activo o pulsa 'Guardar de todos modos' para forzar el guardado.",
+          })
+          setForceSaveAvailable(true)
+        } else {
+          toast.error("No se pudo guardar el proveedor por defecto", {
+            description: formatError(e),
+          })
+        }
+      } finally {
+        setSaving(false)
+      }
+    },
+    [canSaveOllama, ollamaModel, openaiModel, selectedInstanceId]
+  )
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <Toaster richColors position="top-right" />
-
-      <header className="flex flex-col gap-1">
+      <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">Proveedor por defecto</h1>
         <p className="text-muted-foreground text-sm">
-          Configura que modelo de IA usara la aplicacion por defecto. Los
-          proveedores se validan en vivo; puedes guardar aunque fallen si
-          confias en que estaran disponibles mas tarde.
+          Configura qué modelo de IA usará la aplicación por defecto. Los
+          proveedores se validan al pulsar Probar.
         </p>
+        <CurrentConfigPill
+          provider={defaultConfig.provider}
+          instanceName={selectedInstanceName}
+          model={defaultConfig.model}
+        />
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Selecciona un proveedor</CardTitle>
-          <CardDescription>
-            Proveedores registrados: {registeredIds.length === 0 ? "cargando..." : registeredIds.join(", ")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <ToggleGroup
-            value={[selected as string]}
-            onValueChange={(v) => {
-              const first = v[0]
-              if (first && first !== selected) {
-                setSelected(first as ProviderId)
-                setModels(null)
-                setModelInput("")
-              }
-            }}
-            className="flex flex-wrap items-center gap-2"
-          >
-            {registeredIds.map((id) => (
-              <ToggleGroupItem key={id} value={id} aria-label={id}>
-                {id === "ollama" ? "Ollama (local)" : "OpenAI-compatible"}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-
-          <Separator />
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">Estado actual:</span>
-            {registeredIds.map((id) => (
-              <Badge
-                key={id}
-                variant={STATUS_VARIANT[statuses[id]]}
-                className="gap-1"
-              >
-                {statuses[id] === "available" ? (
-                  <CheckCircle2Icon className="size-3" />
-                ) : null}
-                {id}: {STATUS_LABELS[statuses[id]]}
-              </Badge>
-            ))}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void refreshAllStatuses()}
-              disabled={registeredIds.length === 0}
-            >
-              <RefreshCwIcon />
-              Refrescar todos
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {selected === "openai-compatible" ? (
-        <ProviderInstancesCard
-          instances={instances}
-          selectedInstanceId={selectedInstanceId}
-          onSelectInstance={setSelectedInstanceId}
-          onEditInstance={(id, name, url) => {
-            setEditInstanceId(id)
-            setInstanceFormName(name)
-            setInstanceFormUrl(url)
-            setInstanceFormApiKey("")
-          }}
-          onDeleteInstance={handleDeleteInstance}
-          onCreateNew={() => {
-            setEditInstanceId(null)
-            setInstanceFormName("")
-            setInstanceFormUrl("")
-            setInstanceFormApiKey("")
-            setNewInstanceDialogOpen(true)
-          }}
-          onVerifyConnection={handleVerifyOpenAI}
+      {ollamaEnabled ? (
+        <ProviderCard
+          providerId="ollama"
+          status={ollamaStatus}
+          statusMessage={ollamaMessage}
+          verifying={ollamaVerifying}
+          onVerify={() => void verifyOllama()}
+          model={ollamaModel}
+          models={ollamaModels}
+          modelsLoading={ollamaModelsLoading}
+          onModelChange={setOllamaModel}
         />
       ) : null}
 
-      <DefaultModelCard
-        models={models}
-        modelsLoading={modelsLoading}
-        modelInput={modelInput}
-        savingDefault={savingDefault}
-        onChangeModel={setModelInput}
-        onSaveDefault={handleSaveDefault}
-      />
+      {openaiEnabled ? (
+        <ProviderCard
+          providerId="openai-compatible"
+          status={openaiStatus}
+          statusMessage={openaiMessage}
+          verifying={openaiVerifying}
+          onVerify={() => { if (selectedInstanceId) void verifyOpenAIForInstance(selectedInstanceId) }}
+          verifyDisabled={!selectedInstanceId}
+          model={openaiModel}
+          models={openaiModels}
+          modelsLoading={openaiModelsLoading}
+          onModelChange={setOpenaiModel}
+          instances={instances}
+          selectedInstanceId={selectedInstanceId}
+          onSelectInstance={handleSelectInstance}
+          onEditInstance={dialog.openEdit}
+          onDeleteInstance={(id) => void handleDeleteInstance(id)}
+          onCreateInstance={dialog.openCreate}
+        />
+      ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Configuración actual</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {defaultConfig.provider === null ? (
-            <p className="text-muted-foreground text-sm">
-              Aun no has configurado un proveedor por defecto.
-            </p>
-          ) : (
-            <p className="text-sm">
-              <strong>{defaultConfig.provider}</strong>
-              {defaultConfig.providerInstanceId ? (
-                <> &middot; <span className="text-muted-foreground">instancia: {defaultConfig.providerInstanceId}</span></>
-              ) : null}
-              &middot;{" "}
-              <code className="bg-muted rounded px-1 py-0.5 text-xs">
-                {defaultConfig.model}
-              </code>
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {canSave || forceSaveAvailable ? (
+        <>
+          <Separator />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {forceSaveAvailable ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleSave(true)}
+                disabled={saving}
+              >
+                Guardar de todos modos
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              onClick={() => void handleSave(false)}
+              disabled={!canSave || saving}
+            >
+              {saving ? <Spinner /> : null}
+              Guardar como predeterminado
+            </Button>
+          </div>
+        </>
+      ) : null}
 
       <InstanceFormDialog
-        open={newInstanceDialogOpen}
-        mode="create"
-        initialName={instanceFormName}
-        initialUrl={instanceFormUrl}
-        initialApiKey={instanceFormApiKey}
-        onClose={() => setNewInstanceDialogOpen(false)}
-        onSave={(name, url, apiKey) => {
-          handleCreateInstance(name, url, apiKey)
-        }}
+        open={dialog.state.open}
+        mode={dialog.state.mode}
+        initialName={dialog.state.editingInstance?.name ?? ""}
+        initialUrl={dialog.state.editingInstance?.url ?? ""}
+        initialApiKey=""
+        onClose={dialog.close}
+        onSave={handleDialogSave}
       />
+    </div>
+  )
+}
 
-      <InstanceFormDialog
-        open={editInstanceId !== null}
-        mode="edit"
-        initialName={instanceFormName}
-        initialUrl={instanceFormUrl}
-        initialApiKey={instanceFormApiKey}
-        onClose={() => setEditInstanceId(null)}
-        onSave={(name, url, apiKey) => {
-          handleUpdateInstance(name, url, apiKey)
-        }}
-      />
+function CurrentConfigPill({
+  provider,
+  instanceName,
+  model,
+}: {
+  provider: ProviderId | null
+  instanceName: string | null
+  model: string | null
+}) {
+  if (provider === null) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Badge variant="outline">Sin configurar</Badge>
+        <span>Selecciona un proveedor y un modelo abajo, luego pulsa Guardar.</span>
+      </div>
+    )
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-muted-foreground">Proveedor actual:</span>
+      <Badge variant="secondary">
+        {provider === "ollama" ? "Ollama" : instanceName ?? "OpenAI-compatible"}
+      </Badge>
+      {model ? (
+        <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{model}</code>
+      ) : (
+        <Badge variant="outline">Sin modelo</Badge>
+      )}
     </div>
   )
 }

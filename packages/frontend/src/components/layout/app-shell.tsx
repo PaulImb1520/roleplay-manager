@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar"
+import { Toaster } from "@workspace/ui/components/sonner"
 import { UsersIcon, MessageSquareTextIcon, CogIcon } from "lucide-react"
 import { useSidebar } from "@workspace/ui/components/sidebar"
 import { Logo } from "@workspace/ui/components/logo"
@@ -92,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
+      <Toaster richColors position="top-right" />
     </SidebarProvider>
   )
 }

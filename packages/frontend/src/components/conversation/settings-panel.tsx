@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactElement } from "react"
-import { Toaster, toast } from "@workspace/ui/components/sonner"
+import { toast } from "@workspace/ui/components/sonner"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@workspace/ui/components/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
@@ -275,7 +275,6 @@ export function SettingsPanel({
 
   return (
     <>
-      <Toaster richColors position="top-right" />
       <Sheet open={open} onOpenChange={setOpen}>
         {children ? <SheetTrigger render={children as ReactElement} /> : null}
         <SheetContent side="right" className="flex h-full flex-col w-full max-w-md sm:max-w-lg">
