@@ -79,8 +79,6 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const proposals = useMemoryStore((s) => s.proposals)
   const summaries = useSummaryStore((s) => s.summaries)
   const loadSummaries = useSummaryStore((s) => s.loadSummaries)
-  const summaryCount = summaries.length
-
   const pendingCount = useMemo(
     () => proposals.filter(p => p.status === "pending").length,
     [proposals],
@@ -137,7 +135,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           loadProposals(conv.id)
           loadSummaries(conv.id)
         },
-        onTitleGenerated: (title, _titleSource) => {
+        onTitleGenerated: (title) => {
           setConv((prev) => ({ ...prev, title }))
         },
         onSummaryGenerated: () => {

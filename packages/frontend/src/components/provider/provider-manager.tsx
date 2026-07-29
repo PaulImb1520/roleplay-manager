@@ -9,14 +9,7 @@ import {
 } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
 import { Separator } from "@workspace/ui/components/separator"
-import { Spinner } from "@workspace/ui/components/spinner"
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -149,14 +142,16 @@ export function ProviderManager() {
 
   useEffect(() => {
     if (registeredIds.length === 0) return
-    void refreshAllStatuses()
+    ;(async () => {
+      await refreshAllStatuses()
+    })()
   }, [registeredIds, refreshAllStatuses])
 
   useEffect(() => {
     if (!selected) return
-    setModelsLoading(true)
     let cancelled = false
     ;(async () => {
+      setModelsLoading(true)
       try {
         const result = await listProviderModels(selected, selectedInstanceId ?? undefined)
         if (cancelled) return
