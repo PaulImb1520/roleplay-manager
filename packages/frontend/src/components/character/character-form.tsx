@@ -143,7 +143,7 @@ export function CharacterForm({ character }: Props) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ej: Dr. House"
+                placeholder="Ej: Milka Moori"
               />
               <FieldError>El nombre es obligatorio</FieldError>
             </Field>
@@ -154,7 +154,7 @@ export function CharacterForm({ character }: Props) {
                 id="subtitle"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
-                placeholder="Ej: El mejor diagnosticador"
+                placeholder="Ej: La chica holstaur más agradable."
               />
               <FieldDescription>Opcional. Una frase breve.</FieldDescription>
             </Field>
@@ -176,7 +176,7 @@ export function CharacterForm({ character }: Props) {
                 id="greeting"
                 value={greeting}
                 onChange={(e) => setGreeting(e.target.value)}
-                placeholder="Ej: ¡Hola! Bienvenido a mi consulta."
+                placeholder="Ej: ¡Hola! Me alegra verte por aqui."
               />
               <FieldError>El saludo inicial es obligatorio</FieldError>
             </Field>
@@ -187,7 +187,7 @@ export function CharacterForm({ character }: Props) {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ej: Un médico genio y cascarrabias..."
+                placeholder="Ej: Dueña de una granja y amiga de todos..."
               />
               <FieldError>La descripción es obligatoria</FieldError>
             </Field>
