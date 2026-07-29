@@ -239,13 +239,19 @@ export function ProviderManager() {
     }
   }
 
-  const handleCreateInstance = async () => {
+  const handleCreateInstance = async (name?: string, url?: string, apiKey?: string) => {
+    const finalName = (name ?? instanceFormName).trim()
+    const finalUrl = (url ?? instanceFormUrl).trim()
+    const finalApiKey = (apiKey ?? instanceFormApiKey).trim() || undefined
+    if (import.meta.env.DEV) {
+      console.log("[ProviderManager] handleCreateInstance:", { finalName, finalUrl, finalApiKey })
+    }
     try {
       const instance = await createProviderInstance({
         kind: "openai-compatible",
-        name: instanceFormName.trim(),
-        url: instanceFormUrl.trim(),
-        apiKey: instanceFormApiKey.trim() || undefined,
+        name: finalName,
+        url: finalUrl,
+        apiKey: finalApiKey,
       })
       setInstances((prev) => [...prev, instance])
       setNewInstanceDialogOpen(false)
@@ -258,13 +264,19 @@ export function ProviderManager() {
     }
   }
 
-  const handleUpdateInstance = async () => {
+  const handleUpdateInstance = async (name?: string, url?: string, apiKey?: string) => {
     if (!editInstanceId) return
+    const finalName = (name ?? instanceFormName).trim() || undefined
+    const finalUrl = (url ?? instanceFormUrl).trim() || undefined
+    const finalApiKey = (apiKey ?? instanceFormApiKey).trim() || undefined
+    if (import.meta.env.DEV) {
+      console.log("[ProviderManager] handleUpdateInstance:", { finalName, finalUrl, finalApiKey })
+    }
     try {
       const updated = await updateProviderInstance(editInstanceId, {
-        name: instanceFormName.trim() || undefined,
-        url: instanceFormUrl.trim() || undefined,
-        apiKey: instanceFormApiKey.trim() || undefined,
+        name: finalName,
+        url: finalUrl,
+        apiKey: finalApiKey,
       })
       setInstances((prev) => prev.map((i) => (i.id === editInstanceId ? updated : i)))
       setEditInstanceId(null)
@@ -424,10 +436,7 @@ export function ProviderManager() {
         initialApiKey={instanceFormApiKey}
         onClose={() => setNewInstanceDialogOpen(false)}
         onSave={(name, url, apiKey) => {
-          setInstanceFormName(name)
-          setInstanceFormUrl(url)
-          setInstanceFormApiKey(apiKey)
-          handleCreateInstance()
+          handleCreateInstance(name, url, apiKey)
         }}
       />
 
@@ -439,10 +448,7 @@ export function ProviderManager() {
         initialApiKey={instanceFormApiKey}
         onClose={() => setEditInstanceId(null)}
         onSave={(name, url, apiKey) => {
-          setInstanceFormName(name)
-          setInstanceFormUrl(url)
-          setInstanceFormApiKey(apiKey)
-          handleUpdateInstance()
+          handleUpdateInstance(name, url, apiKey)
         }}
       />
     </div>
