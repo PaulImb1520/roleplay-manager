@@ -3,9 +3,6 @@ import { toast } from "@workspace/ui/components/sonner"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Separator } from "@workspace/ui/components/separator"
-import { Input } from "@workspace/ui/components/input"
-import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@workspace/ui/components/dialog"
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react"
 
 import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
@@ -16,6 +13,7 @@ import {
   deleteProviderInstance,
 } from "@/lib/api/provider-instances"
 import { ApiClientError } from "@/lib/api/client"
+import { InstanceFormDialog } from "@/components/provider/instance-form-dialog"
 
 interface InstanceManagerProps {
   instances: ProviderInstance[]
@@ -32,11 +30,9 @@ export function InstanceManager({
   onSelect,
   onInstancesChange,
 }: InstanceManagerProps) {
-  const [newInstanceDialogOpen, setNewInstanceDialogOpen] = useState(false)
-  const [editInstanceId, setEditInstanceId] = useState<string | null>(null)
-  const [instanceFormName, setInstanceFormName] = useState("")
-  const [instanceFormUrl, setInstanceFormUrl] = useState("")
-  const [instanceFormApiKey, setInstanceFormApiKey] = useState("")
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create")
+  const [editingInstance, setEditingInstance] = useState<ProviderInstance | null>(null)
 
   const formatError = (e: unknown): string => {
     if (e instanceof ApiClientError) return `[${e.code}] ${e.message}`
@@ -44,38 +40,31 @@ export function InstanceManager({
     return "Error desconocido"
   }
 
-  const handleCreateInstance = async () => {
+  const handleCreateInstance = async (name: string, url: string, apiKey: string) => {
     try {
       const instance = await createProviderInstance({
         kind: "openai-compatible",
-        name: instanceFormName.trim(),
-        url: instanceFormUrl.trim(),
-        apiKey: instanceFormApiKey.trim() || undefined,
+        name: name.trim(),
+        url: url.trim(),
+        apiKey: apiKey.trim() || undefined,
       })
       onInstancesChange([...instances, instance])
-      setNewInstanceDialogOpen(false)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
+      setDialogOpen(false)
       toast.success("Instancia creada", { description: instance.name })
     } catch (e) {
       toast.error("No se pudo crear la instancia", { description: formatError(e) })
     }
   }
 
-  const handleUpdateInstance = async () => {
-    if (!editInstanceId) return
+  const handleUpdateInstance = async (id: string, name: string, url: string, apiKey: string) => {
     try {
-      const updated = await updateProviderInstance(editInstanceId, {
-        name: instanceFormName.trim() || undefined,
-        url: instanceFormUrl.trim() || undefined,
-        apiKey: instanceFormApiKey.trim() || undefined,
+      const updated = await updateProviderInstance(id, {
+        name: name.trim() || undefined,
+        url: url.trim() || undefined,
+        apiKey: apiKey.trim() || undefined,
       })
-      onInstancesChange(instances.map((i) => (i.id === editInstanceId ? updated : i)))
-      setEditInstanceId(null)
-      setInstanceFormName("")
-      setInstanceFormUrl("")
-      setInstanceFormApiKey("")
+      onInstancesChange(instances.map((i) => (i.id === id ? updated : i)))
+      setDialogOpen(false)
       toast.success("Instancia actualizada")
     } catch (e) {
       toast.error("No se pudo actualizar la instancia", { description: formatError(e) })
@@ -86,9 +75,7 @@ export function InstanceManager({
     try {
       await deleteProviderInstance(id)
       onInstancesChange(instances.filter((i) => i.id !== id))
-      if (selectedInstanceId === id) {
-        onSelect(null)
-      }
+      if (selectedInstanceId === id) onSelect(null)
       toast.success("Instancia eliminada")
     } catch (e) {
       toast.error("No se pudo eliminar la instancia", { description: formatError(e) })
@@ -132,10 +119,9 @@ export function InstanceManager({
                   className="size-7"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setEditInstanceId(inst.id)
-                    setInstanceFormName(inst.name)
-                    setInstanceFormUrl(inst.url)
-                    setInstanceFormApiKey("")
+                    setDialogMode("edit")
+                    setEditingInstance(inst)
+                    setDialogOpen(true)
                   }}
                 >
                   <PencilIcon className="size-3" />
@@ -160,105 +146,32 @@ export function InstanceManager({
         variant="outline"
         size="sm"
         onClick={() => {
-          setEditInstanceId(null)
-          setInstanceFormName("")
-          setInstanceFormUrl("")
-          setInstanceFormApiKey("")
-          setNewInstanceDialogOpen(true)
+          setDialogMode("create")
+          setEditingInstance(null)
+          setDialogOpen(true)
         }}
       >
         <PlusIcon /> Nueva instancia
       </Button>
 
-      <Dialog open={newInstanceDialogOpen} onOpenChange={setNewInstanceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nueva instancia OpenAI-compatible</DialogTitle>
-            <DialogDescription>
-              Configura una conexion a un proveedor compatible con OpenAI.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="inst-name">Nombre</FieldLabel>
-              <Input
-                id="inst-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-                placeholder="LM Studio local"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-url">URL base</FieldLabel>
-              <Input
-                id="inst-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-                placeholder="http://localhost:1234/v1"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inst-key">API key (opcional)</FieldLabel>
-              <Input
-                id="inst-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="sk-..."
-              />
-            </Field>
-          </FieldGroup>
-          <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleCreateInstance}>Crear instancia</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editInstanceId !== null} onOpenChange={(o) => { if (!o) setEditInstanceId(null) }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar instancia</DialogTitle>
-            <DialogDescription>
-              Modifica los datos de la conexion.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="edit-name">Nombre</FieldLabel>
-              <Input
-                id="edit-name"
-                value={instanceFormName}
-                onChange={(e) => setInstanceFormName(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-url">URL base</FieldLabel>
-              <Input
-                id="edit-url"
-                type="url"
-                value={instanceFormUrl}
-                onChange={(e) => setInstanceFormUrl(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="edit-key">API key (dejar vacio para mantener)</FieldLabel>
-              <Input
-                id="edit-key"
-                type="password"
-                value={instanceFormApiKey}
-                onChange={(e) => setInstanceFormApiKey(e.target.value)}
-                placeholder="(dejar vacio para mantener)"
-              />
-            </Field>
-          </FieldGroup>
-          <div className="flex justify-end gap-2">
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-            <Button onClick={handleUpdateInstance}>Guardar cambios</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InstanceFormDialog
+        open={dialogOpen}
+        mode={dialogMode}
+        initialName={editingInstance?.name ?? ""}
+        initialUrl={editingInstance?.url ?? ""}
+        initialApiKey=""
+        onClose={() => {
+          setDialogOpen(false)
+          setEditingInstance(null)
+        }}
+        onSave={(name, url, apiKey) => {
+          if (dialogMode === "edit" && editingInstance) {
+            handleUpdateInstance(editingInstance.id, name, url, apiKey)
+          } else {
+            handleCreateInstance(name, url, apiKey)
+          }
+        }}
+      />
     </div>
   )
 }
