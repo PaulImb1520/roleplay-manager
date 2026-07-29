@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from "react"
-import { StreamingBuffer } from "../streaming/streaming-buffer"
 import {
   sendMessageStreaming,
   regenerateReplyStreaming,
@@ -16,7 +15,6 @@ export interface UseChatStreamingOptions {
 }
 
 export function useChatStreaming(convId: string, options?: UseChatStreamingOptions) {
-  const streamingBuffer = useRef<StreamingBuffer | null>(null)
   const optionsRef = useRef(options)
 
   useEffect(() => {
@@ -31,33 +29,20 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
   const setError = useChatStore((s) => s.setError)
   const setRegeneratingMessageId = useChatStore((s) => s.setRegeneratingMessageId)
 
-  useEffect(() => {
-    const buf = new StreamingBuffer({
-      onFlush: (text) => appendToStreamingContent(text),
-    })
-    streamingBuffer.current = buf
-    return () => buf.clear()
-  }, [appendToStreamingContent])
-
   const handleSend = useCallback(
     async (content: string) => {
       setError(null)
       setStreaming(true)
       setStreamingContent("")
 
-      const buf = streamingBuffer.current!
-      buf.clear()
-      buf.start()
-
       await sendMessageStreaming(convId, content, {
         onSaved: (message) => {
           addMessage(message)
         },
         onChunk: (chunk) => {
-          buf.push(chunk)
+          appendToStreamingContent(chunk)
         },
         onDone: (message) => {
-          buf.flush(true)
           addMessage(message)
           setStreamingContent("")
           setStreaming(false)
@@ -70,7 +55,6 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
           optionsRef.current?.onSummaryGenerated?.()
         },
         onError: (err) => {
-          buf.flush(true)
           setError(err.message)
           setStreaming(false)
           setStreamingContent("")
@@ -78,7 +62,7 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
         },
       })
     },
-    [convId, addMessage, setError, setStreaming, setStreamingContent],
+    [convId, addMessage, setError, setStreaming, setStreamingContent, appendToStreamingContent],
   )
 
   const handleContinue = useCallback(async () => {
@@ -86,16 +70,11 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
     setStreaming(true)
     setStreamingContent("")
 
-    const buf = streamingBuffer.current!
-    buf.clear()
-    buf.start()
-
     await continueConversationStreaming(convId, {
       onChunk: (chunk) => {
-        buf.push(chunk)
+        appendToStreamingContent(chunk)
       },
       onDone: (message) => {
-        buf.flush(true)
         addMessage(message)
         setStreamingContent("")
         setStreaming(false)
@@ -105,14 +84,13 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
         optionsRef.current?.onSummaryGenerated?.()
       },
       onError: (err) => {
-        buf.flush(true)
         setError(err.message)
         setStreaming(false)
         setStreamingContent("")
         optionsRef.current?.onError?.()
       },
     })
-  }, [convId, addMessage, setError, setStreaming, setStreamingContent])
+  }, [convId, addMessage, setError, setStreaming, setStreamingContent, appendToStreamingContent])
 
   const handleRegenerate = useCallback(
     async (messageId: string) => {
@@ -121,16 +99,11 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
       setStreaming(true)
       setStreamingContent("")
 
-      const buf = streamingBuffer.current!
-      buf.clear()
-      buf.start()
-
       await regenerateReplyStreaming(convId, messageId, {
         onChunk: (chunk) => {
-          buf.push(chunk)
+          appendToStreamingContent(chunk)
         },
         onDone: (message: MessageDTO) => {
-          buf.flush(true)
           replaceMessage(messageId, message)
           setRegeneratingMessageId(null)
           setStreamingContent("")
@@ -141,7 +114,6 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
           optionsRef.current?.onSummaryGenerated?.()
         },
         onError: (err: { code: string; message: string }) => {
-          buf.flush(true)
           setError(err.message)
           setRegeneratingMessageId(null)
           setStreaming(false)
@@ -150,7 +122,7 @@ export function useChatStreaming(convId: string, options?: UseChatStreamingOptio
         },
       })
     },
-    [convId, replaceMessage, setError, setRegeneratingMessageId, setStreaming, setStreamingContent],
+    [convId, replaceMessage, setError, setRegeneratingMessageId, setStreaming, setStreamingContent, appendToStreamingContent],
   )
 
   return { handleSend, handleContinue, handleRegenerate }
