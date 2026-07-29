@@ -180,11 +180,13 @@ export function ProviderManager() {
   }, [verifyOllama, verifyOpenAIForInstance])
 
   const handleSelectInstance = useCallback((id: string) => {
+    if (id === selectedInstanceId) return
     setSelectedInstanceId(id)
     setOpenaiModels([])
     setOpenaiStatus("unknown")
     setOpenaiMessage(undefined)
-  }, [])
+    void verifyOpenAIForInstance(id)
+  }, [selectedInstanceId, verifyOpenAIForInstance])
 
   const handleCreateInstance = useCallback(
     async (name: string, url: string, apiKey: string) => {
@@ -196,6 +198,7 @@ export function ProviderManager() {
           apiKey: apiKey.trim() || undefined,
         })
         setInstances((prev) => [...prev, instance])
+        setSelectedInstanceId(instance.id)
         dialog.close()
         toast.success("Instancia creada", { description: instance.name })
       } catch (e) {

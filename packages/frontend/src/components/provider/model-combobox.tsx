@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import {
   Combobox,
   ComboboxContent,
@@ -24,14 +25,20 @@ export function ModelCombobox({
   placeholder = "Selecciona un modelo",
   onChange,
 }: ModelComboboxProps) {
+  const displayValue = useMemo(() => {
+    if (!value) return value
+    const item = models.find((m) => m.id === value)
+    return item?.name ?? item?.id ?? value
+  }, [value, models])
+
   return (
     <Combobox
       items={models}
       value={value || null}
       onValueChange={(v) => onChange(v ?? "")}
-      inputValue={value}
+      inputValue={displayValue}
       onInputValueChange={(v) => {
-        if (v !== value) onChange(v)
+        if (v !== displayValue) onChange(v)
       }}
     >
       <ComboboxInput
