@@ -45,6 +45,13 @@ export function InstanceFormDialog({
     setApiKey(initialApiKey)
   }, [open])
 
+  const handleSave = () => {
+    if (import.meta.env.DEV) {
+      console.log("[InstanceFormDialog] Save clicked with:", { name, url, apiKey })
+    }
+    onSave(name, url, apiKey)
+  }
+
   const title = mode === "create" ? "Nueva instancia OpenAI-compatible" : "Editar instancia"
   const description =
     mode === "create"
@@ -95,7 +102,7 @@ export function InstanceFormDialog({
         </FieldGroup>
         <div className="flex justify-end gap-2">
           <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-          <Button onClick={() => onSave(name, url, apiKey)}>{saveLabel}</Button>
+          <Button onClick={handleSave}>{saveLabel}</Button>
         </div>
       </DialogContent>
     </Dialog>

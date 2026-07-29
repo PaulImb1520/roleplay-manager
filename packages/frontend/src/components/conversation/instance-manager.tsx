@@ -41,6 +41,9 @@ export function InstanceManager({
   }
 
   const handleCreateInstance = async (name: string, url: string, apiKey: string) => {
+    if (import.meta.env.DEV) {
+      console.log("[InstanceManager] handleCreateInstance called with:", { name: name.trim(), url: url.trim(), apiKey: apiKey.trim() || undefined })
+    }
     try {
       const instance = await createProviderInstance({
         kind: "openai-compatible",
