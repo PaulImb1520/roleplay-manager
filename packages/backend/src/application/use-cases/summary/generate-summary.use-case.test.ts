@@ -37,6 +37,7 @@ const buildConversationRepo = (exists: boolean): ConversationRepository => ({
   create: async (c) => c,
   update: async (c) => c,
   updateSettings: async (_id, _s) => ({} as never),
+  clearProviderInstanceId: vi.fn(),
 })
 
 const buildMessageRepo = (count: number): MessageRepository => ({
@@ -163,7 +164,7 @@ const buildLogger = (): Logger => ({
 const buildDefaultProvider = (): GetDefaultProviderUseCase =>
   new (class extends GetDefaultProviderUseCase {
     constructor() {
-      super({} as never)
+      super({} as never, {} as never)
     }
     async execute(): Promise<DefaultProviderConfig> {
       return { provider: "ollama", providerInstanceId: null, model: "llama3" }

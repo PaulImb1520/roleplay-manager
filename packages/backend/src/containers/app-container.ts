@@ -162,9 +162,9 @@ export const buildContainer = ({
     new DrizzleMemoryChangeProposalRepository(database)
   const promptContextBuilder: PromptContextBuilder = new PromptContextBuilderImpl()
   const summaryRepository: SummaryRepository = new DrizzleSummaryRepository(database)
-  const getDefaultProvider = new GetDefaultProviderUseCase(settings)
   const providerInstanceRepository: ProviderInstanceRepository =
     new DrizzleProviderInstanceRepository(database)
+  const getDefaultProvider = new GetDefaultProviderUseCase(settings, providerInstanceRepository)
 
   const applyAllMemoryChanges = new ApplyAllMemoryChangesUseCase(
     memoryRepository,
