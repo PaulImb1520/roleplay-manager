@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect } from "vitest"
 
 import { DeleteMemoryUseCase } from "./delete-memory.use-case"
 import type { MemoryRepository } from "../../../domain/ports/memory.repository"

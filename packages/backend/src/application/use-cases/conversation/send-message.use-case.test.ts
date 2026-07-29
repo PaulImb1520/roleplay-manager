@@ -137,13 +137,13 @@ const buildPromptContextBuilder = (): PromptContextBuilder => ({
   }),
 })
 
-let providerCount = 0
+let _providerCount = 0
 
 const buildProviderRegistry = (shouldFail = false): ProviderRegistry => ({
   listRegistered: () => ["ollama"],
   createAdapter: vi.fn(),
   getAdapter: async (_id: ProviderId) => {
-    providerCount++
+    _providerCount++
     if (shouldFail) return null
     return {
       validateConnection: async () => "available",
@@ -238,7 +238,7 @@ const memoryChangeProposalRepository = {
 
 describe("SendMessageUseCase", () => {
   beforeAll(() => {
-    providerCount = 0
+    _providerCount = 0
   })
 
   it("lanza ConversationNotFoundError si la conversacion no existe", async () => {
@@ -262,7 +262,6 @@ describe("SendMessageUseCase", () => {
     await expect(
       async () => {
         const gen = useCase.execute({ conversationId: "nonexistent", content: "Hola" })
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const _ of gen) {
           // consume
         }

@@ -180,7 +180,7 @@ const providerRegistry: ProviderRegistry = {
     }
     return null
   },
-  createAdapter: (instance) => ({
+  createAdapter: (_instance) => ({
     validateConnection: async () => ({ status: "ok" } as any),
     listModels: async () => ({ models: [], manualEntryRequired: false }),
     generateStreaming: async function* (_context: PromptContext, _options?: any) {

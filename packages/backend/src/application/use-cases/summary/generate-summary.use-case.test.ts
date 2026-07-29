@@ -36,7 +36,7 @@ const buildConversationRepo = (exists: boolean): ConversationRepository => ({
   list: async () => [],
   create: async (c) => c,
   update: async (c) => c,
-  updateSettings: async (id, s) => ({} as never),
+  updateSettings: async (_id, _s) => ({} as never),
 })
 
 const buildMessageRepo = (count: number): MessageRepository => ({
@@ -80,7 +80,7 @@ const buildCharacterRepo = (exists: boolean): CharacterRepository => ({
         } as never)
       : null,
   list: async () => [],
-  createWithFirstVersion: async (c, v) => ({} as never),
+  createWithFirstVersion: async (_c, _v) => ({} as never),
   update: async (c) => c,
   delete: async () => {},
   findVersionsByCharacterId: async () => [],
@@ -174,7 +174,7 @@ function buildProviderInstanceRepo(_hasInstance: boolean): ProviderInstanceRepos
   return {
     list: async () => [],
     findById: async () => null,
-    create: async (input) => ({
+    create: async (_input) => ({
       id: "inst-1",
       kind: "ollama",
       name: "test",
@@ -184,7 +184,7 @@ function buildProviderInstanceRepo(_hasInstance: boolean): ProviderInstanceRepos
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }),
-    update: async (id, input) => ({}) as never,
+    update: async (_id, _input) => ({}) as never,
     delete: async () => {},
   }
 }

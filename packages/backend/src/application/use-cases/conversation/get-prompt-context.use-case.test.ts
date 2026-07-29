@@ -99,7 +99,7 @@ const buildSummary = (): Summary =>
     createdAt: now, editedAt: null,
   })
 
-let capturedBuildParams: Record<string, unknown> = {}
+let _capturedBuildParams: Record<string, unknown> = {}
 
 const buildConversationRepo = (conv: Conversation, nonexistentIds: string[] = []): ConversationRepository => ({
   create: async (c) => c,
@@ -153,7 +153,7 @@ const buildSummaryRepo = (summary: Summary | null): SummaryRepository => ({
 
 const buildPromptContextBuilder = (): PromptContextBuilder => ({
   build: async (params) => {
-    capturedBuildParams = params as unknown as Record<string, unknown>
+    _capturedBuildParams = params as unknown as Record<string, unknown>
     return {
       systemPrompt: `Eres TestChar. A test character.\n\n## Personalidad\nNombre: TestChar`,
       messages: (params.messages ?? []).map((m: any) => ({
@@ -171,7 +171,7 @@ function buildUseCase(params: {
   memories?: Memory[]
   summary?: Summary | null
 }) {
-  capturedBuildParams = {}
+  _capturedBuildParams = {}
   return new GetPromptContextUseCase(
     buildConversationRepo(params.conv ?? activeConv, params.nonexistentIds ?? []),
     buildCharacterRepo(),
