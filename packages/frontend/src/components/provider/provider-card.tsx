@@ -45,12 +45,13 @@ interface BaseProps {
   statusMessage?: string
   verifying: boolean
   onVerify: () => void
-  onSetDefault: () => void
-  onSetModel: () => void
+  onSetDefault?: () => void
+  onSetModel?: () => void
   savingDefault?: boolean
   savingModel?: boolean
   isCurrentDefault?: boolean
   hasModel?: boolean
+  mode?: "global" | "local"
 }
 
 interface OllamaProps extends BaseProps {
@@ -162,30 +163,34 @@ export function ProviderCard(props: ProviderCardProps) {
           </Button>
         </div>
 
-        <Separator />
+        {props.mode !== "local" ? (
+          <>
+            <Separator />
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant={props.isCurrentDefault ? "secondary" : "outline"}
-            size="sm"
-            onClick={props.onSetDefault}
-            disabled={props.savingDefault || props.status !== "available"}
-          >
-            {props.savingDefault ? <Spinner /> : <StarIcon className="size-3.5" />}
-            {props.isCurrentDefault ? "Predeterminado" : "Establecer como predeterminado"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={props.onSetModel}
-            disabled={props.savingModel || !props.model.trim() || props.status !== "available"}
-          >
-            {props.savingModel ? <Spinner /> : null}
-            {props.hasModel ? "Actualizar modelo" : "Establecer modelo"}
-          </Button>
-        </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant={props.isCurrentDefault ? "secondary" : "outline"}
+                size="sm"
+                onClick={props.onSetDefault}
+                disabled={props.savingDefault || props.status !== "available"}
+              >
+                {props.savingDefault ? <Spinner /> : <StarIcon className="size-3.5" />}
+                {props.isCurrentDefault ? "Predeterminado" : "Establecer como predeterminado"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={props.onSetModel}
+                disabled={props.savingModel || !props.model.trim() || props.status !== "available"}
+              >
+                {props.savingModel ? <Spinner /> : null}
+                {props.hasModel ? "Actualizar modelo" : "Establecer modelo"}
+              </Button>
+            </div>
+          </>
+        ) : null}
       </CardContent>
     </Card>
   )
