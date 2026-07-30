@@ -2,6 +2,7 @@ import type {
   ConfigureDefaultProviderInput,
   DefaultProviderConfig,
   OpenAICompatibleConfig,
+  ProviderId,
 } from "@workspace/shared/types/provider"
 
 import { apiRequest } from "./client"
@@ -16,6 +17,20 @@ export const configureDefaultProvider = async (
   return apiRequest("/api/settings/default-provider", {
     method: "PUT",
     body: JSON.stringify(input),
+  })
+}
+
+export const setProviderModel = async (
+  providerId: ProviderId,
+  model: string,
+  options?: { force?: boolean; providerInstanceId?: string },
+): Promise<void> => {
+  const body: Record<string, unknown> = { model }
+  if (options?.force) body.force = true
+  if (options?.providerInstanceId) body.providerInstanceId = options.providerInstanceId
+  await apiRequest(`/api/settings/provider-model/${providerId}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
   })
 }
 

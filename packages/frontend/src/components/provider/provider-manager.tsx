@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "@workspace/ui/components/sonner"
-import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
-import { Spinner } from "@workspace/ui/components/spinner"
-import { Separator } from "@workspace/ui/components/separator"
 
 import type {
-  ConfigureDefaultProviderInput,
   DefaultProviderConfig,
   ProviderId,
   ProviderModel,
@@ -17,6 +13,7 @@ import type { ProviderInstance } from "@workspace/shared/types/provider-instance
 import {
   configureDefaultProvider,
   getDefaultProvider,
+  setProviderModel,
 } from "@/lib/api/settings"
 import {
   listProviders,
@@ -49,7 +46,7 @@ function formatError(e: unknown): string {
 export function ProviderManager() {
   const [registeredIds, setRegisteredIds] = useState<ProviderId[]>([])
   const [defaultConfig, setDefaultConfig] =
-    useState<DefaultProviderConfig>({ provider: null, providerInstanceId: null, model: null })
+    useState<DefaultProviderConfig>({ provider: null, providerInstanceId: null, models: {} })
 
   const [instances, setInstances] = useState<ProviderInstance[]>([])
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null)
@@ -68,8 +65,9 @@ export function ProviderManager() {
   const [openaiModelsLoading, setOpenaiModelsLoading] = useState(false)
   const [openaiModel, setOpenaiModel] = useState("")
 
-  const [saving, setSaving] = useState(false)
-  const [forceSaveAvailable, setForceSaveAvailable] = useState(false)
+  const [savingDefault, setSavingDefault] = useState(false)
+  const [savingOllamaModel, setSavingOllamaModel] = useState(false)
+  const [savingOpenaiModel, setSavingOpenaiModel] = useState(false)
 
   const dialog = useInstanceDialog()
 
@@ -80,7 +78,6 @@ export function ProviderManager() {
     setOllamaVerifying(true)
     setOllamaStatus("loading")
     setOllamaMessage(undefined)
-    setForceSaveAvailable(false)
     try {
       const result = await validateProvider("ollama")
       setOllamaStatus(result.status)
@@ -99,13 +96,10 @@ export function ProviderManager() {
           setOllamaModelsLoading(false)
         }
         toast.success("Conexión exitosa", { description: "Modelos cargados" })
-      } else {
-        setForceSaveAvailable(true)
       }
     } catch (e) {
       setOllamaStatus("unavailable")
       setOllamaMessage(formatError(e))
-      setForceSaveAvailable(true)
     } finally {
       setOllamaVerifying(false)
     }
@@ -115,7 +109,6 @@ export function ProviderManager() {
     setOpenaiVerifying(true)
     setOpenaiStatus("loading")
     setOpenaiMessage(undefined)
-    setForceSaveAvailable(false)
     try {
       const result = await validateProviderInstance(instanceId)
       const status: ProviderStatus = result.status
@@ -135,13 +128,10 @@ export function ProviderManager() {
           setOpenaiModelsLoading(false)
         }
         toast.success("Conexión exitosa", { description: "Modelos cargados" })
-      } else {
-        setForceSaveAvailable(true)
       }
     } catch (e) {
       setOpenaiStatus("unavailable")
       setOpenaiMessage(formatError(e))
-      setForceSaveAvailable(true)
     } finally {
       setOpenaiVerifying(false)
     }
@@ -161,15 +151,14 @@ export function ProviderManager() {
         if (def.provider === "openai-compatible" && def.providerInstanceId) {
           setSelectedInstanceId(def.providerInstanceId)
         }
-        if (def.model) {
-          if (def.provider === "ollama") {
-            setOllamaModel(def.model)
-            void verifyOllama()
-          }
-          if (def.provider === "openai-compatible") {
-            setOpenaiModel(def.model)
-            if (def.providerInstanceId) void verifyOpenAIForInstance(def.providerInstanceId)
-          }
+        if (def.provider === "ollama") {
+          const saved = def.models.ollama
+          if (saved) setOllamaModel(saved)
+          void verifyOllama()
+        } else if (def.provider === "openai-compatible") {
+          const saved = def.models["openai-compatible"]
+          if (saved) setOpenaiModel(saved)
+          if (def.providerInstanceId) void verifyOpenAIForInstance(def.providerInstanceId)
         }
       } catch (e) {
         toast.error("No se pudo cargar la configuración inicial", {
@@ -199,13 +188,14 @@ export function ProviderManager() {
         })
         setInstances((prev) => [...prev, instance])
         setSelectedInstanceId(instance.id)
+        void verifyOpenAIForInstance(instance.id)
         dialog.close()
         toast.success("Instancia creada", { description: instance.name })
       } catch (e) {
         toast.error("No se pudo crear la instancia", { description: formatError(e) })
       }
     },
-    [dialog]
+    [dialog, verifyOpenAIForInstance]
   )
 
   const handleUpdateInstance = useCallback(
@@ -256,57 +246,57 @@ export function ProviderManager() {
     return instances.find((i) => i.id === defaultConfig.providerInstanceId)?.name ?? null
   }, [defaultConfig.providerInstanceId, instances])
 
-  const ollamaReady = ollamaStatus === "available"
-  const openaiReady = openaiStatus === "available" && !!selectedInstanceId
-  const ollamaDirty = ollamaModel.trim() !== (defaultConfig.provider === "ollama" ? defaultConfig.model ?? "" : "")
-  const openaiDirty =
-    openaiModel.trim() !== (defaultConfig.provider === "openai-compatible" ? defaultConfig.model ?? "" : "") ||
-    selectedInstanceId !== defaultConfig.providerInstanceId
-  const canSaveOllama = ollamaEnabled && ollamaReady && ollamaModel.trim() !== "" && ollamaDirty
-  const canSaveOpenAI = openaiEnabled && openaiReady && openaiModel.trim() !== "" && openaiDirty
-  const canSave = canSaveOllama || canSaveOpenAI
-
-  const handleSave = useCallback(
-    async (force: boolean) => {
-      const pickOllama = canSaveOllama
-      const provider: ProviderId = pickOllama ? "ollama" : "openai-compatible"
-      const model = (pickOllama ? ollamaModel : openaiModel).trim()
-      const providerInstanceId = pickOllama ? null : selectedInstanceId
-      if (provider === "openai-compatible" && !providerInstanceId) {
-        toast.error("Selecciona una instancia antes de guardar")
-        return
-      }
-      setSaving(true)
-      const body: ConfigureDefaultProviderInput = {
-        provider,
-        providerInstanceId,
-        model,
-        ...(force ? { force: true } : {}),
-      }
+  const handleSetDefault = useCallback(
+    async (provider: ProviderId) => {
+      setSavingDefault(true)
       try {
-        const result = await configureDefaultProvider(body)
-        setDefaultConfig(result)
-        toast.success("Proveedor por defecto actualizado", {
-          description: `${result.provider}${result.providerInstanceId ? " · instancia" : ""} · ${result.model}`,
-        })
-        setForceSaveAvailable(false)
-      } catch (e) {
-        if (isError(e) && e.code === "PROVIDER_CONNECTION_FAILED") {
-          toast.warning("El proveedor no responde", {
-            description:
-              "Reintenta cuando esté activo o pulsa 'Guardar de todos modos' para forzar el guardado.",
-          })
-          setForceSaveAvailable(true)
-        } else {
-          toast.error("No se pudo guardar el proveedor por defecto", {
-            description: formatError(e),
-          })
+        const providerInstanceId =
+          provider === "openai-compatible" ? selectedInstanceId : null
+        if (provider === "openai-compatible" && !providerInstanceId) {
+          toast.error("Selecciona una instancia antes de establecer como predeterminado")
+          return
         }
+        const result = await configureDefaultProvider({
+          provider,
+          providerInstanceId,
+        })
+        setDefaultConfig(result)
+        toast.success("Proveedor por defecto actualizado")
+      } catch (e) {
+        toast.error("No se pudo establecer como predeterminado", {
+          description: formatError(e),
+        })
+      } finally {
+        setSavingDefault(false)
+      }
+    },
+    [selectedInstanceId],
+  )
+
+  const handleSetModel = useCallback(
+    async (provider: ProviderId, model: string) => {
+      const setSaving = provider === "ollama" ? setSavingOllamaModel : setSavingOpenaiModel
+      setSaving(true)
+      try {
+        const providerInstanceId =
+          provider === "openai-compatible" ? (selectedInstanceId ?? undefined) : undefined
+        if (provider === "openai-compatible" && !providerInstanceId) {
+          toast.error("Selecciona una instancia antes de guardar el modelo")
+          return
+        }
+        await setProviderModel(provider, model, { providerInstanceId })
+        const def = await getDefaultProvider()
+        setDefaultConfig(def)
+        toast.success("Modelo guardado para " + (provider === "ollama" ? "Ollama" : "OpenAI-compatible"))
+      } catch (e) {
+        toast.error("No se pudo guardar el modelo", {
+          description: formatError(e),
+        })
       } finally {
         setSaving(false)
       }
     },
-    [canSaveOllama, ollamaModel, openaiModel, selectedInstanceId]
+    [selectedInstanceId],
   )
 
   return (
@@ -320,7 +310,7 @@ export function ProviderManager() {
         <CurrentConfigPill
           provider={defaultConfig.provider}
           instanceName={selectedInstanceName}
-          model={defaultConfig.model}
+          models={defaultConfig.models}
         />
       </header>
 
@@ -335,6 +325,12 @@ export function ProviderManager() {
           models={ollamaModels}
           modelsLoading={ollamaModelsLoading}
           onModelChange={setOllamaModel}
+          onSetDefault={() => void handleSetDefault("ollama")}
+          onSetModel={() => void handleSetModel("ollama", ollamaModel.trim())}
+          savingDefault={savingDefault}
+          savingModel={savingOllamaModel}
+          isCurrentDefault={defaultConfig.provider === "ollama"}
+          hasModel={!!defaultConfig.models.ollama}
         />
       ) : null}
 
@@ -356,33 +352,13 @@ export function ProviderManager() {
           onEditInstance={dialog.openEdit}
           onDeleteInstance={(id) => void handleDeleteInstance(id)}
           onCreateInstance={dialog.openCreate}
+          onSetDefault={() => void handleSetDefault("openai-compatible")}
+          onSetModel={() => void handleSetModel("openai-compatible", openaiModel.trim())}
+          savingDefault={savingDefault}
+          savingModel={savingOpenaiModel}
+          isCurrentDefault={defaultConfig.provider === "openai-compatible"}
+          hasModel={!!defaultConfig.models["openai-compatible"]}
         />
-      ) : null}
-
-      {canSave || forceSaveAvailable ? (
-        <>
-          <Separator />
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {forceSaveAvailable ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleSave(true)}
-                disabled={saving}
-              >
-                Guardar de todos modos
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              onClick={() => void handleSave(false)}
-              disabled={!canSave || saving}
-            >
-              {saving ? <Spinner /> : null}
-              Guardar como predeterminado
-            </Button>
-          </div>
-        </>
       ) : null}
 
       <InstanceFormDialog
@@ -401,28 +377,29 @@ export function ProviderManager() {
 function CurrentConfigPill({
   provider,
   instanceName,
-  model,
+  models,
 }: {
   provider: ProviderId | null
   instanceName: string | null
-  model: string | null
+  models: Partial<Record<ProviderId, string>>
 }) {
   if (provider === null) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Badge variant="outline">Sin configurar</Badge>
-        <span>Selecciona un proveedor y un modelo abajo, luego pulsa Guardar.</span>
+        <span>Selecciona un proveedor y guarda el modelo para empezar.</span>
       </div>
     )
   }
+  const currentModel = provider ? models[provider] : null
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <span className="text-muted-foreground">Proveedor actual:</span>
       <Badge variant="secondary">
         {provider === "ollama" ? "Ollama" : instanceName ?? "OpenAI-compatible"}
       </Badge>
-      {model ? (
-        <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{model}</code>
+      {currentModel ? (
+        <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{currentModel}</code>
       ) : (
         <Badge variant="outline">Sin modelo</Badge>
       )}

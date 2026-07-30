@@ -10,7 +10,8 @@ import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
-import { CheckCircle2Icon, AlertCircleIcon, RefreshCwIcon, ServerIcon, CircleDotIcon } from "lucide-react"
+import { Separator } from "@workspace/ui/components/separator"
+import { CheckCircle2Icon, AlertCircleIcon, RefreshCwIcon, ServerIcon, CircleDotIcon, StarIcon } from "lucide-react"
 
 import type { ProviderId, ProviderModel, ProviderStatus } from "@workspace/shared/types/provider"
 
@@ -44,6 +45,12 @@ interface BaseProps {
   statusMessage?: string
   verifying: boolean
   onVerify: () => void
+  onSetDefault: () => void
+  onSetModel: () => void
+  savingDefault?: boolean
+  savingModel?: boolean
+  isCurrentDefault?: boolean
+  hasModel?: boolean
 }
 
 interface OllamaProps extends BaseProps {
@@ -152,6 +159,31 @@ export function ProviderCard(props: ProviderCardProps) {
           >
             {props.verifying ? <Spinner /> : <RefreshCwIcon />}
             Probar conexión
+          </Button>
+        </div>
+
+        <Separator />
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant={props.isCurrentDefault ? "secondary" : "outline"}
+            size="sm"
+            onClick={props.onSetDefault}
+            disabled={props.savingDefault || props.status !== "available"}
+          >
+            {props.savingDefault ? <Spinner /> : <StarIcon className="size-3.5" />}
+            {props.isCurrentDefault ? "Predeterminado" : "Establecer como predeterminado"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={props.onSetModel}
+            disabled={props.savingModel || !props.model.trim() || props.status !== "available"}
+          >
+            {props.savingModel ? <Spinner /> : null}
+            {props.hasModel ? "Actualizar modelo" : "Establecer modelo"}
           </Button>
         </div>
       </CardContent>

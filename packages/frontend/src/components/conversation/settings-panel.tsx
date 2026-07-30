@@ -189,7 +189,10 @@ export function SettingsPanel({
         if (def.provider) {
           setProvider(def.provider)
           if (def.providerInstanceId) setProviderInstanceId(def.providerInstanceId)
-          if (def.model && !current.model) setModel(def.model)
+          if (def.provider) {
+            const savedModel = def.models[def.provider]
+            if (savedModel && !current.model) setModel(savedModel)
+          }
         }
       })
     }

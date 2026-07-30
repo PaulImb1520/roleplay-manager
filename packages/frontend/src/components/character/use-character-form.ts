@@ -200,7 +200,15 @@ export function useCharacterForm(character?: CharacterDetail) {
         }
         const result = await createCharacter(input)
         const conv = await createConversation({ characterId: result.id })
-        location.href = `/conversations/${conv.id}`
+        if (conv.defaultProviderStatus !== "available") {
+          toast.warning(
+            conv.defaultProviderStatus === "unconfigured"
+              ? "No hay proveedor por defecto configurado"
+              : "El proveedor por defecto no está disponible",
+            { description: conv.defaultProviderMessage },
+          )
+        }
+        location.href = `/conversations/${conv.conversation.id}`
         return
       }
     } catch (e) {
@@ -241,7 +249,15 @@ export function useCharacterForm(character?: CharacterDetail) {
         characterId: character.id,
         versionId: selectedVersionId !== character.currentVersion.id ? selectedVersionId : undefined,
       })
-      location.href = `/conversations/${conv.id}`
+      if (conv.defaultProviderStatus !== "available") {
+        toast.warning(
+          conv.defaultProviderStatus === "unconfigured"
+            ? "No hay proveedor por defecto configurado"
+            : "El proveedor por defecto no está disponible",
+          { description: conv.defaultProviderMessage },
+        )
+      }
+      location.href = `/conversations/${conv.conversation.id}`
     } catch {
       toast.error("Error al crear la conversación")
     }

@@ -3,6 +3,7 @@ import type {
   ConversationSettingsUpdate,
   ConversationSummary,
   CreateConversationInput,
+  CreateConversationResult,
   TitleSource,
 } from "@workspace/shared/types/conversation"
 import type { MessageDTO } from "@workspace/shared/types/message"
@@ -20,7 +21,7 @@ export const getConversation = (id: string): Promise<ConversationDetail> =>
 
 export const createConversation = (
   input: CreateConversationInput,
-): Promise<ConversationDetail> =>
+): Promise<CreateConversationResult> =>
   apiRequest("/api/conversations", {
     method: "POST",
     body: JSON.stringify(input),
