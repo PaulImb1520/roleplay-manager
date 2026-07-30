@@ -33,12 +33,19 @@ export function usePersistedValue<T>({
   validate,
 }: UsePersistedValueOptions<T>): [T, React.Dispatch<React.SetStateAction<T>>] {
   const storageKey = buildStorageKey(key, scope)
-  const [value, setValue] = useState<T>(() => readStorageValue(storageKey, defaultValue, validate))
+  const [value, setValue] = useState<T>(defaultValue)
   const validateRef = useRef(validate)
 
   useEffect(() => {
     validateRef.current = validate
   }, [validate])
+
+  useEffect(() => {
+    const stored = readStorageValue(storageKey, defaultValue, validateRef.current)
+    if (stored !== value) {
+      setValue(stored)
+    }
+  }, [storageKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setAndPersist = useCallback(
     (next: T | ((prev: T) => T)) => {
