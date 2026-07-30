@@ -1,63 +1,36 @@
-import { useCallback, useEffect, useState, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 import { toast } from "@workspace/ui/components/sonner"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@workspace/ui/components/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
 import { Spinner } from "@workspace/ui/components/spinner"
-import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
-import { CheckCircle2Icon, RefreshCwIcon } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@workspace/ui/components/accordion"
 
 import type { ConversationDetail, ConversationSettingsUpdate, MemoryProposalMode } from "@workspace/shared/types/conversation"
-import type { ProviderInstance } from "@workspace/shared/types/provider-instance"
 import type { ProviderId } from "@workspace/shared/types/provider"
 
 import { updateConversationSettings } from "@/lib/api/conversations"
-import { listProviderInstances, validateProviderInstance } from "@/lib/api/provider-instances"
-import { listProviderModels } from "@/lib/api/providers"
-import { getDefaultProvider } from "@/lib/api/settings"
 import { ApiClientError } from "@/lib/api/client"
 import { useMemoryStore } from "@/lib/stores/memory.store"
 import { useSummaryStore } from "@/lib/stores/summary.store"
 import { SummaryViewer } from "../summary/summary-viewer"
 import { InferenceParamsCard } from "./inference-params-card"
-import { InstanceManager } from "./instance-manager"
-import { ModelCard } from "./model-card"
 import { SummarySettingsCard } from "./summary-settings-card"
 import { MemoryModeCard } from "../memory/memory-mode-card"
 import { ProposalList } from "../memory/proposal-list"
 import { MemoryList } from "../memory/memory-list"
 import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
 import { usePersistedStringList } from "@/lib/hooks/use-persisted-string-list"
+import { ModelSelector } from "./model-selector"
 
 interface SettingsPanelProps {
   conversationId: string
   current: ConversationDetail
   onSettingsChanged: (updated: ConversationDetail) => void
   children?: React.ReactNode
-}
-
-type ProviderStatus = "available" | "unavailable" | "unconfigured" | "unknown" | "loading"
-
-const STATUS_LABELS: Record<ProviderStatus, string> = {
-  available: "Disponible",
-  unavailable: "No disponible",
-  unconfigured: "Sin configurar",
-  unknown: "Desconocido",
-  loading: "Verificando...",
-}
-
-const STATUS_VARIANT: Record<ProviderStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  available: "default",
-  unavailable: "destructive",
-  unconfigured: "outline",
-  unknown: "secondary",
-  loading: "secondary",
 }
 
 export function SettingsPanel({
@@ -68,9 +41,15 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
 
-  const [provider, setProvider] = useState<ProviderId | string | null>(current.provider ?? "ollama")
-  const [providerInstanceId, setProviderInstanceId] = useState<string | null>(current.providerInstanceId ?? null)
-  const [model, setModel] = useState<string | null>(current.model)
+  const [modelUpdate, setModelUpdate] = useState<{
+    provider: ProviderId | string | null
+    providerInstanceId: string | null
+    model: string | null
+  }>({
+    provider: current.provider ?? "ollama",
+    providerInstanceId: current.providerInstanceId ?? null,
+    model: current.model,
+  })
   const [temperature, setTemperature] = useState(current.temperature ?? 0.7)
   const [maxTokens, setMaxTokens] = useState(current.maxTokens ?? 2048)
   const [topP, setTopP] = useState(current.topP ?? 0.9)
@@ -80,14 +59,7 @@ export function SettingsPanel({
   const [recentMessageCount, setRecentMessageCount] = useState(current.recentMessageCount ?? 10)
   const [summaryFrequency, setSummaryFrequency] = useState(current.summaryFrequency ?? 20)
 
-  const [instances, setInstances] = useState<ProviderInstance[]>([])
-  const [instancesLoading, setInstancesLoading] = useState(false)
-  const [modelsList, setModelsList] = useState<{ id: string; name?: string }[]>([])
-  const [modelsLoading, setModelsLoading] = useState(false)
-  const [modelsManualEntry, setModelsManualEntry] = useState(false)
-  const [providerStatus, setProviderStatus] = useState<ProviderStatus>("unknown")
   const [saving, setSaving] = useState(false)
-
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
   const pendingCount = useMemoryStore((s) => s.proposals.filter((p) => p.status === "pending").length)
@@ -114,9 +86,9 @@ export function SettingsPanel({
     summaryFrequency === 20
 
   const hasChanges =
-    provider !== (current.provider ?? "ollama") ||
-    providerInstanceId !== current.providerInstanceId ||
-    model !== current.model ||
+    modelUpdate.provider !== (current.provider ?? "ollama") ||
+    modelUpdate.providerInstanceId !== current.providerInstanceId ||
+    modelUpdate.model !== current.model ||
     temperature !== (current.temperature ?? 0.7) ||
     maxTokens !== (current.maxTokens ?? 2048) ||
     topP !== (current.topP ?? 0.9) ||
@@ -126,100 +98,16 @@ export function SettingsPanel({
     recentMessageCount !== (current.recentMessageCount ?? 10) ||
     summaryFrequency !== (current.summaryFrequency ?? 20)
 
-  const loadInstances = useCallback(async () => {
-    setInstancesLoading(true)
-    try {
-      const result = await listProviderInstances()
-      setInstances(result)
-    } catch {
-      toast.error("No se pudieron cargar las instancias")
-    } finally {
-      setInstancesLoading(false)
-    }
-  }, [])
-
-  const loadModels = useCallback(async (kind: ProviderId | string, instanceId?: string | null) => {
-    if (kind === "ollama") {
-      setModelsLoading(true)
-      try {
-        const result = await listProviderModels("ollama")
-        setModelsList(result.models)
-        setModelsManualEntry(result.manualEntryRequired)
-      } catch {
-        setModelsList([])
-        setModelsManualEntry(true)
-      } finally {
-        setModelsLoading(false)
-      }
-    } else if (kind === "openai-compatible" && instanceId) {
-      setModelsLoading(true)
-      try {
-        const result = await listProviderModels("openai-compatible")
-        setModelsList(result.models)
-        setModelsManualEntry(result.manualEntryRequired)
-      } catch {
-        setModelsList([])
-        setModelsManualEntry(true)
-      } finally {
-        setModelsLoading(false)
-      }
-    }
-  }, [])
-
-  const verifyConnection = useCallback(async () => {
-    setProviderStatus("loading")
-    try {
-      if (provider === "ollama") {
-        const { validateProvider } = await import("@/lib/api/providers")
-        const result = await validateProvider("ollama")
-        setProviderStatus(result.status)
-      } else if (providerInstanceId) {
-        const result = await validateProviderInstance(providerInstanceId)
-        setProviderStatus(result.status)
-      }
-    } catch {
-      setProviderStatus("unavailable")
-    }
-  }, [provider, providerInstanceId])
-
-  useEffect(() => {
-    if (!open) return
-    if (!current.provider) {
-      getDefaultProvider().then((def) => {
-        if (def.provider) {
-          setProvider(def.provider)
-          if (def.providerInstanceId) setProviderInstanceId(def.providerInstanceId)
-          if (def.provider) {
-            const savedModel = def.models[def.provider]
-            if (savedModel && !current.model) setModel(savedModel)
-          }
-        }
-      })
-    }
-    ;(async () => {
-      await loadModels(provider ?? "ollama", providerInstanceId)
-      await verifyConnection()
-    })()
-  }, [open, provider, providerInstanceId, loadModels, verifyConnection, current.provider, current.model])
-
-  useEffect(() => {
-    if (open) {
-      ;(async () => {
-        await loadInstances()
-      })()
-    }
-  }, [open, loadInstances])
-
   const handleSave = async () => {
     setSaving(true)
     const settings: ConversationSettingsUpdate = {}
-    if (provider !== (current.provider ?? "ollama")) {
-      settings.provider = provider ?? undefined
+    if (modelUpdate.provider !== (current.provider ?? "ollama")) {
+      settings.provider = modelUpdate.provider ?? undefined
     }
-    if (providerInstanceId !== current.providerInstanceId) {
-      settings.providerInstanceId = providerInstanceId
+    if (modelUpdate.providerInstanceId !== current.providerInstanceId) {
+      settings.providerInstanceId = modelUpdate.providerInstanceId
     }
-    if (model !== current.model) settings.model = model
+    if (modelUpdate.model !== current.model) settings.model = modelUpdate.model
     if (temperature !== (current.temperature ?? 0.7)) settings.temperature = temperature
     if (maxTokens !== (current.maxTokens ?? 2048)) settings.maxTokens = maxTokens
     if (topP !== (current.topP ?? 0.9)) settings.topP = topP
@@ -346,85 +234,9 @@ export function SettingsPanel({
               </TabsContent>
 
               <TabsContent value="modelo" className="flex flex-col gap-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      Proveedor
-                      <Badge variant={STATUS_VARIANT[providerStatus]}>
-                        {providerStatus === "available" ? (
-                          <CheckCircle2Icon className="size-3" />
-                        ) : providerStatus === "loading" ? (
-                          <Spinner />
-                        ) : null}
-                        {STATUS_LABELS[providerStatus]}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Selecciona el proveedor de IA para esta conversación.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-3">
-                    <FieldGroup>
-                      <Field>
-                        <FieldLabel htmlFor="provider-select">Proveedor</FieldLabel>
-                        <Select
-                          value={provider === "openai-compatible" && providerInstanceId ? providerInstanceId : provider}
-                          onValueChange={(v) => {
-                            if (v === "ollama") {
-                              setProvider("ollama")
-                              setProviderInstanceId(null)
-                            } else {
-                              setProvider("openai-compatible")
-                              setProviderInstanceId(v)
-                            }
-                          }}
-                        >
-                          <SelectTrigger id="provider-select">
-                            <SelectValue placeholder="Selecciona un proveedor">
-                              {provider === "ollama"
-                                ? "Ollama (local)"
-                                : instances.find((i) => i.id === providerInstanceId)?.name}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ollama">Ollama (local)</SelectItem>
-                            {instances.map((inst) => (
-                              <SelectItem key={inst.id} value={inst.id}>
-                                {inst.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    </FieldGroup>
-
-                    {provider === "openai-compatible" ? (
-                      <InstanceManager
-                        instances={instances}
-                        loading={instancesLoading}
-                        selectedInstanceId={providerInstanceId}
-                        onSelect={(id) => {
-                          setProvider("openai-compatible")
-                          setProviderInstanceId(id)
-                        }}
-                        onInstancesChange={setInstances}
-                      />
-                    ) : null}
-
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={verifyConnection}>
-                        <RefreshCwIcon /> Verificar conexion
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <ModelCard
-                  model={model}
-                  modelsList={modelsList}
-                  modelsLoading={modelsLoading}
-                  modelsManualEntry={modelsManualEntry}
-                  onModelChange={setModel}
+                <ModelSelector
+                  current={current}
+                  onChange={setModelUpdate}
                 />
 
                 <InferenceParamsCard
