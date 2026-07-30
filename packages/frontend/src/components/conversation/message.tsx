@@ -190,7 +190,7 @@ export function MessageBubble({
                   <ChevronLeft className="size-3" />
                 </Button>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {currentIndex + 1}/{totalAlternatives}
+                  {totalAlternatives - currentIndex}/{totalAlternatives}
                 </span>
                 <Button
                   variant="ghost"
