@@ -225,9 +225,26 @@ export class OpenAICompatibleAdapter implements ProviderPort {
       }
     } catch (error) {
       if (error instanceof ProviderError) throw error
+      const message = (error as Error).message
+      const status = this.errorStatus(error)
+      if (status === 404) {
+        this.options.logger.error(
+          "OpenAI-compatible chat completions endpoint returned 404. " +
+          "Verify the base URL points to the root of the OpenAI-compatible API " +
+          "(e.g. http://localhost:1234/v1) and that the path ends with /v1.",
+          undefined,
+          { baseUrl: this.baseUrl, status },
+        )
+        throw new ProviderError(
+          "PROVIDER_CONNECTION_FAILED",
+          `Chat completions endpoint returned 404. ` +
+          `Verify the base URL is correct: "${this.baseUrl}". ` +
+          `Expected format: http://host:port/v1, received: http://host:port${this.baseUrl.match(/\/\/[^/]+(.+)/)?.[1] ?? ""}`,
+        )
+      }
       throw new ProviderError(
         "PROVIDER_GENERATION_FAILED",
-        `OpenAI-compatible streaming failed: ${(error as Error).message}`,
+        `OpenAI-compatible streaming failed: ${message}`,
       )
     }
   }

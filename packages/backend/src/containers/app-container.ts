@@ -346,9 +346,11 @@ export const buildContainer = ({
     ),
     createProviderInstance: new CreateProviderInstanceUseCase(
       providerInstanceRepository,
+      logger,
     ),
     updateProviderInstance: new UpdateProviderInstanceUseCase(
       providerInstanceRepository,
+      logger,
     ),
     deleteProviderInstance: new DeleteProviderInstanceUseCase(
       providerInstanceRepository,

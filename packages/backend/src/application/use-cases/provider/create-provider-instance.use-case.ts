@@ -5,6 +5,7 @@ import type {
 import type { ProviderId } from "@workspace/shared/types/provider"
 
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
+import type { Logger } from "../../../domain/ports/logger.port"
 import { DomainError } from "../../../domain/errors"
 
 const VALID_KINDS: ProviderId[] = ["ollama", "openai-compatible"]
@@ -12,6 +13,7 @@ const VALID_KINDS: ProviderId[] = ["ollama", "openai-compatible"]
 export class CreateProviderInstanceUseCase {
   constructor(
     private readonly providerInstanceRepository: ProviderInstanceRepository,
+    private readonly logger: Logger,
   ) {}
 
   async execute(input: CreateProviderInstanceInput): Promise<ProviderInstance> {
@@ -34,6 +36,18 @@ export class CreateProviderInstanceUseCase {
         "URL_REQUIRED",
         "URL is required for openai-compatible providers.",
       )
+    }
+
+    if (input.kind === "openai-compatible" && input.url.trim()) {
+      const url = input.url.trim().replace(/\/+$/, "")
+      if (!/\/v1$/.test(url)) {
+        this.logger.warn(
+          `OpenAI-compatible base URL "${url}" does not end with /v1. ` +
+          "This may cause 404 errors on OpenAI-compatible endpoints " +
+          "(e.g. /chat/completions). Expected format: http://host:port/v1",
+          { url, name: input.name },
+        )
+      }
     }
 
     return this.providerInstanceRepository.create({

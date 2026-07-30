@@ -14,6 +14,7 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
+import { FieldDescription } from "@workspace/ui/components/field"
 
 interface InstanceFormDialogProps {
   open: boolean
@@ -91,6 +92,10 @@ export function InstanceFormDialog({
               onChange={(e) => setUrl(e.target.value)}
               placeholder="http://localhost:1234/v1"
             />
+            <FieldDescription>
+              Debe apuntar a la raíz de la API OpenAI-compatible: <code>http://host:puerto/v1</code>.
+              Por ejemplo: <code>http://localhost:1234/v1</code>.
+            </FieldDescription>
           </Field>
           <Field>
             <FieldLabel htmlFor={`${idPrefix}-key`}>API key {mode === "edit" ? "(opcional)" : ""}</FieldLabel>
