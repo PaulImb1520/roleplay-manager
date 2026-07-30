@@ -55,6 +55,36 @@ describe("Message.fromPersistence", () => {
   })
 })
 
+describe("Message.rawContent", () => {
+  it("returns props.content when cursor is 0", () => {
+    const msg = Message.create(validProps)
+    expect(msg.rawContent).toBe("Hello")
+    expect(msg.rawContent).toBe(msg.content) // same as display when cursor=0
+  })
+
+  it("returns props.content even when cursor > 0", () => {
+    const assistantMsg = Message.create({ ...validProps, role: "assistant", content: "v2", alternatives: ["v1", "v0"], alternativesCursor: 0 })
+    const prev = assistantMsg.cyclePrev()
+    expect(prev.alternativesCursor).toBe(1)
+    expect(prev.content).toBe("v1") // displayed content
+    expect(prev.rawContent).toBe("v2") // original content preserved
+    const prev2 = prev.cyclePrev()
+    expect(prev2.alternativesCursor).toBe(2)
+    expect(prev2.content).toBe("v0")
+    expect(prev2.rawContent).toBe("v2")
+  })
+
+  it("is preserved through cycleNext back to cursor 0", () => {
+    const msg = Message.create({ ...validProps, role: "assistant", content: "original", alternatives: ["alt1"], alternativesCursor: 0 })
+    const cycled = msg.cyclePrev()
+    expect(cycled.rawContent).toBe("original")
+    expect(cycled.content).toBe("alt1")
+    const back = cycled.cycleNext()
+    expect(back.rawContent).toBe("original")
+    expect(back.content).toBe("original")
+  })
+})
+
 describe("Message.regenerate", () => {
   it("saves previous content as first alternative", () => {
     const msg = Message.create(validProps)

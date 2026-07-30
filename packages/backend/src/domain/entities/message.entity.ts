@@ -28,6 +28,7 @@ export class Message {
   get conversationId(): string { return this.props.conversationId }
   get role(): "user" | "assistant" { return this.props.role }
   get content(): string { return this.displayContent }
+  get rawContent(): string { return this.props.content }
   get position(): number { return this.props.position }
   get alternatives(): string[] { return this.props.alternatives }
   get alternativesCursor(): number { return this.props.alternativesCursor }
