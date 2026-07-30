@@ -28,7 +28,7 @@ export class DrizzleMessageRepository implements MessageRepository {
       id: message.id,
       conversationId: message.conversationId,
       role: message.role,
-      content: message.content,
+      content: message.rawContent,
       position: message.position,
       alternatives: message.alternatives,
       alternativesCursor: message.alternativesCursor,
@@ -76,7 +76,7 @@ export class DrizzleMessageRepository implements MessageRepository {
     await this.db
       .update(messages)
       .set({
-        content: message.content,
+        content: message.rawContent,
         position: message.position,
         alternatives: message.alternatives,
         alternativesCursor: message.alternativesCursor,
