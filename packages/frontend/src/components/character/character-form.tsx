@@ -171,8 +171,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setName(e.target.value)}
                 onBlur={() => markTouched("name")}
                 placeholder="Ej: Milka Moori"
+                maxLength={80}
               />
               <FieldError>{showError("name")}</FieldError>
+              <CharCounter current={name.length} max={80} />
             </Field>
 
             <Field>
@@ -182,8 +184,10 @@ export function CharacterForm({ character }: Props) {
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 placeholder="Ej: La chica holstaur más agradable."
+                maxLength={150}
               />
               <FieldDescription>Opcional. Una frase breve.</FieldDescription>
+              <CharCounter current={subtitle.length} max={150} />
             </Field>
 
             <Field>
@@ -194,8 +198,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setProfileImage(e.target.value)}
                 onBlur={() => markTouched("profileImage")}
                 placeholder="URL o data-URI"
+                maxLength={2048}
               />
               <FieldError>{showError("profileImage")}</FieldError>
+              <CharCounter current={profileImage.length} max={2048} />
             </Field>
 
             <Field>
@@ -206,8 +212,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setGreeting(e.target.value)}
                 onBlur={() => markTouched("greeting")}
                 placeholder="Ej: ¡Hola! Me alegra verte por aqui."
+                maxLength={500}
               />
               <FieldError>{showError("greeting")}</FieldError>
+              <CharCounter current={greeting.length} max={500} />
             </Field>
 
             <Field>
@@ -218,8 +226,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={() => markTouched("description")}
                 placeholder="Ej: Dueña de una granja y amiga de todos..."
+                maxLength={2000}
               />
               <FieldError>{showError("description")}</FieldError>
+              <CharCounter current={description.length} max={2000} />
             </Field>
 
             <Field>
@@ -229,10 +239,12 @@ export function CharacterForm({ character }: Props) {
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="Indicaciones adicionales para la IA (opcional)"
+                maxLength={2000}
               />
               <FieldDescription>
                 Instrucciones extra que la IA usará al interpretar este personaje.
               </FieldDescription>
+              <CharCounter current={instructions.length} max={2000} />
             </Field>
           </FieldGroup>
         </TabsContent>
@@ -270,12 +282,14 @@ export function CharacterForm({ character }: Props) {
                       onChange={(e) => updateCard(idx, "title", e.target.value)}
                       onBlur={() => markTouched(`card-${idx}`)}
                       placeholder="Título de la tarjeta"
+                      maxLength={80}
                     />
                     <Textarea
                       value={card.content}
                       onChange={(e) => updateCard(idx, "content", e.target.value)}
                       onBlur={() => markTouched(`card-${idx}`)}
                       placeholder="Contenido de la tarjeta"
+                      maxLength={2500}
                     />
                     <div className="flex items-center gap-2">
                       <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -296,6 +310,7 @@ export function CharacterForm({ character }: Props) {
                       </button>
                     </div>
                     <FieldError>{showError(`card-${idx}`)}</FieldError>
+                    <CharCounter current={card.content.length} max={2500} />
                   </div>
                   </div>
                 </SortableItem>
@@ -305,5 +320,14 @@ export function CharacterForm({ character }: Props) {
         </TabsContent>
       </Tabs>
     </form>
+  )
+}
+
+function CharCounter({ current, max }: { current: number; max: number }) {
+  const pct = current / max
+  return (
+    <p className={`text-right text-xs ${pct >= 0.9 ? "text-destructive" : "text-muted-foreground"}`}>
+      {current} / {max}
+    </p>
   )
 }

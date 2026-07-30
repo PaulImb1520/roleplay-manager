@@ -32,7 +32,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 
 ### Input y validación
 
-- [ ] **S9.13** — Limitar los campos de ingreso de texto a un rango razonable (2000-3000 caracteres según el campo).
+- [x] **S9.13** — Limitar los campos de ingreso de texto a un rango razonable (2000-3000 caracteres según el campo). *Límites: nombre 80, subtítulo 150, imagen 2048, saludo 500, descripción 2000, instrucciones 2000, título de tarjeta 80, contenido de tarjeta 2500. Contador inline que se vuelve rojo al 90% del límite.*
 - [ ] **S9.14** — Usar localStorage para almacenar temporalmente el mensaje del usuario que está en el input, preservándolo al cambiar de conversación o recargar.
 
 ### Ordenamiento y listas
