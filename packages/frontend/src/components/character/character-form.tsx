@@ -171,10 +171,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setName(e.target.value)}
                 onBlur={() => markTouched("name")}
                 placeholder="Ej: Milka Moori"
-                maxLength={80}
+                maxLength={50}
               />
               <FieldError>{showError("name")}</FieldError>
-              <CharCounter current={name.length} max={80} />
+              <CharCounter current={name.length} max={50} />
             </Field>
 
             <Field>
@@ -184,10 +184,10 @@ export function CharacterForm({ character }: Props) {
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 placeholder="Ej: La chica holstaur más agradable."
-                maxLength={150}
+                maxLength={80}
               />
               <FieldDescription>Opcional. Una frase breve.</FieldDescription>
-              <CharCounter current={subtitle.length} max={150} />
+              <CharCounter current={subtitle.length} max={80} />
             </Field>
 
             <Field>
@@ -212,10 +212,10 @@ export function CharacterForm({ character }: Props) {
                 onChange={(e) => setGreeting(e.target.value)}
                 onBlur={() => markTouched("greeting")}
                 placeholder="Ej: ¡Hola! Me alegra verte por aqui."
-                maxLength={500}
+                maxLength={2000}
               />
               <FieldError>{showError("greeting")}</FieldError>
-              <CharCounter current={greeting.length} max={500} />
+              <CharCounter current={greeting.length} max={2000} />
             </Field>
 
             <Field>
@@ -239,12 +239,12 @@ export function CharacterForm({ character }: Props) {
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="Indicaciones adicionales para la IA (opcional)"
-                maxLength={2000}
+                maxLength={1500}
               />
               <FieldDescription>
                 Instrucciones extra que la IA usará al interpretar este personaje.
               </FieldDescription>
-              <CharCounter current={instructions.length} max={2000} />
+              <CharCounter current={instructions.length} max={1500} />
             </Field>
           </FieldGroup>
         </TabsContent>
@@ -282,7 +282,7 @@ export function CharacterForm({ character }: Props) {
                       onChange={(e) => updateCard(idx, "title", e.target.value)}
                       onBlur={() => markTouched(`card-${idx}`)}
                       placeholder="Título de la tarjeta"
-                      maxLength={80}
+                      maxLength={50}
                     />
                     <Textarea
                       value={card.content}
