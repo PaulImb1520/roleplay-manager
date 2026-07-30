@@ -238,7 +238,11 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="size-8 overflow-hidden rounded-full bg-muted">
+        <a
+          href={`/characters/${conv.characterId}`}
+          className="block size-8 overflow-hidden rounded-full bg-muted transition-shadow hover:ring-2 hover:ring-primary/50"
+          aria-label={`Ir a la definición de ${conv.characterName}`}
+        >
           {conv.characterProfileImage ? (
             <img
               src={conv.characterProfileImage}
@@ -246,7 +250,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
               className="size-full object-cover"
             />
           ) : null}
-        </div>
+        </a>
         <div className="flex flex-col">
           {editingTitle ? (
             <form onSubmit={(e) => { e.preventDefault(); handleManualTitle() }} className="flex items-center gap-1">

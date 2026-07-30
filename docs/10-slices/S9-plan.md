@@ -20,7 +20,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 - [x] **S9.5** — Añadir un selector de versiones en la pantalla de edición/creación de personajes (dropdown o lista para elegir la versión activa).
 - [x] **S9.6** — Organizar mejor la pantalla de Proveedores (revisar espaciado, jerarquía visual y agrupación de secciones, mejorar la UX, corregir error de O-llama al entrar a la pantalla y reemplazar select de modelo por Combobox). *Refactorizado: la pantalla ya no auto-valida modelos al cargar. Cada proveedor tiene su propia tarjeta con un botón "Probar conexión" explícito. Se añadió un Combobox a `@workspace/ui` para reemplazar el Select de modelos. Pill en el header muestra el proveedor actual. Botón "Guardar de todos modos" solo aparece tras una verificación fallida. Toaster movido al layout global.*
 - [x] **S9.7** — Mantener el estado de la última configuración abierta en el panel de ajustes (SettingsPanel recordar qué tab/accordion estaba abierto).
-- [ ] **S9.8** — Añadir funcionalidad para que al hacer clic en el Avatar del chat navegue a la pantalla de definición del personaje.
+- [x] **S9.8** — Añadir funcionalidad para que al hacer clic en el Avatar del chat navegue a la pantalla de definición del personaje.
 - [ ] **S9.9** — Añadir la capacidad de ordenar las tarjetas de personaje con drag & drop.
 
 ### Bugs y estados boundary
