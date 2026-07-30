@@ -1,6 +1,5 @@
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
+  GripVerticalIcon,
   MessageSquarePlusIcon,
   PlusIcon,
   Trash2Icon,
@@ -42,6 +41,8 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select"
 
+import { Sortable, SortableItem, SortableItemHandle } from "@workspace/ui/components/sortable"
+
 import type { CharacterDetail } from "@workspace/shared/types/character"
 import { useCharacterForm } from "./use-character-form"
 
@@ -67,7 +68,7 @@ export function CharacterForm({ character }: Props) {
     dirty,
     addCard,
     removeCard,
-    moveCard,
+    reorderCards,
     updateCard,
     handleSubmit,
     handleDelete,
@@ -232,9 +233,9 @@ export function CharacterForm({ character }: Props) {
 
         <TabsContent value="cards" className="flex flex-col gap-4 pt-4">
           <FieldContent>
-            <p className="text-muted-foreground text-sm">
-              Las tarjetas definen las características del personaje. Se ordenan por importancia. Arrastra o usa las flechas para reordenar.
-            </p>
+              <p className="text-muted-foreground text-sm">
+                Las tarjetas definen las características del personaje. Se ordenan por importancia. Arrastra para reordenar.
+              </p>
           </FieldContent>
 
           <div className="max-h-96 overflow-y-auto">
@@ -244,29 +245,19 @@ export function CharacterForm({ character }: Props) {
                 Añadir tarjeta
               </Button>
             </div>
-            <div className="mt-3 flex flex-col gap-3">
+            <Sortable
+              value={cards}
+              onMove={({ activeIndex, overIndex }) => reorderCards(activeIndex, overIndex)}
+              getItemValue={(card) => card.id}
+              strategy="vertical"
+              className="mt-3 flex flex-col gap-3"
+            >
               {cards.map((card, idx) => (
-                <div key={card.id} className="flex gap-3 rounded-lg border p-3">
-                  <div className="flex flex-col gap-1">
-                    <button
-                      type="button"
-                      onClick={() => moveCard(idx, "up")}
-                      disabled={idx === 0}
-                      className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
-                      aria-label="Subir"
-                    >
-                      <ArrowUpIcon className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveCard(idx, "down")}
-                      disabled={idx === cards.length - 1}
-                      className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted disabled:opacity-30"
-                      aria-label="Bajar"
-                    >
-                      <ArrowDownIcon className="size-4" />
-                    </button>
-                  </div>
+                <SortableItem key={card.id} value={card.id}>
+                  <div className="flex gap-3 rounded-lg border p-3">
+                    <SortableItemHandle className="flex items-center rounded text-muted-foreground hover:text-foreground">
+                      <GripVerticalIcon className="size-4" />
+                    </SortableItemHandle>
                   <div className="flex flex-1 flex-col gap-2">
                     <Input
                       value={card.title}
@@ -297,9 +288,10 @@ export function CharacterForm({ character }: Props) {
                       </button>
                     </div>
                   </div>
-                </div>
+                  </div>
+                </SortableItem>
               ))}
-            </div>
+            </Sortable>
           </div>
         </TabsContent>
       </Tabs>

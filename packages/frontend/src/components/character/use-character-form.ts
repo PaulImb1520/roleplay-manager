@@ -95,12 +95,14 @@ export function useCharacterForm(character?: CharacterDetail) {
   const removeCard = (idx: number) =>
     setCards((prev) => prev.filter((_, i) => i !== idx))
 
-  const moveCard = (idx: number, direction: "up" | "down") => {
+  const reorderCards = (fromIndex: number, toIndex: number) => {
     setCards((prev) => {
+      if (fromIndex < 0 || fromIndex >= prev.length) return prev
+      if (toIndex < 0 || toIndex >= prev.length) return prev
+      if (fromIndex === toIndex) return prev
       const next = [...prev]
-      const target = direction === "up" ? idx - 1 : idx + 1
-      if (target < 0 || target >= next.length) return prev
-      ;[next[idx], next[target]] = [next[target], next[idx]]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
       return next
     })
   }
@@ -281,7 +283,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     dirty,
     addCard,
     removeCard,
-    moveCard,
+    reorderCards,
     updateCard,
     handleSubmit,
     handleDelete,
