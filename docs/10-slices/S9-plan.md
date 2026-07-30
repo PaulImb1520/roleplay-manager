@@ -41,7 +41,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 
 ### Responsive / Accesibilidad
 
-- [ ] **S9.16** — Verificar que el chat sea utilizable desde el navegador del teléfono (responsive design mínimo).
+- [x] **S9.16** — Verificar que el chat sea utilizable desde el navegador del teléfono (responsive design mínimo). *El padding global del AppShell se redujo a p-4 en móvil y p-6 en desktop. El proveedor-manager dejó de tener padding propio (lo hereda del AppShell). Responsive grid (1 col móvil, 2/3 cols escritorio).*
 
 ---
 

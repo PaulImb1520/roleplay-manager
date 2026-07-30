@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="flex h-12 items-center gap-2 border-b px-4">
           <SidebarTrigger />
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </SidebarInset>
       <Toaster richColors position="top-right" />
     </SidebarProvider>
