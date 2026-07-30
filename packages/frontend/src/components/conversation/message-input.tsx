@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 import {
@@ -14,15 +14,19 @@ export function MessageInput({
   onContinue,
   onPreview,
   disabled,
-  rewindDraft = "",
+  conversationId,
 }: {
   onSend: (content: string) => void
   onContinue?: () => void
   onPreview?: (content?: string) => void
   disabled: boolean
-  rewindDraft?: string
+  conversationId: string
 }) {
-  const [content, setContent] = useState(rewindDraft)
+  const [content, setContent] = usePersistedValue({
+    scope: conversationId,
+    key: "chat:draft",
+    defaultValue: "",
+  })
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault()

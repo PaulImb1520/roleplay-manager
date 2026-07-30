@@ -41,7 +41,6 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
   const [conv, setConv] = useState(conversation)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [confirmRewind, setConfirmRewind] = useState<string | null>(null)
-  const [rewindDraft, setRewindDraft] = useState("")
   const [inputKey, setInputKey] = useState(0)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<PromptContextDTO | null>(null)
@@ -153,7 +152,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
       setMessages(result.messages)
 
       if (targetMsg?.role === "user") {
-        setRewindDraft(targetMsg.content)
+        localStorage.setItem(`chat:draft:${conv.id}`, JSON.stringify(targetMsg.content))
         setInputKey(k => k + 1)
       }
 
@@ -372,7 +371,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           onContinue={handleContinue}
           onPreview={handlePreview}
           disabled={isStreaming || conv.status === "archived"}
-          rewindDraft={rewindDraft}
+          conversationId={conv.id}
         />
       </footer>
 
