@@ -1,3 +1,5 @@
+import type { ProviderStatus } from "./provider"
+
 export type ConversationStatus = "active" | "archived"
 
 export type MemoryProposalMode = "auto" | "manual"
@@ -72,3 +74,10 @@ export interface CreateConversationInput {
   characterId: string
   versionId?: string
 }
+
+export interface CreateConversationResult {
+  conversation: ConversationDetail
+  defaultProviderStatus: ProviderStatus
+  defaultProviderMessage?: string
+}
+

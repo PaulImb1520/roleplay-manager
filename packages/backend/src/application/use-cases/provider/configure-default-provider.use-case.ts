@@ -13,25 +13,15 @@ import type { ProviderInstanceRepository } from "../../../domain/ports/provider-
 const KEYS = {
   provider: "default_provider",
   providerInstanceId: "default_provider_instance_id",
-  model: "default_model",
 } as const
+
+const MODEL_KEYS: Record<ProviderId, string> = {
+  ollama: "default_model_ollama",
+  "openai-compatible": "default_model_openai_compatible",
+}
 
 const REGISTERED: ReadonlyArray<ProviderId> = ["ollama", "openai-compatible"]
 
-/**
- * Configura el proveedor y modelo por defecto del sistema.
- *
- * Comportamiento:
- * 1. Verifica que `provider` sea un id registrado.
- * 2. Si `force !== true`, valida la conexion antes de persistir.
- *    Si la validacion falla, lanza `ProviderUnavailableError` y NO
- *    persiste cambios. La configuracion anterior, si existia, se
- *    conserva intacta.
- * 3. Si la validacion pasa (o se omite por `force: true`), persiste
- *    las settings (`default_provider`, `default_provider_instance_id`,
- *    `default_model`).
- * 4. Devuelve la configuracion recien persistida.
- */
 export class ConfigureDefaultProviderUseCase {
   constructor(
     private readonly registry: ProviderRegistry,
@@ -81,7 +71,6 @@ export class ConfigureDefaultProviderUseCase {
 
     const entries: Record<string, string> = {
       [KEYS.provider]: input.provider,
-      [KEYS.model]: input.model,
     }
     if (input.providerInstanceId !== undefined) {
       if (input.providerInstanceId === null) {
@@ -93,10 +82,18 @@ export class ConfigureDefaultProviderUseCase {
 
     await this.settings.setMany(entries)
 
+    const allKeys = Object.values(MODEL_KEYS)
+    const stored = await this.settings.getMany(allKeys)
+    const models: Partial<Record<ProviderId, string>> = {}
+    for (const [pid, key] of Object.entries(MODEL_KEYS)) {
+      const val = stored[key]
+      if (val) models[pid as ProviderId] = val
+    }
+
     return {
       provider: input.provider,
       providerInstanceId: input.providerInstanceId ?? null,
-      model: input.model,
+      models,
     }
   }
 }

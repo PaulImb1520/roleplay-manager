@@ -48,7 +48,7 @@ export class GenerateConversationTitleUseCase {
       const defaultConfig = await this.getDefaultProvider.execute()
       providerId = defaultConfig.provider
       providerInstanceId = defaultConfig.providerInstanceId
-      resolvedModel ??= defaultConfig.model
+      resolvedModel ??= defaultConfig.models[providerId as ProviderId] ?? null
     }
 
     let adapter = null

@@ -28,7 +28,6 @@ export class DeleteProviderInstanceUseCase {
       await this.settingsRepository.setMany({
         default_provider: "",
         default_provider_instance_id: "",
-        default_model: "",
       })
     }
 

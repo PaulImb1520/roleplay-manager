@@ -167,7 +167,7 @@ const buildDefaultProvider = (): GetDefaultProviderUseCase =>
       super({} as never, {} as never)
     }
     async execute(): Promise<DefaultProviderConfig> {
-      return { provider: "ollama", providerInstanceId: null, model: "llama3" }
+      return { provider: "ollama", providerInstanceId: null, models: { ollama: "llama3" } }
     }
   })()
 

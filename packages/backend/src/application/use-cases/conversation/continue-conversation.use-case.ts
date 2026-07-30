@@ -157,7 +157,7 @@ export class ContinueConversationUseCase {
         await this.getDefaultProvider.execute()
       providerId = defaultConfig.provider
       providerInstanceId = defaultConfig.providerInstanceId
-      resolvedModel ??= defaultConfig.model
+      resolvedModel ??= defaultConfig.models[providerId as ProviderId] ?? null
     }
     if (!providerId) {
       yield {

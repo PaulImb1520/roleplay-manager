@@ -1,4 +1,4 @@
-import type { DefaultProviderConfig } from "@workspace/shared/types/provider"
+import type { DefaultProviderConfig, ProviderId } from "@workspace/shared/types/provider"
 
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { SettingsRepository } from "../../../domain/ports/settings.repository"
@@ -6,8 +6,12 @@ import type { SettingsRepository } from "../../../domain/ports/settings.reposito
 const KEYS = {
   provider: "default_provider",
   providerInstanceId: "default_provider_instance_id",
-  model: "default_model",
 } as const
+
+const MODEL_KEYS: Record<ProviderId, string> = {
+  ollama: "default_model_ollama",
+  "openai-compatible": "default_model_openai_compatible",
+}
 
 export class GetDefaultProviderUseCase {
   constructor(
@@ -16,15 +20,21 @@ export class GetDefaultProviderUseCase {
   ) {}
 
   async execute(): Promise<DefaultProviderConfig> {
-    const stored = await this.settings.getMany([
+    const allKeys = [
       KEYS.provider,
       KEYS.providerInstanceId,
-      KEYS.model,
-    ])
+      ...Object.values(MODEL_KEYS),
+    ]
+    const stored = await this.settings.getMany(allKeys)
     const provider = stored[KEYS.provider] as DefaultProviderConfig["provider"]
     const instanceIdRaw = stored[KEYS.providerInstanceId]
     const providerInstanceId = instanceIdRaw && instanceIdRaw !== "" ? instanceIdRaw : null
-    const model = stored[KEYS.model]
+
+    const models: Partial<Record<ProviderId, string>> = {}
+    for (const [pid, key] of Object.entries(MODEL_KEYS)) {
+      const val = stored[key]
+      if (val) models[pid as ProviderId] = val
+    }
 
     if (providerInstanceId) {
       const instance = await this.providerInstanceRepository.findById(providerInstanceId)
@@ -32,16 +42,18 @@ export class GetDefaultProviderUseCase {
         await this.settings.setMany({
           [KEYS.provider]: "",
           [KEYS.providerInstanceId]: "",
-          [KEYS.model]: "",
+          ...Object.fromEntries(
+            Object.values(MODEL_KEYS).map((k) => [k, ""]),
+          ),
         })
-        return { provider: null, providerInstanceId: null, model: null }
+        return { provider: null, providerInstanceId: null, models: {} }
       }
     }
 
     return {
       provider: provider ?? null,
       providerInstanceId,
-      model: model ?? null,
+      models,
     }
   }
 }

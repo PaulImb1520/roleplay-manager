@@ -55,14 +55,12 @@ describe("ConfigureDefaultProviderUseCase", () => {
 
     const result = await useCase.execute({
       provider: "ollama",
-      model: "llama3:latest",
     })
 
-    expect(result).toEqual({ provider: "ollama", model: "llama3:latest", providerInstanceId: null })
+    expect(result).toMatchObject({ provider: "ollama", providerInstanceId: null })
     expect(adapter.validateConnection).toHaveBeenCalled()
     expect(settings.setMany).toHaveBeenCalledWith({
       default_provider: "ollama",
-      default_model: "llama3:latest",
     })
   })
 
@@ -75,7 +73,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     )
 
     await expect(
-      useCase.execute({ provider: "fake" as never, model: "x" }),
+      useCase.execute({ provider: "fake" as never }),
     ).rejects.toThrow("Unknown provider id: fake")
   })
 
@@ -94,7 +92,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     )
 
     await expect(
-      useCase.execute({ provider: "ollama", model: "x" }),
+      useCase.execute({ provider: "ollama" }),
     ).rejects.toThrow("is not available")
 
     expect(settings.setMany).not.toHaveBeenCalled()
@@ -116,15 +114,13 @@ describe("ConfigureDefaultProviderUseCase", () => {
 
     const result = await useCase.execute({
       provider: "ollama",
-      model: "x",
       force: true,
     })
 
-    expect(result).toEqual({ provider: "ollama", model: "x", providerInstanceId: null })
+    expect(result).toMatchObject({ provider: "ollama", providerInstanceId: null })
     expect(adapter.validateConnection).not.toHaveBeenCalled()
     expect(settings.setMany).toHaveBeenCalledWith({
       default_provider: "ollama",
-      default_model: "x",
     })
   })
 
@@ -137,7 +133,7 @@ describe("ConfigureDefaultProviderUseCase", () => {
     )
 
     await expect(
-      useCase.execute({ provider: "openai-compatible", model: "gpt-x" }),
+      useCase.execute({ provider: "openai-compatible" }),
     ).rejects.toThrow("not configured")
   })
 })

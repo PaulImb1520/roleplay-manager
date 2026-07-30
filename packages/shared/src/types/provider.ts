@@ -26,7 +26,7 @@ export interface ProviderStatusEntry {
 export interface DefaultProviderConfig {
   provider: ProviderId | null
   providerInstanceId: string | null
-  model: string | null
+  models: Partial<Record<ProviderId, string>>
 }
 
 export interface OpenAICompatibleConfig {
@@ -37,6 +37,11 @@ export interface OpenAICompatibleConfig {
 export interface ConfigureDefaultProviderInput {
   provider: ProviderId
   providerInstanceId?: string | null
+  force?: boolean
+}
+
+export interface SetProviderModelInput {
   model: string
+  providerInstanceId?: string
   force?: boolean
 }

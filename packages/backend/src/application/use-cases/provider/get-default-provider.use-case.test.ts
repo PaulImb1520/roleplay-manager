@@ -14,12 +14,14 @@ const noopInstanceRepo: ProviderInstanceRepository = {
 }
 
 describe("GetDefaultProviderUseCase", () => {
-  it("devuelve null/null si no hay settings guardadas", async () => {
+  it("devuelve null/models vacio si no hay settings guardadas", async () => {
     const settings: SettingsRepository = {
       get: vi.fn(async () => null),
       getMany: vi.fn(async () => ({
         default_provider: null,
-        default_model: null,
+        default_provider_instance_id: null,
+        default_model_ollama: null,
+        default_model_openai_compatible: null,
       })),
       set: vi.fn(),
       setMany: vi.fn(),
@@ -28,7 +30,7 @@ describe("GetDefaultProviderUseCase", () => {
 
     const result = await useCase.execute()
 
-    expect(result).toEqual({ provider: null, model: null, providerInstanceId: null })
+    expect(result).toEqual({ provider: null, providerInstanceId: null, models: {} })
   })
 
   it("devuelve el provider y model persistidos", async () => {
@@ -36,7 +38,9 @@ describe("GetDefaultProviderUseCase", () => {
       get: vi.fn(async () => null),
       getMany: vi.fn(async () => ({
         default_provider: "ollama",
-        default_model: "llama3:latest",
+        default_provider_instance_id: null,
+        default_model_ollama: "llama3:latest",
+        default_model_openai_compatible: null,
       })),
       set: vi.fn(),
       setMany: vi.fn(),
@@ -45,7 +49,11 @@ describe("GetDefaultProviderUseCase", () => {
 
     const result = await useCase.execute()
 
-    expect(result).toEqual({ provider: "ollama", model: "llama3:latest", providerInstanceId: null })
+    expect(result).toEqual({
+      provider: "ollama",
+      providerInstanceId: null,
+      models: { ollama: "llama3:latest" },
+    })
   })
 
   it("limpia y retorna null si la instancia por defecto fue eliminada", async () => {
@@ -54,7 +62,8 @@ describe("GetDefaultProviderUseCase", () => {
       getMany: vi.fn(async () => ({
         default_provider: "openai-compatible",
         default_provider_instance_id: "inst-1",
-        default_model: "gpt-4",
+        default_model_ollama: null,
+        default_model_openai_compatible: "gpt-4",
       })),
       set: vi.fn(),
       setMany: vi.fn(),
@@ -67,11 +76,12 @@ describe("GetDefaultProviderUseCase", () => {
 
     const result = await useCase.execute()
 
-    expect(result).toEqual({ provider: null, providerInstanceId: null, model: null })
+    expect(result).toEqual({ provider: null, providerInstanceId: null, models: {} })
     expect(settings.setMany).toHaveBeenCalledWith({
       default_provider: "",
       default_provider_instance_id: "",
-      default_model: "",
+      default_model_ollama: "",
+      default_model_openai_compatible: "",
     })
   })
 
@@ -81,7 +91,8 @@ describe("GetDefaultProviderUseCase", () => {
       getMany: vi.fn(async () => ({
         default_provider: "openai-compatible",
         default_provider_instance_id: "inst-1",
-        default_model: "gpt-4",
+        default_model_ollama: null,
+        default_model_openai_compatible: "gpt-4",
       })),
       set: vi.fn(),
       setMany: vi.fn(),
@@ -106,7 +117,7 @@ describe("GetDefaultProviderUseCase", () => {
     expect(result).toEqual({
       provider: "openai-compatible",
       providerInstanceId: "inst-1",
-      model: "gpt-4",
+      models: { "openai-compatible": "gpt-4" },
     })
     expect(settings.setMany).not.toHaveBeenCalled()
   })
