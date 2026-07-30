@@ -3,12 +3,18 @@ import { z } from "zod"
 
 import type { GetDefaultProviderUseCase } from "../../../../application/use-cases/provider/get-default-provider.use-case"
 import type { ConfigureDefaultProviderUseCase } from "../../../../application/use-cases/provider/configure-default-provider.use-case"
+import type { SetProviderModelUseCase } from "../../../../application/use-cases/provider/set-provider-model.use-case"
 import { validate } from "../middlewares/validation"
 
 const ConfigureBodySchema = z.object({
   provider: z.enum(["ollama", "openai-compatible"]),
   providerInstanceId: z.string().nullable().optional(),
+  force: z.boolean().optional(),
+})
+
+const SetProviderModelSchema = z.object({
   model: z.string().trim().min(1),
+  providerInstanceId: z.string().optional(),
   force: z.boolean().optional(),
 })
 
@@ -20,6 +26,7 @@ const OpenAICompatibleConfigSchema = z.object({
 export const buildSettingsRouter = (deps: {
   getDefaultProvider: GetDefaultProviderUseCase
   configureDefaultProvider: ConfigureDefaultProviderUseCase
+  setProviderModel: SetProviderModelUseCase
   settings: {
     get(key: string): Promise<string | null>
     set(key: string, value: string): Promise<void>
@@ -44,6 +51,21 @@ export const buildSettingsRouter = (deps: {
         const body = req.body as z.infer<typeof ConfigureBodySchema>
         const result = await deps.configureDefaultProvider.execute(body)
         res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.put(
+    "/provider-model/:providerId",
+    validate(SetProviderModelSchema),
+    async (req, res, next) => {
+      try {
+        const providerId = req.params.providerId as "ollama" | "openai-compatible"
+        const body = req.body as z.infer<typeof SetProviderModelSchema>
+        await deps.setProviderModel.execute(providerId, body)
+        res.status(204).end()
       } catch (error) {
         next(error)
       }

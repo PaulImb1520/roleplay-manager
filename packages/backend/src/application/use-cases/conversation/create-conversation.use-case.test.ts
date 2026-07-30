@@ -5,15 +5,21 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
+import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
 
 const buildDefaultProvider = (
-  provider: string | null = "openai-compatible",
+  provider: ProviderId | null = "openai-compatible",
   model: string | null = "gpt-4o-mini",
-): GetDefaultProviderUseCase =>
-  ({ execute: async () => ({ provider, model }) }) as unknown as GetDefaultProviderUseCase
+): GetDefaultProviderUseCase => {
+  const models: Partial<Record<ProviderId, string>> = {}
+  if (provider && model) models[provider] = model
+  return { execute: async () => ({ provider, providerInstanceId: null, models }) } as unknown as GetDefaultProviderUseCase
+}
+
+import type { ProviderId } from "@workspace/shared/types/provider"
 
 const now = new Date()
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
@@ -48,6 +54,14 @@ const buildCharacterRepo = (): CharacterRepository => ({
   saveVersion: async (v) => v,
 })
 
+const buildProviderInstanceRepo = (): ProviderInstanceRepository => ({
+  findById: async () => null,
+  create: async (_i) => ({}) as never,
+  update: async (_id, _input) => ({}) as never,
+  delete: async () => {},
+  list: async () => [],
+})
+
 const buildConversationRepo = (): ConversationRepository => ({
   create: async (c) => c,
   findById: async () => null,
@@ -76,18 +90,20 @@ describe("CreateConversationUseCase", () => {
       buildMessageRepo(),
       buildCharacterRepo(),
       buildDefaultProvider(),
+      buildProviderInstanceRepo(),
     )
 
     const result = await useCase.execute({ characterId: "char-1" })
 
-    expect(result.characterName).toBe("Test")
-    expect(result.status).toBe("active")
-    expect(result.messages).toHaveLength(1)
-    expect(result.messages[0].role).toBe("assistant")
-    expect(result.messages[0].content).toBe("Hello!")
-    expect(result.messages[0].position).toBe(0)
-    expect(result.provider).toBe("openai-compatible")
-    expect(result.model).toBe("gpt-4o-mini")
+    expect(result.conversation.characterName).toBe("Test")
+    expect(result.conversation.status).toBe("active")
+    expect(result.conversation.messages).toHaveLength(1)
+    expect(result.conversation.messages[0].role).toBe("assistant")
+    expect(result.conversation.messages[0].content).toBe("Hello!")
+    expect(result.conversation.messages[0].position).toBe(0)
+    expect(result.conversation.provider).toBe("openai-compatible")
+    expect(result.conversation.model).toBe("gpt-4o-mini")
+    expect(result.defaultProviderStatus).toBe("available")
   })
 
   it("lanza CharacterNotFoundError si el personaje no existe", async () => {
@@ -99,6 +115,7 @@ describe("CreateConversationUseCase", () => {
       buildMessageRepo(),
       repo,
       buildDefaultProvider(),
+      buildProviderInstanceRepo(),
     )
 
     await expect(
@@ -116,12 +133,13 @@ describe("CreateConversationUseCase", () => {
       buildMessageRepo(),
       repo,
       buildDefaultProvider(),
+      buildProviderInstanceRepo(),
     )
 
     const result = await useCase.execute({ characterId: "char-1", versionId: "ver-2" })
 
-    expect(result.messages[0].content).toBe("Bonjour!")
-    expect(result.characterName).toBe("Test")
+    expect(result.conversation.messages[0].content).toBe("Bonjour!")
+    expect(result.conversation.characterName).toBe("Test")
   })
 
   it("lanza CharacterVersionNotFoundError si la versionId no existe", async () => {
@@ -133,6 +151,7 @@ describe("CreateConversationUseCase", () => {
       buildMessageRepo(),
       repo,
       buildDefaultProvider(),
+      buildProviderInstanceRepo(),
     )
 
     await expect(
@@ -149,6 +168,7 @@ describe("CreateConversationUseCase", () => {
       buildMessageRepo(),
       repo,
       buildDefaultProvider(),
+      buildProviderInstanceRepo(),
     )
 
     await expect(

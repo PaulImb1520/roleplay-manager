@@ -57,6 +57,7 @@ export const buildServer = ({
     buildSettingsRouter({
       getDefaultProvider: container.getDefaultProvider,
       configureDefaultProvider: container.configureDefaultProvider,
+      setProviderModel: container.setProviderModel,
       settings: container.settings,
     }),
   )

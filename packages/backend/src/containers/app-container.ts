@@ -64,6 +64,7 @@ import { CreateProviderInstanceUseCase } from "../application/use-cases/provider
 import { UpdateProviderInstanceUseCase } from "../application/use-cases/provider/update-provider-instance.use-case"
 import { DeleteProviderInstanceUseCase } from "../application/use-cases/provider/delete-provider-instance.use-case"
 import { ValidateProviderInstanceUseCase } from "../application/use-cases/provider/validate-provider-instance.use-case"
+import { SetProviderModelUseCase } from "../application/use-cases/provider/set-provider-model.use-case"
 
 export interface AppContainer {
   logger: Logger
@@ -109,6 +110,7 @@ export interface AppContainer {
   updateProviderInstance: UpdateProviderInstanceUseCase
   deleteProviderInstance: DeleteProviderInstanceUseCase
   validateProviderInstance: ValidateProviderInstanceUseCase
+  setProviderModel: SetProviderModelUseCase
 
   summaryRepository: SummaryRepository
 
@@ -265,6 +267,12 @@ export const buildContainer = ({
       providerInstanceRepository,
       logger,
     ),
+    setProviderModel: new SetProviderModelUseCase(
+      providerRegistry,
+      settings,
+      providerInstanceRepository,
+      logger,
+    ),
     settings,
     providerRegistry,
     providerInstanceRepository,
@@ -290,6 +298,7 @@ export const buildContainer = ({
       messageRepository,
       characterRepository,
       getDefaultProvider,
+      providerInstanceRepository,
     ),
     getConversation: new GetConversationUseCase(
       conversationRepository,

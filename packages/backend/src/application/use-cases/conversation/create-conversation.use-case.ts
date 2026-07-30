@@ -1,14 +1,15 @@
 import { v7 as randomUUIDv7 } from "uuid"
 
-import type { ConversationDetail, CreateConversationInput } from "@workspace/shared/types/conversation"
+import type { ConversationDetail, CreateConversationInput, CreateConversationResult } from "@workspace/shared/types/conversation"
 import type { MessageDTO } from "@workspace/shared/types/message"
-import type { DefaultProviderConfig } from "@workspace/shared/types/provider"
+import type { DefaultProviderConfig, ProviderStatus } from "@workspace/shared/types/provider"
 
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import {
   CharacterNotFoundError,
@@ -22,9 +23,10 @@ export class CreateConversationUseCase {
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
+    private readonly providerInstanceRepository: ProviderInstanceRepository,
   ) {}
 
-  async execute(input: CreateConversationInput): Promise<ConversationDetail> {
+  async execute(input: CreateConversationInput): Promise<CreateConversationResult> {
     const result = await this.characterRepository.findById(input.characterId)
 
     if (!result) {
@@ -40,13 +42,17 @@ export class CreateConversationUseCase {
     const defaultConfig: DefaultProviderConfig =
       await this.getDefaultProvider.execute()
 
+    const resolvedModel = defaultConfig.provider
+      ? (defaultConfig.models[defaultConfig.provider] ?? null)
+      : null
+
     const conversation = Conversation.create({
       id: conversationId,
       versionId: version.id,
       title: null,
       titleSource: null,
       status: "active",
-      model: defaultConfig.model,
+      model: resolvedModel,
       provider: defaultConfig.provider,
       providerInstanceId: defaultConfig.providerInstanceId,
       recentMessageCount: 10,
@@ -77,7 +83,31 @@ export class CreateConversationUseCase {
     await this.conversationRepository.create(conversation)
     await this.messageRepository.create(greeting)
 
-    return {
+    let defaultProviderStatus: ProviderStatus = "unconfigured"
+    let defaultProviderMessage: string | undefined
+
+    if (defaultConfig.provider) {
+      if (defaultConfig.providerInstanceId) {
+        const instance = await this.providerInstanceRepository.findById(
+          defaultConfig.providerInstanceId,
+        )
+        if (!instance) {
+          defaultProviderStatus = "unavailable"
+          defaultProviderMessage =
+            "La instancia del proveedor por defecto ya no existe."
+        } else if (defaultConfig.models[defaultConfig.provider]) {
+          defaultProviderStatus = "available"
+        } else {
+          defaultProviderStatus = "unknown"
+        }
+      } else if (defaultConfig.models[defaultConfig.provider]) {
+        defaultProviderStatus = "available"
+      } else {
+        defaultProviderStatus = "unknown"
+      }
+    }
+
+    const conversationDetail: ConversationDetail = {
       id: conversation.id,
       characterId: result.character.id,
       characterName: version.name,
@@ -100,6 +130,12 @@ export class CreateConversationUseCase {
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
       messages: [toMessageDTO(greeting)],
+    }
+
+    return {
+      conversation: conversationDetail,
+      defaultProviderStatus,
+      defaultProviderMessage,
     }
   }
 
