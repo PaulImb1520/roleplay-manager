@@ -271,6 +271,17 @@ export class SendMessageUseCase {
       proposals = fallback.proposals
     }
 
+    if (!cleanedContent.trim()) {
+      yield {
+        type: "error",
+        error: {
+          code: "EMPTY_RESPONSE",
+          message: "The provider returned an empty response.",
+        },
+      }
+      return
+    }
+
     const assistantMessage = Message.create({
       id: randomUUIDv7(),
       conversationId: input.conversationId,

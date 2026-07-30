@@ -248,6 +248,17 @@ export class RegenerateReplyUseCase {
       proposals = fallback.proposals
     }
 
+    if (!cleanedContent.trim()) {
+      yield {
+        type: "error",
+        error: {
+          code: "EMPTY_RESPONSE",
+          message: "The provider returned an empty response.",
+        },
+      }
+      return
+    }
+
     const regenerated = message.regenerate(cleanedContent)
     await this.messageRepository.update(regenerated)
 

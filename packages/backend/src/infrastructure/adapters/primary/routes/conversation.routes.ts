@@ -15,6 +15,7 @@ import type { CycleAlternativeUseCase } from "../../../../application/use-cases/
 import type { ConversationRepository } from "../../../../domain/ports/conversation.repository"
 import type { GenerateConversationTitleUseCase } from "../../../../application/use-cases/conversation/generate-conversation-title.use-case"
 import type { UpdateConversationSettingsUseCase } from "../../../../application/use-cases/conversation/update-conversation-settings.use-case"
+import type { Logger } from "../../../../domain/ports/logger.port"
 import { validate } from "../middlewares/validation"
 
 const CreateConversationSchema = z.object({
@@ -51,6 +52,7 @@ const UpdateConversationSettingsSchema = z.object({
 })
 
 export const buildConversationRouter = (deps: {
+  logger: Logger
   createConversation: CreateConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
@@ -121,8 +123,9 @@ export const buildConversationRouter = (deps: {
 
   router.post("/conversations/:id/messages", async (req, res, next) => {
     let sseStarted = false
+    let id: string = ""
     try {
-      const { id } = req.params as { id: string }
+      id = (req.params as { id: string }).id
       const { content } = SendMessageSchema.parse(req.body)
 
       const generator = deps.sendMessage.execute({
@@ -166,9 +169,12 @@ export const buildConversationRouter = (deps: {
 
       res.end()
     } catch (error) {
+      deps.logger.error("Send message SSE error", error as Error, {
+        conversationId: id,
+      })
       if (sseStarted) {
         res.write(
-          `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: "Unexpected error" })}\n\n`,
+          `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: (error as Error).message })}\n\n`,
         )
         res.end()
       } else {
@@ -216,8 +222,11 @@ export const buildConversationRouter = (deps: {
     "/conversations/:id/messages/:messageId/regenerate",
     async (req, res, next) => {
       let sseStarted = false
+      let id: string = ""
+      let messageId: string = ""
       try {
-        const { id, messageId } = req.params as { id: string; messageId: string }
+        id = (req.params as { id: string; messageId: string }).id
+        messageId = (req.params as { id: string; messageId: string }).messageId
         const generator = deps.regenerateReply.execute({
           conversationId: id,
           messageId,
@@ -252,9 +261,13 @@ export const buildConversationRouter = (deps: {
 
         res.end()
       } catch (error) {
+        deps.logger.error("Regenerate SSE error", error as Error, {
+          conversationId: id,
+          messageId,
+        })
         if (sseStarted) {
           res.write(
-            `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: "Unexpected error" })}\n\n`,
+            `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: (error as Error).message })}\n\n`,
           )
           res.end()
         } else {
@@ -287,8 +300,9 @@ export const buildConversationRouter = (deps: {
     "/conversations/:id/continue",
     async (req, res, next) => {
       let sseStarted = false
+      let id: string = ""
       try {
-        const { id } = req.params as { id: string }
+        id = (req.params as { id: string }).id
         const generator = deps.continueConversation.execute({
           conversationId: id,
         })
@@ -322,9 +336,12 @@ export const buildConversationRouter = (deps: {
 
         res.end()
       } catch (error) {
+        deps.logger.error("Continue conversation SSE error", error as Error, {
+          conversationId: id,
+        })
         if (sseStarted) {
           res.write(
-            `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: "Unexpected error" })}\n\n`,
+            `event: error\ndata: ${JSON.stringify({ code: "INTERNAL_ERROR", message: (error as Error).message })}\n\n`,
           )
           res.end()
         } else {

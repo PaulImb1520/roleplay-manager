@@ -65,6 +65,7 @@ export const buildServer = ({
   app.use(
     "/api",
     buildConversationRouter({
+      logger: container.logger,
       createConversation: container.createConversation,
       getConversation: container.getConversation,
       listConversations: container.listConversations,
