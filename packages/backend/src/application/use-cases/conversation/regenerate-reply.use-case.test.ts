@@ -267,4 +267,86 @@ describe("RegenerateReplyUseCase - tool calls", () => {
     expect(savedProposals[0].operation).toBe("CREATE")
     expect(savedProposals[0].actor).toBe("Bob")
   })
+
+  it("excluye el mensaje regenerado del contexto enviado al modelo", async () => {
+    const sentMessages: Message[] = []
+    const capturingPromptBuilder: PromptContextBuilder = {
+      build: async (params) => {
+        sentMessages.push(...params.messages)
+        return { systemPrompt: "", messages: [] }
+      },
+    }
+
+    const userMsg = Message.create({
+      id: "user-1",
+      conversationId: "conv-1",
+      role: "user",
+      content: "Hola",
+      position: 0,
+      alternatives: [],
+      alternativesCursor: 0,
+      createdAt: now,
+      editedAt: null,
+    })
+
+    const multiMsgRepo: MessageRepository = {
+      ...buildMessageRepo(),
+      findByConversationId: async () => [userMsg, baseAssistantMsg],
+    }
+
+    const providerEmpty: ProviderRegistry = {
+      listRegistered: () => ["ollama"],
+      createAdapter: vi.fn(),
+      getAdapter: async () => ({
+        validateConnection: async () => "available" as const,
+        listModels: async () => ({ models: [], manualEntryRequired: false }),
+        generateStreaming: function (): AsyncIterable<StreamChunk> {
+          return {
+            [Symbol.asyncIterator]: () => {
+              const chunks: StreamChunk[] = [
+                { content: "Nueva respuesta" },
+                { content: " extendida" },
+              ]
+              let i = 0
+              return {
+                next: async () => {
+                  if (i < chunks.length) {
+                    return { value: chunks[i++], done: false } as const
+                  }
+                  return { value: undefined, done: true } as const
+                },
+              }
+            },
+          }
+        },
+      }),
+    }
+
+    const useCase = new RegenerateReplyUseCase(
+      buildConversationRepo(),
+      multiMsgRepo,
+      buildCharacterRepo(),
+      buildMemoryRepo(),
+      { create: async (p: any) => p, createMany: async () => {}, findById: async () => null, findPendingByConversationId: async () => [], findByConversationId: async () => [], update: async (p: any) => p, markProcessed: async () => {}, discardPendingByConversationId: async () => {} } as unknown as MemoryChangeProposalRepository,
+      capturingPromptBuilder,
+      providerEmpty,
+      buildLogger(),
+      buildDefaultProvider(),
+      providerInstanceRepository,
+      { execute: async () => [] } as unknown as ApplyAllMemoryChangesUseCase,
+      buildSummaryRepo(),
+      buildGenerateSummary(),
+    )
+
+    for await (const _ of useCase.execute({
+      conversationId: "conv-1",
+      messageId: "msg-1",
+    })) {
+      // consume
+    }
+
+    expect(sentMessages).toHaveLength(1)
+    expect(sentMessages[0].id).toBe("user-1")
+    expect(sentMessages[0].id).not.toBe("msg-1")
+  })
 })

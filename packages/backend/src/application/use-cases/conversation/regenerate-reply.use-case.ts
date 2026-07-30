@@ -135,6 +135,9 @@ export class RegenerateReplyUseCase {
     const allMessages = await this.messageRepository.findByConversationId(
       input.conversationId,
     )
+    const contextMessages = allMessages.filter(
+      (m) => m.id !== input.messageId,
+    )
 
     const memories = await this.memoryRepository.findByConversationId(
       input.conversationId,
@@ -146,7 +149,7 @@ export class RegenerateReplyUseCase {
 
     const context = await this.promptContextBuilder.build({
       characterVersion: characterResult.currentVersion,
-      messages: allMessages,
+      messages: contextMessages,
       recentMessageCount: conversation.recentMessageCount,
       memories,
       summary: latestSummary ?? undefined,
