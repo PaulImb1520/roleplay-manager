@@ -28,7 +28,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 - [x] **S9.10** — El botón de rebobinar no debe aparecer en el último mensaje.
 - [x] **S9.10.5** — El historial de mensajes el regenerar está roto. Los mensajes no están apilados correctamente, el contador no funciona como debería y al avanzar y retroceder con las flechas, un mensaje se vuelve inaccesible.
 - [x] **S9.11** — Manejar la recarga de página mientras se está realizando streaming de una respuesta (ej. reintentar, mostrar estado, o preservar el stream in progress). *Decisión: documentar el comportamiento actual sin añadir lógica. La persistencia del mensaje se hace al final del stream en el use case, por lo que recargar mientras hay chunks en vuelo puede dejar la conversación sin el mensaje. El usuario puede regenerar manualmente. La complejidad de un "stream resumible" queda fuera de v1.0.*
-- [ ] **S9.12** — Añadir retroalimentación de errores al guardar un personaje (ej. validar tarjetas vacías, mostrar errores de campo específicos).
+- [x] **S9.12** — Añadir retroalimentación de errores al guardar un personaje (ej. validar tarjetas vacías, mostrar errores de campo específicos). *Los errores en línea aparecen solo después de blur o de un intento de envío. El botón de guardar se deshabilita hasta que todos los campos obligatorios estén completos. Se eliminaron los errores rojos permanentes que ocupaban espacio.*
 
 ### Input y validación
 

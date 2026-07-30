@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { toast } from "@workspace/ui/components/sonner"
 import type {
   CharacterDetail,
@@ -49,6 +49,33 @@ export function useCharacterForm(character?: CharacterDetail) {
   const [activeTab, setActiveTab] = useState("general")
   const [saving, setSaving] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false)
+
+  const validationErrors = useMemo(() => {
+    const errors: Record<string, string | null> = {}
+    errors.name = !name.trim() ? "El nombre es obligatorio" : null
+    errors.profileImage = !profileImage.trim() ? "La imagen de perfil es obligatoria" : null
+    errors.description = !description.trim() ? "La descripción es obligatoria" : null
+    errors.greeting = !greeting.trim() ? "El saludo inicial es obligatorio" : null
+    cards.forEach((c, i) => {
+      if (!c.title.trim() || !c.content.trim()) {
+        errors[`card-${i}`] = "Título y contenido son obligatorios"
+      }
+    })
+    return errors
+  }, [name, profileImage, description, greeting, cards])
+
+  const hasValidationErrors = Object.values(validationErrors).some(Boolean)
+
+  const showError = (field: string): string | null => {
+    if (!touched[field] && !attemptedSubmit) return null
+    return validationErrors[field] ?? null
+  }
+
+  const markTouched = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+  }
 
   const [lastSnapshot, setLastSnapshot] = useState(() =>
     buildSnapshot(
@@ -64,6 +91,8 @@ export function useCharacterForm(character?: CharacterDetail) {
 
   const handleVersionChange = useCallback((versionId: string) => {
     setSelectedVersionId(versionId)
+    setTouched({})
+    setAttemptedSubmit(false)
     const v = character?.versions.find((v) => v.id === versionId)
     if (!v) return
     setName(v.name)
@@ -117,29 +146,13 @@ export function useCharacterForm(character?: CharacterDetail) {
     cards.map(c => ({ title: c.title, content: c.content, active: c.active })),
   )
   const dirty = isEditing && hasChanges(currentSnapshot, lastSnapshot)
+  const canSubmit = !saving && !hasValidationErrors && (!isEditing || dirty)
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    if (!name.trim()) {
-      toast.error("El nombre es obligatorio")
-      return
-    }
-    if (!profileImage.trim()) {
-      toast.error("La imagen de perfil es obligatoria")
-      return
-    }
-    if (!description.trim()) {
-      toast.error("La descripción es obligatoria")
-      return
-    }
-    if (!greeting.trim()) {
-      toast.error("El saludo inicial es obligatorio")
-      return
-    }
-    if (cards.some((c) => !c.title.trim() || !c.content.trim())) {
-      toast.error("Las tarjetas deben tener título y contenido")
-      return
-    }
+    setAttemptedSubmit(true)
+
+    if (hasValidationErrors) return
 
     if (isEditing && !dirty) {
       toast.warning("No hay cambios que guardar")
@@ -285,6 +298,9 @@ export function useCharacterForm(character?: CharacterDetail) {
     removeCard,
     reorderCards,
     updateCard,
+    showError,
+    markTouched,
+    canSubmit,
     handleSubmit,
     handleDelete,
     handleStartConversation,

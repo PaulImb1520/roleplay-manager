@@ -65,11 +65,13 @@ export function CharacterForm({ character }: Props) {
     saving,
     showDeleteDialog, setShowDeleteDialog,
     selectedVersionId, handleVersionChange,
-    dirty,
     addCard,
     removeCard,
     reorderCards,
     updateCard,
+    showError,
+    markTouched,
+    canSubmit,
     handleSubmit,
     handleDelete,
     handleStartConversation,
@@ -131,7 +133,7 @@ export function CharacterForm({ character }: Props) {
               </Dialog>
             </>
           ) : null}
-          <Button type="submit" disabled={saving || (isEditing && !dirty)}>
+          <Button type="submit" disabled={!canSubmit}>
             {isEditing ? "Guardar cambios" : "Crear personaje"}
           </Button>
         </div>
@@ -167,9 +169,10 @@ export function CharacterForm({ character }: Props) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onBlur={() => markTouched("name")}
                 placeholder="Ej: Milka Moori"
               />
-              <FieldError>El nombre es obligatorio</FieldError>
+              <FieldError>{showError("name")}</FieldError>
             </Field>
 
             <Field>
@@ -189,9 +192,10 @@ export function CharacterForm({ character }: Props) {
                 id="profileImage"
                 value={profileImage}
                 onChange={(e) => setProfileImage(e.target.value)}
+                onBlur={() => markTouched("profileImage")}
                 placeholder="URL o data-URI"
               />
-              <FieldError>La imagen de perfil es obligatoria</FieldError>
+              <FieldError>{showError("profileImage")}</FieldError>
             </Field>
 
             <Field>
@@ -200,9 +204,10 @@ export function CharacterForm({ character }: Props) {
                 id="greeting"
                 value={greeting}
                 onChange={(e) => setGreeting(e.target.value)}
+                onBlur={() => markTouched("greeting")}
                 placeholder="Ej: ¡Hola! Me alegra verte por aqui."
               />
-              <FieldError>El saludo inicial es obligatorio</FieldError>
+              <FieldError>{showError("greeting")}</FieldError>
             </Field>
 
             <Field>
@@ -211,9 +216,10 @@ export function CharacterForm({ character }: Props) {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onBlur={() => markTouched("description")}
                 placeholder="Ej: Dueña de una granja y amiga de todos..."
               />
-              <FieldError>La descripción es obligatoria</FieldError>
+              <FieldError>{showError("description")}</FieldError>
             </Field>
 
             <Field>
@@ -262,11 +268,13 @@ export function CharacterForm({ character }: Props) {
                     <Input
                       value={card.title}
                       onChange={(e) => updateCard(idx, "title", e.target.value)}
+                      onBlur={() => markTouched(`card-${idx}`)}
                       placeholder="Título de la tarjeta"
                     />
                     <Textarea
                       value={card.content}
                       onChange={(e) => updateCard(idx, "content", e.target.value)}
+                      onBlur={() => markTouched(`card-${idx}`)}
                       placeholder="Contenido de la tarjeta"
                     />
                     <div className="flex items-center gap-2">
@@ -287,6 +295,7 @@ export function CharacterForm({ character }: Props) {
                         Eliminar
                       </button>
                     </div>
+                    <FieldError>{showError(`card-${idx}`)}</FieldError>
                   </div>
                   </div>
                 </SortableItem>
