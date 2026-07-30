@@ -37,7 +37,7 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 
 ### Ordenamiento y listas
 
-- [ ] **S9.15** — Ordenar las conversaciones por las más recientes (fecha de última actividad, descendente).
+- [x] **S9.15** — Ordenar las conversaciones por las más recientes (fecha de última actividad, descendente). *Se añadió lastActivityAt al DTO (último mensaje o updatedAt como fallback). El use case ordena por lastActivityAt descendente antes de devolver la lista.*
 
 ### Responsive / Accesibilidad
 

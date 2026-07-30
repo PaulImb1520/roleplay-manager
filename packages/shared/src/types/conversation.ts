@@ -13,6 +13,7 @@ export interface ConversationSummary {
   title: string | null
   status: ConversationStatus
   messageCount: number
+  lastActivityAt: string
   createdAt: string
   updatedAt: string
 }

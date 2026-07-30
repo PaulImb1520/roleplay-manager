@@ -125,6 +125,8 @@ describe("ListConversationsUseCase", () => {
     expect(result[0].messageCount).toBe(5)
     expect(result[0].status).toBe("active")
     expect(result[1].status).toBe("archived")
+    expect(result[0].lastActivityAt).toBeDefined()
+    expect(result[1].lastActivityAt).toBeDefined()
   })
 
   it("filtra por estado", async () => {
@@ -137,5 +139,87 @@ describe("ListConversationsUseCase", () => {
     const result = await useCase.execute("archived")
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe("archived")
+  })
+
+  it("ordena por lastActivityAt descendente", async () => {
+    const older = new Date("2025-01-01")
+    const newer = new Date("2025-06-01")
+
+    const repo = (): ConversationRepository => ({
+      create: async (c) => c,
+      findById: async () => null,
+      findByIdWithMessages: async () => null,
+      updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
+      clearProviderInstanceId: async () => {},
+      list: async () => [
+        Conversation.create({
+          id: "old-conv",
+          versionId: "ver-1",
+          title: null, titleSource: null, status: "active",
+          model: null, provider: null, providerInstanceId: null,
+          recentMessageCount: 10, summaryFrequency: 20,
+          temperature: 0.7, maxTokens: 2048, topP: 0.9,
+          frequencyPenalty: 0, presencePenalty: 0,
+          stopSequences: [],
+          memoryProposalMode: "auto",
+          createdAt: older,
+          updatedAt: older,
+        }),
+        Conversation.create({
+          id: "recent-conv",
+          versionId: "ver-1",
+          title: null, titleSource: null, status: "active",
+          model: null, provider: null, providerInstanceId: null,
+          recentMessageCount: 10, summaryFrequency: 20,
+          temperature: 0.7, maxTokens: 2048, topP: 0.9,
+          frequencyPenalty: 0, presencePenalty: 0,
+          stopSequences: [],
+          memoryProposalMode: "auto",
+          createdAt: newer,
+          updatedAt: newer,
+        }),
+      ],
+      update: async (c) => c,
+    })
+
+    const messageRepo = (): MessageRepository => ({
+      create: async (m) => m,
+      findByConversationId: async (convId) => {
+        if (convId === "recent-conv") {
+          return [
+            Message.create({
+              id: "msg-recent", conversationId: "recent-conv",
+              role: "assistant", content: "Hi", position: 0,
+              alternatives: [], alternativesCursor: 0,
+              createdAt: newer, editedAt: null,
+            }),
+          ]
+        }
+        return [
+          Message.create({
+            id: "msg-old", conversationId: "old-conv",
+            role: "assistant", content: "Hello", position: 0,
+            alternatives: [], alternativesCursor: 0,
+            createdAt: older, editedAt: null,
+          }),
+        ]
+      },
+      findById: async () => null,
+      findLastByConversationId: async () => null,
+      update: async (m) => m,
+      deleteById: async () => {},
+      deleteAfterPosition: async () => {},
+      clearAlternatives: async () => {},
+    })
+
+    const useCase = new ListConversationsUseCase(
+      repo(),
+      messageRepo(),
+      buildCharacterRepo(),
+    )
+
+    const result = await useCase.execute()
+    expect(result[0].id).toBe("recent-conv")
+    expect(result[1].id).toBe("old-conv")
   })
 })

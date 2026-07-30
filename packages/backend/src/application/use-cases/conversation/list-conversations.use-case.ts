@@ -21,6 +21,10 @@ export class ListConversationsUseCase {
       const characterId = version?.characterId ?? ""
       const result = characterId ? await this.characterRepository.findById(characterId) : null
 
+      const lastActivityAt = messages.length > 0
+        ? messages.reduce((max, m) => m.createdAt > max ? m.createdAt : max, messages[0].createdAt)
+        : conv.updatedAt
+
       summaries.push({
         id: conv.id,
         characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
@@ -28,10 +32,15 @@ export class ListConversationsUseCase {
         title: conv.title,
         status: conv.status,
         messageCount: messages.length,
+        lastActivityAt: lastActivityAt.toISOString(),
         createdAt: conv.createdAt.toISOString(),
         updatedAt: conv.updatedAt.toISOString(),
       })
     }
+
+    summaries.sort(
+      (a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime(),
+    )
 
     return summaries
   }
