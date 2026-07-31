@@ -31,6 +31,7 @@ type DialogMode = null | "create" | "edit" | "delete"
 export function MemoryList({ conversationId }: MemoryListProps) {
   const memories = useMemoryStore((s) => s.memories)
   const loading = useMemoryStore((s) => s.loading)
+  const lastDecay = useMemoryStore((s) => s.lastDecay)
   const createMemory = useMemoryStore((s) => s.createMemory)
   const updateMemory = useMemoryStore((s) => s.updateMemory)
   const deleteMemory = useMemoryStore((s) => s.deleteMemory)
@@ -125,6 +126,12 @@ export function MemoryList({ conversationId }: MemoryListProps) {
     <>
       <FieldSet>
         <Button onClick={openCreate} className="self-end mt-2">Crear memoria</Button>
+        {lastDecay ? (
+          <p className="text-xs text-muted-foreground">
+            Última limpieza: {new Date(lastDecay.at).toLocaleString()} — {lastDecay.deleted}{" "}
+            memoria(s) eliminada(s).
+          </p>
+        ) : null}
         <div className="flex flex-col gap-3">
           {memories.length === 0 ? (
             <Empty className="p-2">

@@ -2,6 +2,7 @@ import type {
   MemoryDTO,
   CreateMemoryInput,
   UpdateMemoryInput,
+  DecayMemoriesResultDTO,
 } from "@workspace/shared/types/memory"
 import type {
   MemoryChangeProposalDTO,
@@ -61,3 +62,10 @@ export const applyAllProposals = (
     `/api/conversations/${conversationId}/memories/proposals/apply-all`,
     { method: "POST" },
   )
+
+export const decayConversationMemories = (
+  conversationId: string,
+): Promise<DecayMemoriesResultDTO> =>
+  apiRequest(`/api/conversations/${conversationId}/memories/decay`, {
+    method: "POST",
+  })

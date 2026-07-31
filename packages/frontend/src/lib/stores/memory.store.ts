@@ -4,11 +4,17 @@ import type { MemoryChangeProposalDTO, ApplyProposalDecision } from "@workspace/
 
 import * as memoriesApi from "@/lib/api/memories"
 
+export interface LastDecayInfo {
+  deleted: number
+  at: string
+}
+
 export interface MemoryState {
   memories: MemoryDTO[]
   proposals: MemoryChangeProposalDTO[]
   loading: boolean
   error: string | null
+  lastDecay: LastDecayInfo | null
 
   loadMemories: (conversationId: string) => Promise<void>
   loadProposals: (conversationId: string) => Promise<void>
@@ -17,6 +23,7 @@ export interface MemoryState {
   deleteMemory: (conversationId: string, memoryId: string) => Promise<void>
   applyProposals: (conversationId: string, decisions: ApplyProposalDecision[]) => Promise<MemoryDTO[]>
   applyAllProposals: (conversationId: string) => Promise<MemoryDTO[]>
+  runDecay: (conversationId: string) => Promise<{ deleted: number }>
   reset: () => void
 }
 
@@ -25,6 +32,7 @@ export const useMemoryStore = create<MemoryState>((set) => ({
   proposals: [],
   loading: false,
   error: null,
+  lastDecay: null,
 
   loadMemories: async (conversationId) => {
     set({ loading: true, error: null })
@@ -81,5 +89,13 @@ export const useMemoryStore = create<MemoryState>((set) => ({
     return result
   },
 
-  reset: () => set({ memories: [], proposals: [], loading: false, error: null }),
+  runDecay: async (conversationId) => {
+    const result = await memoriesApi.decayConversationMemories(conversationId)
+    set({ lastDecay: { deleted: result.deleted, at: new Date().toISOString() } })
+    const memories = await memoriesApi.listMemories(conversationId)
+    set({ memories })
+    return result
+  },
+
+  reset: () => set({ memories: [], proposals: [], loading: false, error: null, lastDecay: null }),
 }))

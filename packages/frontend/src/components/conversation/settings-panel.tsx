@@ -20,6 +20,7 @@ import { SummaryViewer } from "../summary/summary-viewer"
 import { InferenceParamsCard } from "./inference-params-card"
 import { SummarySettingsCard } from "./summary-settings-card"
 import { MemoryModeCard } from "../memory/memory-mode-card"
+import { MemoryDecayCard } from "../memory/memory-decay-card"
 import { ProposalList } from "../memory/proposal-list"
 import { MemoryList } from "../memory/memory-list"
 import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
@@ -76,7 +77,7 @@ export function SettingsPanel({
     scope: conversationId,
     key: "settings-accordion",
     defaultValue: ["mode", "memories"],
-    validateItem: (v) => v === "mode" || v === "proposals" || v === "memories" || v === "summaries",
+    validateItem: (v) => v === "mode" || v === "proposals" || v === "memories" || v === "summaries" || v === "decay",
   })
 
   const isDefaultValues =
@@ -222,6 +223,16 @@ export function SettingsPanel({
                         onSummaryFrequencyChange={setSummaryFrequency}
                       />
                       <SummaryViewer conversationId={conversationId} summaryFrequency={summaryFrequency} />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="decay">
+                    <AccordionTrigger>Auto-degradación de memorias</AccordionTrigger>
+                    <AccordionContent>
+                      <MemoryDecayCard
+                        conversationId={conversationId}
+                        current={current}
+                        onSettingsChanged={onSettingsChanged}
+                      />
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="memories">
