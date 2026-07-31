@@ -1,7 +1,8 @@
 # S9 — Pulido transversal (Plan)
 
-**Estado:** 🔄 En progreso  
+**Estado:** ✅ Completado (v1.0.0 publicado)  
 **Inicio:** 2026-07-28  
+**Cierre:** 2026-07-31  
 
 ## Objetivo
 
@@ -45,50 +46,9 @@ La versión 1.0 cumple los criterios de éxito del MVP con una experiencia estab
 
 ---
 
-## Tareas para Post-MVP
+## Post-MVP backlog
 
-Las siguientes funcionalidades quedan fuera del alcance de v1.0 pero se registran aquí para planificación futura.
-
-### Imágenes y medios (Post-MVP)
-
-| # | Propuesta | Dependencias |
-|---|-----------|-------------|
-| PM.1 | Importar imágenes para guardarlas en la BDD (no solo links) para la foto de perfil. | Nueva columna/tabla, storage |
-| PM.2 | Añadir recortador de imágenes para la foto de perfil. | PM.1 |
-| PM.3 | Compresor de imágenes para la imagen de fondo y recortador para sección cuadrada. | PM.1 |
-| PM.4 | Modificar imagen de perfil sin crear una nueva versión del personaje. | PM.1 |
-| PM.5 | Permitir elegir imagen de fondo para el chat (por defecto la foto de perfil), con modos de muestreo (rellenar, recortar, etc.). | PM.1 |
-
-### Agrupación y navegación (Post-MVP)
-
-| # | Propuesta | Dependencias |
-|---|-----------|-------------|
-| PM.6 | Agrupar conversaciones por personaje en una sola card. Usar ContextMenu para submenús: crear conversación eligiendo versión, editar personaje, elegir conversación asociada (ordenada por más reciente). Opción "Ir a la más reciente". | — |
-| PM.7 | Ramas de historia en una misma conversación con interfaz visual. | — |
-
-### Exportación / Importación (Post-MVP)
-
-| # | Propuesta | Dependencias |
-|---|-----------|-------------|
-| PM.8 | Importar personaje desde archivo (drag & drop o buscador de archivos). | — |
-| PM.9 | Exportar conversaciones. | — |
-| PM.10 | Gestor de exportación: exportar definición del personaje, versiones específicas, conversaciones asociadas, memoria dinámica, resúmenes, configuraciones. Accesible desde ContextMenu de la lista de personajes. | PM.8, PM.9 |
-
-### Multi-idioma y temas (Post-MVP)
-
-| # | Propuesta | Dependencias |
-|---|-----------|-------------|
-| PM.11 | Soporte multi-idioma, por defecto inglés. | — |
-| PM.12 | Temas de colores preestablecidos. | — |
-| PM.13 | Pantalla de bienvenida que pregunte idioma y tema en el primer inicio. | PM.11, PM.12 |
-| PM.14 | Menubar superior para elegir idioma y tema. | PM.11, PM.12 |
-
-### Nuevas funcionalidades (Post-MVP)
-
-| # | Propuesta | Dependencias |
-|---|-----------|-------------|
-| PM.15 | Personajes que el usuario representa (nombre y descripción, no requieren versión). | — |
-| PM.16 | Navegación de historial de regeneraciones deslizando la burbuja del mensaje hacia los lados (mobile). | S9.16 |
+Las funcionalidades Post-MVP se movieron a [`PM-backlog.md`](./PM-backlog.md). Cuando un PM se promueva a un slice (`S11`, `S12`, …), se documentará ahí con criterios de aceptación y notas de implementación.
 
 ---
 
