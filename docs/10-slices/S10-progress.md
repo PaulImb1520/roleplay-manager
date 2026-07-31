@@ -1,6 +1,6 @@
 # S10 — Auto-degradación de memorias
 
-**Estado:** pendiente.
+**Estado:** pendiente (diseño completo, listo para implementar).
 **Inicio previsto:** 2026-07-31.
 
 ## Objetivo
@@ -9,57 +9,73 @@ Añadir un mecanismo programado para eliminar automáticamente memorias dinámic
 
 ## Decisiones clave
 
-- **Trigger**: el barrido se ejecuta al final del use case `send-message` (después de persistir la respuesta del asistente). No se introduce una tarea programada externa; basta con barrer tras cada turno.
-- **Modo por defecto**: silencioso. El usuario no es interrumpido; las memorias que cumplen el criterio se eliminan sin mostrar un diálogo. Un toggle en el panel de ajustes permite cambiar a modo "manual" (solo se eliminan cuando el usuario pulsa un botón).
-- **Reglas configurables** (por conversación, almacenadas en el DTO de configuración):
-  - `priorityFloor` (0..1, por defecto `0.3`): prioridad mínima para sobrevivir al barrido. Memorias con `priority < floor` son candidatas.
-  - `ageThreshold` (entero, mensajes, por defecto `30`): número de mensajes desde la última actualización de la memoria. Memorias no actualizadas en los últimos N mensajes son candidatas.
-  - Ambas condiciones deben cumplirse (AND) para que la memoria se elimine.
-- **Alcance**: solo memorias dinámicas (`memoryMode === "auto"` o `"manual"`). No afecta a memorias estáticas del personaje.
-- **Sin cambios de schema**: el barrido no requiere columnas nuevas. La prioridad y la fecha de actualización ya están en la tabla de memorias (`priority`, `updatedAt`).
-- **Transaccional**: el barrido se ejecuta dentro de una transacción Drizzle. Si falla, la conversación queda como estaba.
-- **Límite de borrado por barrido**: como salvaguarda, máximo 100 memorias por barrido. Si hay más candidatas, se eliminan las 100 de menor `priority` y el resto sobrevive hasta el siguiente turno.
+- **Escala de prioridad**: entero 1..10 (ya existente en la entidad `Memory`). Valor por defecto al crear: 5.
+- **Umbral de importancia** (`priorityThreshold`): entero 1..10, por defecto **3**. Las memorias con `priority <= threshold` se **excluyen del prompt** enviado al modelo. Esta exclusión es una función independiente de la degradación y **permanece activa siempre** (no se puede desactivar; solo se configura el umbral).
+- **Modo de degradación por conversación** (`memoryDecayMode`): `"silent" | "manual" | "off"`, por defecto **`"silent"`**. Cada conversación ajusta su configuración localmente.
+  - `silent` — el barrido se ejecuta automáticamente al final de `send-message`, sin intervención del usuario.
+  - `manual` — las memorias candidatas solo se eliminan cuando el usuario lo solicita (botón "Ejecutar limpieza" o endpoint).
+  - `off` — **degradación desactivada**: no se elimina ninguna memoria automática ni manualmente. La exclusión del prompt (por umbral) sigue activa.
+- **Regla de candidatura a eliminación** (AND):
+  1. `priority <= priorityThreshold`.
+  2. No actualizada en los últimos `ageThreshold` mensajes (por defecto **30**): `updatedAt` anterior al `createdAt` del mensaje N-ésimo más reciente (el mensaje en la posición `totalMessages - ageThreshold`).
+- **Sin degradación gradual**: no se baja la prioridad progresivamente; solo se elimina. Evita el problema de que `Memory.update()` refresca `updatedAt` (imposibilitaría calcular la antigüedad).
+- **Límite por barrido**: máximo 100 memorias eliminadas por ejecución, las de menor prioridad primero. El resto sobrevive hasta el siguiente turno.
+- **Transaccional**: el barrido se ejecuta en una transacción Drizzle. Si falla, la conversación queda intacta.
+- **Solo memorias dinámicas**: la degradación no afecta a propuestas de cambio (`memory_change_proposals`) ni a otro recurso.
+- **Filtro en todas las rutas de generación**: la exclusión por umbral se aplica en `send-message`, `continue-conversation`, `regenerate-reply` y `generate-summary` (hoy no existe ningún filtro; hay que añadirlo).
 
 ## Sub-slices
 
-- **S10.a — Configuración**: añadir `MemoryDecayConfig` (value object) + columna en el JSON de configuración de la conversación. Default: `{ priorityFloor: 0.3, ageThreshold: 30, mode: "silent" }`.
-- **S10.b — Use case de barrido**: `DecayConversationMemoryUseCase` que recibe `(conversationId, config)` y devuelve `{ deleted: number }`. Recibe `MemoryRepository` y `ConversationRepository` por puerto.
-- **S10.c — Hook en `send-message`**: tras persistir la respuesta, llamar al use case de barrido si la conversación tiene `memoryMode !== "off"`.
-- **S10.d — Endpoint manual**: `POST /api/conversations/:id/memory/decay` para el modo "manual". Devuelve `{ deleted: number }`.
-- **S10.e — UI de configuración**: nueva sección "Memoria dinámica" en `SettingsPanel` con slider de prioridad (0–1), input numérico de edad, toggle de modo (silent/manual), y botón "Ejecutar limpieza ahora".
-- **S10.f — Indicador de última limpieza**: badge en `MemoryViewer` con "Última limpieza: hace N mensajes (X memorias eliminadas)".
+- **S10.a — Configuración por conversación**: 3 columnas nuevas en `conversations` (`memoryDecayMode`, `memoryDecayThreshold`, `memoryDecayAgeThreshold`) + campos en la entidad `Conversation` con mutators (`withMemoryDecayMode`, `withMemoryDecayThreshold`, `withMemoryDecayAgeThreshold`) + defaults en `create-conversation` + mapping en `DrizzleConversationRepository` + DTO/schema de `update-conversation-settings` + route.
+- **S10.b — Filtro de prompt por umbral**: helper de aplicación que filtra `Memory[]` con `priority <= threshold`, aplicado en los 4 use cases de generación (send, continue, regenerate, summary).
+- **S10.c — Use case de barrido**: `DecayConversationMemoryUseCase` que recibe `(conversationId, overrides?)` y devuelve `{ deleted: number }`. Orquesta `ConversationRepository`, `MemoryRepository` (find + delete) y `MessageRepository` (para el cutoff de antigüedad).
+- **S10.d — Hook en `send-message`**: tras el bloque de auto-aplicación de propuestas (después de la línea 359), si `memoryDecayMode === "silent"`, ejecutar el barrido.
+- **S10.e — Endpoint manual**: `POST /api/conversations/:id/memory/decay` para modo `manual`. Devuelve `{ deleted: number }`.
+- **S10.f — Frontend**: sección "Memoria dinámica" en el panel de ajustes de la conversación (modo silent/manual/off, umbral 1–10, edad en mensajes) + botón "Ejecutar limpieza ahora" + refresco automático de la lista de memorias tras el barrido + badge de última limpieza en `MemoryViewer`.
 
 ## Cambios en schema (Drizzle)
 
-Sin cambios. La tabla `memories` ya tiene `priority` y `updatedAt`; la tabla `conversations` ya tiene `settings` (JSON) donde se guarda la configuración.
+Migración `0006` — columnas nuevas en `conversations`:
+
+```ts
+memoryDecayMode: text("memory_decay_mode", { enum: ["silent", "manual", "off"] })
+  .notNull()
+  .default("silent"),
+memoryDecayThreshold: integer("memory_decay_threshold").notNull().default(3),
+memoryDecayAgeThreshold: integer("memory_decay_age_threshold").notNull().default(30),
+```
 
 ## Nuevos endpoints
 
-- `POST /api/conversations/:id/memory/decay` — barrido manual. Body: opcional `{ priorityFloor?, ageThreshold? }` (si se omite, usa la configuración de la conversación). Respuesta: `{ deleted: number }`.
+- `POST /api/conversations/:id/memory/decay` — barrido manual. Respuesta: `{ deleted: number }`. Si el modo es `"off"`, devuelve `{ deleted: 0 }`.
+- `PATCH /api/conversations/:id/settings` — se extiende con `memoryDecayMode`, `memoryDecayThreshold`, `memoryDecayAgeThreshold` (opcionales).
 
 ## Cambios frontend
 
-- `lib/api/memories.ts`: añadir `decayConversation(conversationId, overrides?)`.
-- `lib/api/conversations.ts`: añadir `updateMemoryDecayConfig(conversationId, config)`.
-- `components/settings/memory-settings.tsx` (nuevo): formulario de configuración de barrido.
-- `components/settings/settings-panel.tsx`: incluir la nueva sección.
-- `components/memory/memory-viewer.tsx`: badge de "última limpieza".
-- `lib/stores/memory.store.ts`: acción `runDecay()`.
+- `lib/api/memories.ts`: añadir `decayConversation(conversationId)`.
+- `lib/api/conversations.ts`: extender `updateConversationSettings` con los campos nuevos.
+- `components/conversation/settings-panel.tsx`: nueva sección "Memoria dinámica" (select de modo, input umbral 1–10, input edad ≥ 1, botón "Ejecutar limpieza ahora").
+- `components/memory/memory-viewer.tsx`: refrescar la lista automáticamente tras el barrido + badge "Última limpieza: hace N mensajes (X eliminadas)".
+- `lib/stores/memory.store.ts`: acción `runDecay()` que llama a la API y refresca.
 
-## Pendientes
+## Pendientes resueltos (2026-07-31)
 
-- [ ] Decidir si el toggle de modo (silent/manual) se almacena en la conversación o en un setting global. (Decisión provisional: por conversación, igual que `memoryMode`.)
-- [ ] Definir el comportamiento cuando el modo es "manual" y el usuario no ha ejecutado la limpieza en N mensajes: ¿se acumula basura? (Decisión provisional: sí, el usuario es responsable. El badge en `MemoryViewer` indica cuántas candidatas hay.)
-- [ ] Validar la interacción con el `MemoryViewer`: tras el barrido, refrescar la lista automáticamente.
-- [ ] Localización de los strings nuevos (i18n se pospone a PM.11).
+1. **¿Modo silent/manual por conversación o global?** — Por conversación. El modo por defecto es `silent` y cada chat ajusta su configuración localmente (settings panel de la conversación).
+2. **¿Comportamiento en modo manual?** — El usuario es responsable de ejecutar la limpieza. **Importante**: la exclusión de memorias con `priority <= threshold` del prompt se mantiene activa en todos los modos; el modo solo controla la *eliminación*, nunca el filtrado.
+3. **¿Refresco del MemoryViewer tras el barrido?** — Sí, la lista se refresca automáticamente después de cualquier ejecución del barrido (automática o manual).
+4. **¿Toggle para desactivar la degradación?** — Sí: modo `"off"`. Desactiva solo la eliminación; el filtrado del prompt por umbral sigue activo.
+5. **¿Umbral por defecto?** — 3: se descartan (del prompt y como candidatas a eliminación) las memorias con importancia ≤ 3. La escala es 1..10 (ya existente).
+6. **¿i18n de los strings nuevos?** — Se pospone a PM.11 (multi-idioma).
 
 ## Criterios de aceptación de S10
 
-- [ ] `DecayConversationMemoryUseCase` elimina memorias con `priority < floor` Y `messagesSinceUpdate >= ageThreshold`.
-- [ ] El barrido automático se ejecuta al final de `send-message` cuando `memoryMode !== "off"`.
-- [ ] El endpoint `POST /api/conversations/:id/memory/decay` funciona y devuelve el conteo correcto.
-- [ ] La UI de configuración permite ajustar `priorityFloor` y `ageThreshold`.
-- [ ] El badge en `MemoryViewer` muestra la última limpieza y el conteo.
-- [ ] Tests: use case del barrido (criterios, casos límite, transaccionalidad).
+- [ ] `DecayConversationMemoryUseCase` elimina memorias con `priority <= threshold` Y no actualizadas en los últimos `ageThreshold` mensajes (cutoff = createdAt del mensaje N-ésimo más reciente).
+- [ ] El barrido automático se ejecuta al final de `send-message` solo cuando `memoryDecayMode === "silent"`.
+- [ ] Modo `"manual"`: solo se elimina vía endpoint/botón. Modo `"off"`: nunca se elimina.
+- [ ] El filtro de prompt excluye memorias con `priority <= threshold` en send, continue, regenerate y summary, en todos los modos.
+- [ ] El endpoint `POST /api/conversations/:id/memory/decay` devuelve el conteo correcto.
+- [ ] La UI permite ajustar modo, umbral (1–10) y edad (≥ 1) por conversación.
+- [ ] `MemoryViewer` se refresca automáticamente tras el barrido y muestra la última limpieza.
+- [ ] Tests: use case del barrido (criterios, límite 100, límites de escala, transaccionalidad).
 - [ ] `pnpm check` y `pnpm --filter @workspace/backend test` pasan.
 - [ ] Versión bumped a `1.1.0` con entrada en `CHANGELOG.md`.
