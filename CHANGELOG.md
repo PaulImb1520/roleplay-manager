@@ -11,23 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- S1 — Configurar proveedor por defecto (registro de proveedores de IA y configuración inicial).
-- S2 — Gestión de personajes + shell de la aplicación (CRUD de personajes, navegación y layout).
-- S3 — Envío y recepción de mensajes (streaming SSE, estado de generación).
-- S4 — Edición de personajes y carga de conversaciones.
-- S5 — Regenerar, editar, retroceder, eliminar, continuar y ciclaje de alternativas de respuesta.
-- S6 — Memoria dinámica con modos Auto/Manual.
-- S7 — Resúmenes (synopsis) de conversaciones largas.
-- S8 — Inspección de contexto (prompt) y títulos de conversación.
-- S9 — Pulido transversal para v1.0 (16 tareas de UX, bugs, validación, ordenamiento y responsive).
+- S1 — Configure default provider (AI provider registry and initial setup).
+- S2 — Character management + app shell (character CRUD, navigation, and layout).
+- S3 — Send and receive messages (SSE streaming, generation state).
+- S4 — Character editing and conversation loading.
+- S5 — Regenerate, edit, rewind, delete, continue, and response alternative cycling.
+- S6 — Dynamic memory with Auto/Manual modes.
+- S7 — Summaries (synopsis) of long conversations.
+- S8 — Context (prompt) inspection and conversation titles.
+- S9 — Cross-cutting polish for v1.0 (16 tasks: UX, bugs, validation, sorting, responsive).
 
 ### Changed
 
-- Licencia del proyecto: AGPL-3.0-or-later.
-- Scripts de instalación y arranque para usuarios finales (`scripts/install.*` y `scripts/start.*`).
+- Project license: AGPL-3.0-or-later.
+- Install and startup scripts for end users (`scripts/install.*` and `scripts/start.*`).
 
 ### Fixed
 
-- Historial de regeneraciones: persistencia del contenido original y contador de versiones (S9.10.5).
-- Hydration mismatch en el hook `usePersistedValue` (draft del chat).
-- Pantalla de proveedores: error de O-llama al entrar y UX general (S9.6).
+- Regeneration history: persistence of the original content and version counter (S9.10.5).
+- Hydration mismatch in the `usePersistedValue` hook (chat draft).
+- Providers screen: O-llama error on load and general UX (S9.6).
