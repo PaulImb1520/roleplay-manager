@@ -91,6 +91,18 @@ export class PromptContextBuilderImpl implements PromptContextBuilder {
       systemParts.push('```')
       systemParts.push("")
       systemParts.push("Operaciones válidas: CREATE, UPDATE, DELETE. Para UPDATE o DELETE debes incluir el id de la memoria existente como \"targetMemoryId\". Si no hay cambios que proponer, no incluyas el bloque.")
+    } else {
+      systemParts.push("")
+      systemParts.push("## Propuestas de memoria (alternativa)")
+      systemParts.push(
+        "Si no puedes llamar a la herramienta `propose_memory_changes`, también puedes proponer cambios sobre la memoria dinámica al final de tu mensaje usando este formato:",
+      )
+      systemParts.push("")
+      systemParts.push('```memory_proposals')
+      systemParts.push('[ { "operation": "CREATE", "actor": "...", "title": "...", "description": "...", "priority": 5 } ]')
+      systemParts.push('```')
+      systemParts.push("")
+      systemParts.push('Operaciones válidas: CREATE, UPDATE, DELETE. Para UPDATE o DELETE debes incluir el id de la memoria existente como "targetMemoryId".')
     }
 
     systemParts.push("")

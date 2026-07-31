@@ -207,7 +207,7 @@ describe("PromptContextBuilderImpl", () => {
     expect(result.systemPrompt).toContain("```memory_proposals")
   })
 
-  it("omite seccion de propuestas de memoria cuando enableMemoryProposalTool=true", async () => {
+  it("omite las instrucciones completas cuando enableMemoryProposalTool=true pero incluye hint compacto", async () => {
     const builder = new PromptContextBuilderImpl()
     const result = await builder.build({
       characterVersion: baseVersion,
@@ -217,7 +217,9 @@ describe("PromptContextBuilderImpl", () => {
     })
 
     expect(result.systemPrompt).not.toContain("Propuestas de modificación de memoria")
-    expect(result.systemPrompt).not.toContain("```memory_proposals")
+    expect(result.systemPrompt).toContain("Propuestas de memoria (alternativa)")
+    expect(result.systemPrompt).toContain("propose_memory_changes")
+    expect(result.systemPrompt).toContain("```memory_proposals")
   })
 
   it("filtra OOC de mensajes del usuario previos al ultimo cuando filterOocFromHistory=true", async () => {
