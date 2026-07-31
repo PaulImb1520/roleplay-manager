@@ -95,6 +95,7 @@ Las siguientes funcionalidades quedan fuera del alcance de v1.0 pero se registra
 ## Criterios de aceptación de S9
 
 - [x] Todas las tareas S9.1 a S9.16 marcadas como completadas.
-- [ ] `pnpm check` pasa en todo el workspace.
-- [ ] No hay regresiones en los slices anteriores (S1–S8).
-- [ ] La experiencia del usuario es estable y predecible.
+- [x] `pnpm check` pasa en todo el workspace.
+- [x] No hay regresiones en los slices anteriores (S1–S8).
+- [x] La experiencia del usuario es estable y predecible.
+- [x] Versión oficial **1.0.0** publicada (tag `v1.0.0`, `CHANGELOG.md`, bump de `package.json`).
