@@ -10,6 +10,7 @@ import type { Database } from "../../../../config/database"
 import type {
   ConversationSettingsUpdate,
   ConversationStatus,
+  MemoryDecayMode,
   MemoryProposalMode,
   TitleSource,
 } from "@workspace/shared/types/conversation"
@@ -37,6 +38,10 @@ const toConversation = (row: ConversationRow): Conversation =>
     presencePenalty: row.presencePenalty ?? 0,
     stopSequences: row.stopSequences ?? [],
     memoryProposalMode: (row.memoryProposalMode ?? "auto") as MemoryProposalMode,
+    memoryDecayMode: (row.memoryDecayMode ?? "silent") as MemoryDecayMode,
+    memoryDecayThreshold: row.memoryDecayThreshold ?? 3,
+    memoryDecayAgeThreshold: row.memoryDecayAgeThreshold ?? 30,
+    memoryDecaySpeed: row.memoryDecaySpeed ?? 10,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   })
@@ -74,6 +79,10 @@ export class DrizzleConversationRepository implements ConversationRepository {
       frequencyPenalty: conversation.frequencyPenalty,
       presencePenalty: conversation.presencePenalty,
       stopSequences: conversation.stopSequences,
+      memoryDecayMode: conversation.memoryDecayMode,
+      memoryDecayThreshold: conversation.memoryDecayThreshold,
+      memoryDecayAgeThreshold: conversation.memoryDecayAgeThreshold,
+      memoryDecaySpeed: conversation.memoryDecaySpeed,
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
     })
@@ -170,6 +179,14 @@ export class DrizzleConversationRepository implements ConversationRepository {
       values.stopSequences = JSON.stringify(settings.stopSequences)
     if (settings.memoryProposalMode !== undefined)
       values.memoryProposalMode = settings.memoryProposalMode
+    if (settings.memoryDecayMode !== undefined)
+      values.memoryDecayMode = settings.memoryDecayMode
+    if (settings.memoryDecayThreshold !== undefined)
+      values.memoryDecayThreshold = settings.memoryDecayThreshold
+    if (settings.memoryDecayAgeThreshold !== undefined)
+      values.memoryDecayAgeThreshold = settings.memoryDecayAgeThreshold
+    if (settings.memoryDecaySpeed !== undefined)
+      values.memoryDecaySpeed = settings.memoryDecaySpeed
 
     await this.db
       .update(conversations)

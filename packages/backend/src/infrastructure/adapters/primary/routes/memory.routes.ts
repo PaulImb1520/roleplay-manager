@@ -7,6 +7,7 @@ import type { DeleteMemoryUseCase } from "../../../../application/use-cases/memo
 import type { ListProposalsUseCase } from "../../../../application/use-cases/memory/list-proposals.use-case"
 import type { ApplyMemoryChangesUseCase } from "../../../../application/use-cases/memory/apply-memory-changes.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../../../../application/use-cases/memory/apply-all-memory-changes.use-case"
+import type { DecayConversationMemoryUseCase } from "../../../../application/use-cases/memory/decay-conversation-memory.use-case"
 import { validate } from "../middlewares/validation"
 import { z } from "zod"
 
@@ -49,6 +50,7 @@ export const buildMemoryRouter = (deps: {
   listProposals: ListProposalsUseCase
   applyMemoryChanges: ApplyMemoryChangesUseCase
   applyAllMemoryChanges: ApplyAllMemoryChangesUseCase
+  decayMemories: DecayConversationMemoryUseCase
 }): Router => {
   const router = Router()
 
@@ -144,6 +146,22 @@ export const buildMemoryRouter = (deps: {
         const result = await deps.applyAllMemoryChanges.execute({
           conversationId: id,
           processedBy: "user",
+        })
+        res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.post(
+    "/conversations/:id/memories/decay",
+    async (req, res, next) => {
+      try {
+        const { id } = req.params as { id: string }
+        const result = await deps.decayMemories.execute({
+          conversationId: id,
+          manual: true,
         })
         res.json(result)
       } catch (error) {

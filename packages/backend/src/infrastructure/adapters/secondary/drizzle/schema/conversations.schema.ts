@@ -35,6 +35,14 @@ export const conversations = sqliteTable("conversations", {
   })
     .notNull()
     .default("auto"),
+  memoryDecayMode: text("memory_decay_mode", {
+    enum: ["silent", "manual", "off"],
+  })
+    .notNull()
+    .default("silent"),
+  memoryDecayThreshold: integer("memory_decay_threshold").notNull().default(3),
+  memoryDecayAgeThreshold: integer("memory_decay_age_threshold").notNull().default(30),
+  memoryDecaySpeed: integer("memory_decay_speed").notNull().default(10),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 })

@@ -30,6 +30,10 @@ const buildConversationRepo = (exists: boolean): ConversationRepository => ({
           presencePenalty: 0,
           stopSequences: [],
           status: "active",
+          memoryDecayMode: "silent",
+          memoryDecayThreshold: 3,
+          memoryDecayAgeThreshold: 30,
+          memoryDecaySpeed: 10,
         } as never)
       : null,
   findByIdWithMessages: async () => null,

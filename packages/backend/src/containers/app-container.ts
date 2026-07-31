@@ -48,6 +48,7 @@ import { CycleAlternativeUseCase } from "../application/use-cases/conversation/c
 import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
 import { ApplyMemoryChangesUseCase } from "../application/use-cases/memory/apply-memory-changes.use-case"
 import { ApplyAllMemoryChangesUseCase } from "../application/use-cases/memory/apply-all-memory-changes.use-case"
+import { DecayConversationMemoryUseCase } from "../application/use-cases/memory/decay-conversation-memory.use-case"
 import { CreateMemoryUseCase } from "../application/use-cases/memory/create-memory.use-case"
 import { UpdateMemoryUseCase } from "../application/use-cases/memory/update-memory.use-case"
 import { DeleteMemoryUseCase } from "../application/use-cases/memory/delete-memory.use-case"
@@ -128,6 +129,7 @@ export interface AppContainer {
   deleteMemory: DeleteMemoryUseCase
   listMemories: ListMemoriesUseCase
   listProposals: ListProposalsUseCase
+  decayMemories: DecayConversationMemoryUseCase
 }
 
 export interface BuildContainerOptions {
@@ -174,6 +176,13 @@ export const buildContainer = ({
     logger,
   )
 
+  const decayMemories = new DecayConversationMemoryUseCase(
+    conversationRepository,
+    memoryRepository,
+    messageRepository,
+    logger,
+  )
+
   const generateConversationTitle = new GenerateConversationTitleUseCase(
     conversationRepository,
     messageRepository,
@@ -211,6 +220,7 @@ export const buildContainer = ({
     summaryRepository,
     generateSummary,
     generateConversationTitle,
+    decayMemories,
   )
 
   const regenerateReply = new RegenerateReplyUseCase(
@@ -382,5 +392,6 @@ export const buildContainer = ({
     deleteMemory: new DeleteMemoryUseCase(memoryRepository),
     listMemories: new ListMemoriesUseCase(memoryRepository),
     listProposals: new ListProposalsUseCase(memoryChangeProposalRepository),
+    decayMemories,
   }
 }

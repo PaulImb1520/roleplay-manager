@@ -221,10 +221,15 @@ const buildGenerateConversationTitle = (): GenerateConversationTitleUseCase =>
   ({ execute: vi.fn() }) as unknown as GenerateConversationTitleUseCase
 
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+import type { DecayConversationMemoryUseCase } from "../memory/decay-conversation-memory.use-case"
 
 const applyAllMemoryChanges = {
   execute: async () => [],
 } as unknown as ApplyAllMemoryChangesUseCase
+
+const decayMemories = {
+  execute: async () => ({ deleted: 0 }),
+} as unknown as DecayConversationMemoryUseCase
 
 const memoryChangeProposalRepository = {
   create: async (p: any) => p,
@@ -258,6 +263,7 @@ describe("SendMessageUseCase", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     await expect(
@@ -286,6 +292,7 @@ describe("SendMessageUseCase", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     await expect(
@@ -314,6 +321,7 @@ describe("SendMessageUseCase", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const events: string[] = []
@@ -346,6 +354,7 @@ describe("SendMessageUseCase", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const chunks: string[] = []
@@ -383,6 +392,7 @@ describe("SendMessageUseCase", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -485,6 +495,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const gen = useCase.execute({
@@ -592,6 +603,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const gen = useCase.execute({
@@ -712,6 +724,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
@@ -812,6 +825,7 @@ describe("SendMessageUseCase — memory proposal flow", () => {
       buildSummaryRepo(),
       buildGenerateSummary(),
       buildGenerateConversationTitle(),
+      decayMemories,
     )
 
     const gen = useCase.execute({

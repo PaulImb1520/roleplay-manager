@@ -4,6 +4,8 @@ export type ConversationStatus = "active" | "archived"
 
 export type MemoryProposalMode = "auto" | "manual"
 
+export type MemoryDecayMode = "silent" | "manual" | "off"
+
 export type TitleSource = "auto" | "manual"
 
 export interface ConversationSummary {
@@ -38,6 +40,10 @@ export interface ConversationDetail {
   presencePenalty: number | null
   stopSequences: string[]
   memoryProposalMode: MemoryProposalMode
+  memoryDecayMode: MemoryDecayMode
+  memoryDecayThreshold: number
+  memoryDecayAgeThreshold: number
+  memoryDecaySpeed: number
   createdAt: string
   updatedAt: string
   messages: MessageDTO[]
@@ -56,6 +62,10 @@ export interface ConversationSettingsUpdate {
   presencePenalty?: number
   stopSequences?: string[]
   memoryProposalMode?: MemoryProposalMode
+  memoryDecayMode?: MemoryDecayMode
+  memoryDecayThreshold?: number
+  memoryDecayAgeThreshold?: number
+  memoryDecaySpeed?: number
   force?: boolean
 }
 

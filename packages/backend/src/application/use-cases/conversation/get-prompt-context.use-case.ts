@@ -5,6 +5,7 @@ import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
 import type { PromptContextBuilder } from "../../../domain/ports/prompt-context-builder"
 import type { PromptContextDTO, PromptContextMetadataDTO } from "@workspace/shared/types/context"
+import { filterMemoriesForPrompt } from "../../../lib/memory-decay"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
@@ -38,12 +39,13 @@ export class GetPromptContextUseCase {
     const summary = await this.summaryRepository.findLatestByConversationId(conversationId)
 
     const recentMessages = allMessages.slice(-conv.recentMessageCount)
+    const promptMemories = filterMemoriesForPrompt(conv, memories, allMessages)
 
     const context = await this.promptContextBuilder.build({
       characterVersion: characterVersion!,
       messages: recentMessages,
       recentMessageCount: conv.recentMessageCount,
-      memories,
+      memories: promptMemories,
       summary: summary ?? undefined,
       enableMemoryProposalTool: true,
       filterOocFromHistory: true,
@@ -60,7 +62,7 @@ export class GetPromptContextUseCase {
       characterName: characterVersion?.name ?? "Unknown",
       characterVersion: characterVersion?.versionNumber ?? 0,
       summaryId: summary?.id ?? null,
-      memoryCount: memories.length,
+      memoryCount: promptMemories.length,
       recentMessageCount: conv.recentMessageCount,
       totalContextMessages: context.messages.length,
       totalCharacters,

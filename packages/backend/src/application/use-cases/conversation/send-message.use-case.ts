@@ -21,7 +21,9 @@ import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
+import type { DecayConversationMemoryUseCase } from "../memory/decay-conversation-memory.use-case"
 import { extractProposals, createCleanStream, type CleanStreamState } from "../../../lib/memory-proposal-extractor"
+import { filterMemoriesForPrompt } from "../../../lib/memory-decay"
 import { propagateToolCalls, type ToolCallState } from "../../../lib/propagate-tool-calls"
 import {
   accumulateToolCallDeltas,
@@ -88,6 +90,7 @@ export class SendMessageUseCase {
     private readonly summaryRepository: SummaryRepository,
     private readonly generateSummary: GenerateSummaryUseCase,
     private readonly generateConversationTitle: GenerateConversationTitleUseCase,
+    private readonly decayMemories: DecayConversationMemoryUseCase,
   ) {}
 
   async *execute(input: SendMessageInput): AsyncGenerator<SendMessageEvent> {
@@ -172,7 +175,7 @@ export class SendMessageUseCase {
       characterVersion: characterResult.currentVersion,
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
-      memories,
+      memories: filterMemoriesForPrompt(conversation, memories, allMessages),
       summary: latestSummary ?? undefined,
       enableMemoryProposalTool: true,
       filterOocFromHistory: true,
@@ -352,6 +355,20 @@ export class SendMessageUseCase {
       } catch (error) {
         this.logger.error(
           "Failed to auto-apply memory proposals",
+          error as Error,
+          { conversationId: input.conversationId },
+        )
+      }
+    }
+
+    if (conversation.memoryDecayMode === "silent") {
+      try {
+        await this.decayMemories.execute({
+          conversationId: input.conversationId,
+        })
+      } catch (error) {
+        this.logger.error(
+          "Failed to run memory decay sweep",
           error as Error,
           { conversationId: input.conversationId },
         )

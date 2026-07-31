@@ -15,6 +15,7 @@ import { Summary } from "../../../domain/entities/summary.entity"
 import type { PromptContext, PromptContextMessage } from "../../../domain/value-objects/prompt-context"
 import type { Memory } from "../../../domain/entities/memory.entity"
 import type { Message } from "../../../domain/entities/message.entity"
+import { filterMemoriesForPrompt } from "../../../lib/memory-decay"
 
 interface GenerateSummaryResult {
   summary: SummaryDTO
@@ -86,7 +87,7 @@ export class GenerateSummaryUseCase {
     const context = await this.buildSummaryContext({
       newMessages,
       previousSummaryContent,
-      memories,
+      memories: filterMemoriesForPrompt(conversation, memories, allMessages),
       characterName: characterResult.currentVersion.name,
     })
 

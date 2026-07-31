@@ -20,6 +20,7 @@ import type { ProviderInstanceRepository } from "../../../domain/ports/provider-
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import type { ApplyAllMemoryChangesUseCase } from "../memory/apply-all-memory-changes.use-case"
 import { extractProposals, createCleanStream, type CleanStreamState } from "../../../lib/memory-proposal-extractor"
+import { filterMemoriesForPrompt } from "../../../lib/memory-decay"
 import { propagateToolCalls, type ToolCallState } from "../../../lib/propagate-tool-calls"
 import {
   accumulateToolCallDeltas,
@@ -143,7 +144,7 @@ export class ContinueConversationUseCase {
       characterVersion: characterResult.currentVersion,
       messages: allMessages,
       recentMessageCount: conversation.recentMessageCount,
-      memories,
+      memories: filterMemoriesForPrompt(conversation, memories, allMessages),
       summary: latestSummary ?? undefined,
       enableMemoryProposalTool: true,
       filterOocFromHistory: true,

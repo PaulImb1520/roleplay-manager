@@ -93,6 +93,7 @@ export const buildServer = ({
       listProposals: container.listProposals,
       applyMemoryChanges: container.applyMemoryChanges,
       applyAllMemoryChanges: container.applyAllMemoryChanges,
+      decayMemories: container.decayMemories,
     }),
   )
   app.use(

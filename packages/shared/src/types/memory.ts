@@ -24,3 +24,7 @@ export type UpdateMemoryInput = {
   description?: string
   priority?: number
 }
+
+export type DecayMemoriesResultDTO = {
+  deleted: number
+}

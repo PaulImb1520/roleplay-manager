@@ -1,4 +1,8 @@
-import type { ConversationStatus, TitleSource } from "@workspace/shared/types/conversation"
+import type {
+  ConversationStatus,
+  MemoryDecayMode,
+  TitleSource,
+} from "@workspace/shared/types/conversation"
 
 export type MemoryProposalMode = "auto" | "manual"
 
@@ -20,15 +24,32 @@ export interface ConversationProps {
   presencePenalty: number
   stopSequences: string[]
   memoryProposalMode: MemoryProposalMode
+  memoryDecayMode?: MemoryDecayMode
+  memoryDecayThreshold?: number
+  memoryDecayAgeThreshold?: number
+  memoryDecaySpeed?: number
   createdAt: Date
   updatedAt: Date
+}
+
+export const DEFAULT_MEMORY_DECAY = {
+  mode: "silent" as MemoryDecayMode,
+  threshold: 3,
+  ageThreshold: 30,
+  speed: 10,
 }
 
 export class Conversation {
   private constructor(private readonly props: ConversationProps) {}
 
   static create(props: ConversationProps): Conversation {
-    return new Conversation(props)
+    return new Conversation({
+      ...props,
+      memoryDecayMode: props.memoryDecayMode ?? DEFAULT_MEMORY_DECAY.mode,
+      memoryDecayThreshold: props.memoryDecayThreshold ?? DEFAULT_MEMORY_DECAY.threshold,
+      memoryDecayAgeThreshold: props.memoryDecayAgeThreshold ?? DEFAULT_MEMORY_DECAY.ageThreshold,
+      memoryDecaySpeed: props.memoryDecaySpeed ?? DEFAULT_MEMORY_DECAY.speed,
+    })
   }
 
   get id(): string { return this.props.id }
@@ -48,6 +69,10 @@ export class Conversation {
   get presencePenalty(): number { return this.props.presencePenalty }
   get stopSequences(): string[] { return this.props.stopSequences }
   get memoryProposalMode(): MemoryProposalMode { return this.props.memoryProposalMode }
+  get memoryDecayMode(): MemoryDecayMode { return this.props.memoryDecayMode as MemoryDecayMode }
+  get memoryDecayThreshold(): number { return this.props.memoryDecayThreshold as number }
+  get memoryDecayAgeThreshold(): number { return this.props.memoryDecayAgeThreshold as number }
+  get memoryDecaySpeed(): number { return this.props.memoryDecaySpeed as number }
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
 

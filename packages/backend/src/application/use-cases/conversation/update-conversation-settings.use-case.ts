@@ -127,6 +127,15 @@ export class UpdateConversationSettingsUseCase {
     if (input.summaryFrequency !== undefined) {
       input.summaryFrequency = Math.max(1, input.summaryFrequency)
     }
+    if (input.memoryDecayThreshold !== undefined) {
+      input.memoryDecayThreshold = Math.min(10, Math.max(1, Math.round(input.memoryDecayThreshold)))
+    }
+    if (input.memoryDecayAgeThreshold !== undefined) {
+      input.memoryDecayAgeThreshold = Math.max(1, Math.round(input.memoryDecayAgeThreshold))
+    }
+    if (input.memoryDecaySpeed !== undefined) {
+      input.memoryDecaySpeed = Math.max(1, Math.round(input.memoryDecaySpeed))
+    }
 
     const updated = await this.conversationRepository.updateSettings(
       conversationId,
@@ -161,6 +170,10 @@ export class UpdateConversationSettingsUseCase {
       presencePenalty: updated.presencePenalty,
       stopSequences: updated.stopSequences,
       memoryProposalMode: updated.memoryProposalMode,
+      memoryDecayMode: updated.memoryDecayMode,
+      memoryDecayThreshold: updated.memoryDecayThreshold,
+      memoryDecayAgeThreshold: updated.memoryDecayAgeThreshold,
+      memoryDecaySpeed: updated.memoryDecaySpeed,
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
       messages: [],
