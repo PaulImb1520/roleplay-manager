@@ -1,7 +1,8 @@
 # S10 — Auto-degradación de memorias
 
-**Estado:** pendiente (diseño completo, listo para implementar).
-**Inicio previsto:** 2026-07-31.
+**Estado:** ✅ Completado (v1.1.0 publicado)
+**Inicio:** 2026-07-31  
+**Cierre:** 2026-07-31
 
 ## Objetivo
 
@@ -77,14 +78,14 @@ memoryDecaySpeed: integer("memory_decay_speed").notNull().default(10),
 
 ## Criterios de aceptación de S10
 
-- [ ] `DecayConversationMemoryUseCase` elimina memorias con `effectivePriority <= threshold` Y `turnsSinceUpdate >= ageThreshold` (máximo 100 por barrido, menor prioridad efectiva primero).
-- [ ] `effectivePriority` se calcula con `max(1, priority - floor(turnsSinceUpdate / decaySpeed))`.
-- [ ] El barrido automático se ejecuta al final de `send-message` solo cuando `memoryDecayMode === "silent"`.
-- [ ] Modo `"manual"`: solo se elimina vía endpoint/botón (todas las candidatas) o individualmente. Modo `"off"`: nunca se elimina.
-- [ ] El filtro de prompt excluye memorias con `effectivePriority <= threshold` en send, continue, regenerate y summary, en todos los modos.
-- [ ] El endpoint `POST /api/conversations/:id/memory/decay` devuelve el conteo correcto.
-- [ ] La UI permite ajustar modo, umbral (1–10), turnos para borrar (≥ 1) y turnos por -1 de prioridad (≥ 1) por conversación.
-- [ ] `MemoryViewer` se refresca automáticamente tras el barrido y muestra la última limpieza.
-- [ ] Tests: policy (prioridad efectiva, exclusión, candidatura, límites) y use case del barrido (criterios, límite 100, modos).
-- [ ] `pnpm check` y `pnpm --filter @workspace/backend test` pasan.
-- [ ] Versión bumped a `1.1.0` con entrada en `CHANGELOG.md`.
+- [x] `DecayConversationMemoryUseCase` elimina memorias con `effectivePriority <= threshold` Y `turnsSinceUpdate >= ageThreshold` (máximo 100 por barrido, menor prioridad efectiva primero).
+- [x] `effectivePriority` se calcula con `max(1, priority - floor(turnsSinceUpdate / decaySpeed))`.
+- [x] El barrido automático se ejecuta al final de `send-message` solo cuando `memoryDecayMode === "silent"`.
+- [x] Modo `"manual"`: solo se elimina vía endpoint/botón (todas las candidatas) o individualmente. Modo `"off"`: nunca se elimina.
+- [x] El filtro de prompt excluye memorias con `effectivePriority <= threshold` en send, continue, regenerate y summary, en todos los modos.
+- [x] El endpoint `POST /api/conversations/:id/memories/decay` devuelve el conteo correcto.
+- [x] La UI permite ajustar modo, umbral (1–10), turnos para borrar (≥ 1) y turnos por -1 de prioridad (≥ 1) por conversación.
+- [x] `MemoryList` se refresca automáticamente tras el barrido y muestra la última limpieza.
+- [x] Tests: policy (prioridad efectiva, exclusión, candidatura, límites) y use case del barrido (criterios, límite 100, modos).
+- [x] `pnpm check` y `pnpm --filter @workspace/backend test` pasan.
+- [x] Versión bumped a `1.1.0` con entrada en `CHANGELOG.md`.
