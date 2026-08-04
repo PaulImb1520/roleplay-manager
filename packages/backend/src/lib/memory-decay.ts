@@ -9,8 +9,7 @@ export function filterMemoriesForPrompt(
   messages: Message[],
 ): Memory[] {
   const policy = MemoryDecayPolicy.fromConversation(conversation)
-  const timestamps = messages.map((m) => m.createdAt)
   return memories.filter((memory) =>
-    policy.isPromptEligible(memory.priority, policy.turnsSince(memory.updatedAt, timestamps)),
+    policy.isPromptEligible(memory.priority, policy.turnsSince(memory.updatedAt, messages)),
   )
 }

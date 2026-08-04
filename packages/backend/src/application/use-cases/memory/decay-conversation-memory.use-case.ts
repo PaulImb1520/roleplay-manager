@@ -59,12 +59,11 @@ export class DecayConversationMemoryUseCase {
     const messages = await this.messageRepository.findByConversationId(
       input.conversationId,
     )
-    const timestamps = messages.map((m) => m.createdAt)
 
     const candidates = memories
       .map((memory) => ({
         memory,
-        turns: policy.turnsSince(memory.updatedAt, timestamps),
+        turns: policy.turnsSince(memory.updatedAt, messages),
       }))
       .filter(({ memory, turns }) =>
         policy.isDeletionCandidate(memory.priority, turns),
