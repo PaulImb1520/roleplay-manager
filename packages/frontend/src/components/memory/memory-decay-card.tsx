@@ -105,7 +105,7 @@ export function MemoryDecayCard({
     <FieldGroup>
       <FieldSet>
         <FieldDescription>
-          Las memorias pierden -1 de importancia cada {decaySpeed} turno(s) sin actualizarse. Las que caen bajo el umbral ({threshold}) se excluyen del prompt y son candidatas a eliminación.
+          Las memorias pierden -1 de importancia cada {decaySpeed} turno(s) sin actualizarse. Las que caen bajo el umbral de ({threshold}) se excluyen del prompt y son candidatas a eliminación.
         </FieldDescription>
         <RadioGroup value={mode} onValueChange={(value) => setMode(value as MemoryDecayMode)}>
           {(Object.keys(MODE_LABELS) as MemoryDecayMode[]).map((m) => (
@@ -145,7 +145,7 @@ export function MemoryDecayCard({
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="decay-speed">Turnos por -1</FieldLabel>
+          <FieldLabel htmlFor="decay-speed">Turnos para -1</FieldLabel>
           <Input
             id="decay-speed"
             type="number"
