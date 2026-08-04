@@ -1,4 +1,10 @@
 import type { Conversation } from "../entities/conversation.entity"
+import {
+  effectivePriority,
+  isDeletionCandidate,
+  isPromptEligible,
+  turnsSince,
+} from "@workspace/shared/lib/memory-decay"
 
 export const MAX_MEMORIES_DECAYED_PER_SWEEP = 100
 
@@ -29,22 +35,33 @@ export class MemoryDecayPolicy {
     )
   }
 
-  turnsSince(updatedAt: Date, messageTimestamps: readonly Date[]): number {
-    return messageTimestamps.filter((t) => t > updatedAt).length
+  turnsSince(
+    updatedAt: Date,
+    messages: readonly { role: string; createdAt: Date }[],
+  ): number {
+    return turnsSince(updatedAt, messages)
   }
 
   effectivePriority(storedPriority: number, turnsSinceUpdate: number): number {
-    return Math.max(1, storedPriority - Math.floor(turnsSinceUpdate / this.decaySpeed))
+    return effectivePriority(storedPriority, turnsSinceUpdate, this.decaySpeed)
   }
 
   isPromptEligible(storedPriority: number, turnsSinceUpdate: number): boolean {
-    return this.effectivePriority(storedPriority, turnsSinceUpdate) > this.threshold
+    return isPromptEligible(
+      storedPriority,
+      turnsSinceUpdate,
+      this.threshold,
+      this.decaySpeed,
+    )
   }
 
   isDeletionCandidate(storedPriority: number, turnsSinceUpdate: number): boolean {
-    return (
-      this.effectivePriority(storedPriority, turnsSinceUpdate) <= this.threshold &&
-      turnsSinceUpdate >= this.ageThreshold
+    return isDeletionCandidate(
+      storedPriority,
+      turnsSinceUpdate,
+      this.threshold,
+      this.ageThreshold,
+      this.decaySpeed,
     )
   }
 }
