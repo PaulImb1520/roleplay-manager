@@ -238,7 +238,7 @@ export function SettingsPanel({
                   <AccordionItem value="memories">
                     <AccordionTrigger>Memoria dinámica</AccordionTrigger>
                     <AccordionContent>
-                      <MemoryList conversationId={conversationId} />
+                      <MemoryList conversationId={conversationId} conversation={current} />
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>

@@ -20,15 +20,19 @@ import { Textarea } from "@workspace/ui/components/textarea"
 import { Label } from "@workspace/ui/components/label"
 import { toast } from "@workspace/ui/components/sonner"
 import { useMemoryStore } from "@/lib/stores/memory.store"
+import { useChatStore } from "@/lib/stores/chat.store"
+import { memoryDecayInfo } from "@/lib/format-memory"
+import type { ConversationDetail } from "@workspace/shared/types/conversation"
 import type { MemoryDTO } from "@workspace/shared/types/memory"
 
 interface MemoryListProps {
   conversationId: string
+  conversation: ConversationDetail
 }
 
 type DialogMode = null | "create" | "edit" | "delete"
 
-export function MemoryList({ conversationId }: MemoryListProps) {
+export function MemoryList({ conversationId, conversation }: MemoryListProps) {
   const memories = useMemoryStore((s) => s.memories)
   const loading = useMemoryStore((s) => s.loading)
   const lastDecay = useMemoryStore((s) => s.lastDecay)
@@ -36,10 +40,12 @@ export function MemoryList({ conversationId }: MemoryListProps) {
   const updateMemory = useMemoryStore((s) => s.updateMemory)
   const deleteMemory = useMemoryStore((s) => s.deleteMemory)
   const loadMemories = useMemoryStore((s) => s.loadMemories)
+  const chatMessages = useChatStore((s) => s.messages)
+  const messageCount = chatMessages.length
 
   useEffect(() => {
     loadMemories(conversationId)
-  }, [conversationId, loadMemories])
+  }, [conversationId, loadMemories, messageCount])
 
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [target, setTarget] = useState<MemoryDTO | null>(null)
@@ -143,20 +149,34 @@ export function MemoryList({ conversationId }: MemoryListProps) {
               </EmptyHeader>
             </Empty>
           ) : (
-            memories.map((memory) => (
-              <div key={memory.id} className="flex flex-col gap-2 rounded-lg border p-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{memory.actor}</span>
-                  <Badge variant="outline">{memory.priority}</Badge>
+            memories.map((memory) => {
+              const info = memoryDecayInfo(memory, conversation, chatMessages)
+              const badgeVariant =
+                info.isDeletionCandidate
+                  ? "destructive"
+                  : info.isPromptEligible
+                    ? "outline"
+                    : "secondary"
+              const badgeTitle = info.hasDecayed
+                ? `Importancia almacenada: ${memory.priority} — cae a ${info.effectivePriority} tras ${info.turns} turno(s)`
+                : `Importancia: ${info.effectivePriority}`
+              return (
+                <div key={memory.id} className="flex flex-col gap-2 rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{memory.actor}</span>
+                    <Badge variant={badgeVariant} title={badgeTitle}>
+                      {info.effectivePriority}
+                    </Badge>
+                  </div>
+                  <span className="text-sm font-semibold">{memory.title}</span>
+                  <p className="text-sm text-muted-foreground">{memory.description}</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(memory)}>Editar</Button>
+                    <Button size="sm" variant="destructive" onClick={() => openDelete(memory)}>Eliminar</Button>
+                  </div>
                 </div>
-                <span className="text-sm font-semibold">{memory.title}</span>
-                <p className="text-sm text-muted-foreground">{memory.description}</p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(memory)}>Editar</Button>
-                  <Button size="sm" variant="destructive" onClick={() => openDelete(memory)}>Eliminar</Button>
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </FieldSet>

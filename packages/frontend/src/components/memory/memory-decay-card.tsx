@@ -90,12 +90,12 @@ export function MemoryDecayCard({
     try {
       const result = await runDecay(conversationId)
       if (result.deleted > 0) {
-        toast.success(`Limpieza completada: ${result.deleted} memoria(s) eliminada(s)`)
+        toast.success(`Limpieza completada: ${result.deleted} memoria(s) eliminada(s).`)
       } else {
-        toast.info("No hay memorias candidatas para eliminar")
+        toast.info("No hay memorias candidatas para eliminar.")
       }
     } catch {
-      toast.error("No se pudo ejecutar la limpieza")
+      toast.error("No se pudo ejecutar la limpieza.")
     } finally {
       setDecaying(false)
     }
@@ -105,7 +105,7 @@ export function MemoryDecayCard({
     <FieldGroup>
       <FieldSet>
         <FieldDescription>
-          Las memorias pierden -1 de importancia cada {decaySpeed} turno(s) sin actualizarse. Las que caen bajo el umbral de ({threshold}) se excluyen del prompt y son candidatas a eliminación.
+          Las memorias pierden -1 de importancia cada {decaySpeed} mensaje(s) tuyo(s) sin actualizarse. Las que caen bajo el umbral de ({threshold}) se excluyen del prompt y son candidatas a eliminación.
         </FieldDescription>
         <RadioGroup value={mode} onValueChange={(value) => setMode(value as MemoryDecayMode)}>
           {(Object.keys(MODE_LABELS) as MemoryDecayMode[]).map((m) => (
