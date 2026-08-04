@@ -50,12 +50,12 @@ const buildMemory = (id: string, priority: number, updatedAt: Date): Memory =>
     updatedAt,
   })
 
-const buildTimeline = (count: number): Message[] =>
+const buildTimeline = (count: number, role: "user" | "assistant" = "user"): Message[] =>
   Array.from({ length: count }, (_, i) =>
     Message.create({
       id: `msg-${i}`,
       conversationId: "conv-1",
-      role: "assistant",
+      role,
       content: `Message ${i}`,
       position: i,
       alternatives: [],
@@ -187,6 +187,35 @@ describe("DecayConversationMemoryUseCase", () => {
         conversation,
         memories: [memory],
         messages: buildTimeline(5),
+      })
+
+    const useCase = new DecayConversationMemoryUseCase(
+      conversationRepo,
+      memoryRepo,
+      messageRepo,
+      logger,
+    )
+    const result = await useCase.execute({ conversationId: "conv-1" })
+
+    expect(result.deleted).toBe(0)
+    expect(deletedIds).toEqual([])
+  })
+
+  it("no cuenta las respuestas del asistente como turnos", async () => {
+    // 35 respuestas del asistente, 0 mensajes de usuario → turns = 0 → no candidata.
+    const conversation = buildConversation({
+      memoryDecayMode: "silent",
+      memoryDecayThreshold: 3,
+      memoryDecayAgeThreshold: 30,
+      memoryDecaySpeed: 1,
+    })
+    const memory = buildMemory("m-old", 5, new Date(now.getTime() - 60_000))
+    const assistantReplies = buildTimeline(35, "assistant")
+    const { memoryRepo, conversationRepo, messageRepo, logger, deletedIds } =
+      buildRepos({
+        conversation,
+        memories: [memory],
+        messages: assistantReplies,
       })
 
     const useCase = new DecayConversationMemoryUseCase(

@@ -80,6 +80,52 @@ const archivedConversation = Conversation.create({
   updatedAt: now,
 })
 
+const manualDecayConversation = Conversation.create({
+  id: "conv-manual-decay",
+  versionId: "ver-1",
+  title: null,
+  titleSource: null,
+  status: "active",
+  model: null,
+  provider: "ollama",
+  providerInstanceId: null,
+  recentMessageCount: 10,
+  summaryFrequency: 20,
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 0.9,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stopSequences: [],
+  memoryProposalMode: "auto",
+  memoryDecayMode: "manual",
+  createdAt: now,
+  updatedAt: now,
+})
+
+const offDecayConversation = Conversation.create({
+  id: "conv-off-decay",
+  versionId: "ver-1",
+  title: null,
+  titleSource: null,
+  status: "active",
+  model: null,
+  provider: "ollama",
+  providerInstanceId: null,
+  recentMessageCount: 10,
+  summaryFrequency: 20,
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 0.9,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stopSequences: [],
+  memoryProposalMode: "auto",
+  memoryDecayMode: "off",
+  createdAt: now,
+  updatedAt: now,
+})
+
 const existingMessages = [
   Message.create({
     id: "msg-0",
@@ -105,6 +151,16 @@ const buildConversationRepo = (): ConversationRepository => ({
   list: async () => [],
   update: async (c) => c,
   updateSettings: vi.fn(async (_id: string, _settings: any) => activeConversation),
+  clearProviderInstanceId: vi.fn(),
+})
+
+const buildConversationRepoFor = (conversation: Conversation): ConversationRepository => ({
+  create: async () => conversation,
+  findById: async (id) => (id === conversation.id ? conversation : null),
+  findByIdWithMessages: async () => null,
+  list: async () => [],
+  update: async (c) => c,
+  updateSettings: vi.fn(async (_id: string, _settings: any) => conversation),
   clearProviderInstanceId: vi.fn(),
 })
 
@@ -228,7 +284,7 @@ const applyAllMemoryChanges = {
 } as unknown as ApplyAllMemoryChangesUseCase
 
 const decayMemories = {
-  execute: async () => ({ deleted: 0 }),
+  execute: vi.fn(async () => ({ deleted: 0 })),
 } as unknown as DecayConversationMemoryUseCase
 
 const memoryChangeProposalRepository = {
@@ -844,7 +900,66 @@ describe("SendMessageUseCase — memory proposal flow", () => {
     const newUserMsg = ctx.messages[ctx.messages.length - 1]
     expect(newUserMsg.content).toBe("Mensaje nuevo //instruccion nueva//")
   })
+
+  it("ejecuta el barrido de auto-degradación tras cada mensaje en modo silent", async () => {
+    const execute = vi.mocked(decayMemories.execute)
+    execute.mockClear()
+    const useCase = buildSendMessageUseCase(buildConversationRepoFor(activeConversation))
+
+    const gen = useCase.execute({ conversationId: "conv-1", content: "Hola" })
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(execute).toHaveBeenCalledWith({ conversationId: "conv-1" })
+  })
+
+  it("no ejecuta el barrido tras un mensaje en modo manual", async () => {
+    const execute = vi.mocked(decayMemories.execute)
+    execute.mockClear()
+    const useCase = buildSendMessageUseCase(buildConversationRepoFor(manualDecayConversation))
+
+    const gen = useCase.execute({ conversationId: "conv-manual-decay", content: "Hola" })
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(execute).not.toHaveBeenCalled()
+  })
+
+  it("no ejecuta el barrido tras un mensaje en modo off", async () => {
+    const execute = vi.mocked(decayMemories.execute)
+    execute.mockClear()
+    const useCase = buildSendMessageUseCase(buildConversationRepoFor(offDecayConversation))
+
+    const gen = useCase.execute({ conversationId: "conv-off-decay", content: "Hola" })
+    for await (const _ of gen) {
+      // consume
+    }
+
+    expect(execute).not.toHaveBeenCalled()
+  })
 })
+
+function buildSendMessageUseCase(repo: ConversationRepository): SendMessageUseCase {
+  return new SendMessageUseCase(
+    repo,
+    buildMessageRepo(),
+    buildCharacterRepo(),
+    buildMemoryRepo(),
+    memoryChangeProposalRepository,
+    buildPromptContextBuilder(),
+    buildProviderRegistry(),
+    buildLogger(),
+    buildDefaultProvider(),
+    providerInstanceRepository,
+    applyAllMemoryChanges,
+    buildSummaryRepo(),
+    buildGenerateSummary(),
+    buildGenerateConversationTitle(),
+    decayMemories,
+  )
+}
 
 function buildProposalRepoForOoc(): MemoryChangeProposalRepository {
   return {
