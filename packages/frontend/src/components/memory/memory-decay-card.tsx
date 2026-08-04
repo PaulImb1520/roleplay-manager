@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle, FieldContent } from "@workspace/ui/components/field"
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSet, FieldTitle, FieldContent } from "@workspace/ui/components/field"
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
 import { Input } from "@workspace/ui/components/input"
 import { Button } from "@workspace/ui/components/button"
@@ -104,7 +104,6 @@ export function MemoryDecayCard({
   return (
     <FieldGroup>
       <FieldSet>
-        <FieldLegend variant="label">Auto-degradación de memorias</FieldLegend>
         <FieldDescription>
           Las memorias pierden -1 de importancia cada {decaySpeed} turno(s) sin actualizarse. Las que caen bajo el umbral ({threshold}) se excluyen del prompt y son candidatas a eliminación.
         </FieldDescription>
@@ -123,7 +122,7 @@ export function MemoryDecayCard({
         </RadioGroup>
       </FieldSet>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex flex-col gap-3 p-1">
         <Field>
           <FieldLabel htmlFor="decay-threshold">Umbral (1-10)</FieldLabel>
           <Input
