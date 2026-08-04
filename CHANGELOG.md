@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-08-04
+
+### Added
+
+- Memory list shows the **effective (decayed) importance** in a color-coded badge: still in the prompt (outline), excluded from the prompt (secondary), or deletion candidate (destructive). Hover shows the stored importance and turns elapsed since the last update.
+- Memory list **auto-refreshes after each new message**, so silent-mode sweeps are visible without reopening the panel.
+- Shared memory-decay helpers (`@workspace/shared/lib/memory-decay`) used by both backend and frontend, keeping the decay math in a single place.
+- Automated tests for the decay flow: policy math, prompt filtering, silent/manual/off sweep integration, and frontend store/display logic.
+
+### Changed
+
+- Decay turns now count only **user messages**; assistant replies no longer wear memories down twice as fast.
+- Decay settings inputs in the settings panel stack vertically instead of squeezing into three columns (previously released as a fix).
 
 ## [1.1.0] - 2026-07-31
 
