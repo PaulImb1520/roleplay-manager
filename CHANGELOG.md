@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-08-05
+
+### Added
+
+- Square image cropper (PM.2): selecting or dropping an image in the character form now opens a crop dialog. Users can pan and zoom to frame a square profile photo before it is uploaded.
+- New `ImageCropperDialog` component (`react-easy-crop` based) with configurable aspect ratio (default `1` = square).
+- Canvas-based crop utilities (`getCroppedImg`, `fileToDataUrl`, `blobToFile`) that produce a PNG `File` for the existing upload flow.
+
+### Changed
+
+- The dropzone no longer uploads the raw file directly; it routes the file through the crop dialog first. The rest of the upload flow (immediate upload on edit, deferred upload on create) is unchanged.
+
 ## [1.3.1] - 2026-08-05
 
 ### Added
