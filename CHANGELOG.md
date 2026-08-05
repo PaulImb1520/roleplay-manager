@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.3.0] - 2026-08-04
+
+### Added
+
+- Profile image upload and storage: users can now upload PNG/JPEG/WEBP/GIF images (up to 3 MB) as profile photos. Files are stored on disk under `./data/characters/<characterId>/` with metadata in a new `character_assets` table.
+- New `POST /api/characters/:id/assets` endpoint for multipart file upload (busboy-based).
+- New `GET /api/characters/:id/assets/:assetId` endpoint for serving stored images.
+- `profileImageAssetId` field on `CharacterVersionDTO`, `CreateCharacterInput`, and `UpdateCharacterInput` — backward compatible (existing URL-based `profileImage` still works).
+- Profile image picker in the character form: file input with preview, upload button, and clear button (only shown when editing an existing character).
+- Character card, chat header, conversation card, and chat-view surfaces now render the uploaded asset URL when `profileImageAssetId` is present, falling back to the `profileImage` URL.
+- Drizzle migration `0007_sour_silverclaw.sql` adds `character_assets` table and `profile_image_asset_id` column to `character_versions`.
+- New environment variables: `DATA_DIR` (default `./data`) and `MAX_PROFILE_IMAGE_BYTES` (default 3 MB).
+- Backend tests for image validation, filesystem storage, upload/get use cases, and multipart parsing.
+
 ## [1.2.0] - 2026-08-04
 
 ### Added
