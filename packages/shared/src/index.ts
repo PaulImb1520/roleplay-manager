@@ -3,3 +3,4 @@
 // se poblarán durante la implementación por slices verticales.
 export * from "./lib/ooc-parser"
 export * from "./lib/memory-decay"
+export * from "./lib/image"

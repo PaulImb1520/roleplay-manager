@@ -10,8 +10,10 @@ export type TitleSource = "auto" | "manual"
 
 export interface ConversationSummary {
   id: string
+  characterId: string
   characterName: string
   characterProfileImage: string
+  characterProfileImageAssetId: string | null
   title: string | null
   status: ConversationStatus
   messageCount: number
@@ -25,6 +27,7 @@ export interface ConversationDetail {
   characterId: string
   characterName: string
   characterProfileImage: string
+  characterProfileImageAssetId: string | null
   title: string | null
   titleSource: TitleSource | null
   status: ConversationStatus

@@ -1,8 +1,17 @@
+export interface CharacterAssetDTO {
+  id: string
+  characterId: string
+  mimeType: string
+  sizeBytes: number
+  createdAt: string
+}
+
 export interface CharacterSummary {
   id: string
   name: string
   subtitle: string | null
   profileImage: string
+  profileImageAssetId: string | null
   versionNumber: number
   createdAt: string
   updatedAt: string
@@ -23,6 +32,7 @@ export interface CharacterVersionDTO {
   name: string
   subtitle: string | null
   profileImage: string
+  profileImageAssetId: string | null
   description: string
   instructions: string | null
   greeting: string
@@ -44,6 +54,7 @@ export interface CreateCharacterInput {
   name: string
   subtitle?: string | null
   profileImage: string
+  profileImageAssetId?: string | null
   description: string
   instructions?: string | null
   greeting: string
@@ -60,6 +71,7 @@ export interface UpdateCharacterInput {
   name?: string
   subtitle?: string | null
   profileImage?: string
+  profileImageAssetId?: string | null
   description?: string
   instructions?: string | null
   greeting?: string
