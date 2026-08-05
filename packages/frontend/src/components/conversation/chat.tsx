@@ -28,6 +28,12 @@ import {
   setConversationTitle,
 } from "../../lib/api/conversations"
 import { useChatStreaming } from "../../lib/hooks/use-chat-streaming"
+import { getCharacterAssetUrl } from "../../lib/api/client"
+
+function resolveImage(profileImage: string, assetId: string | null, characterId: string): string {
+  if (assetId) return getCharacterAssetUrl(characterId, assetId)
+  return profileImage
+}
 import { getPromptContext } from "../../lib/api/context"
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
@@ -244,7 +250,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
         >
           {conv.characterProfileImage ? (
             <img
-              src={conv.characterProfileImage}
+              src={resolveImage(conv.characterProfileImage, conv.characterProfileImageAssetId, conv.characterId)}
               alt={`${conv.characterName} avatar`}
               className="size-full object-cover"
             />

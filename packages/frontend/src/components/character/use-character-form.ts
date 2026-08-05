@@ -32,6 +32,7 @@ export function useCharacterForm(character?: CharacterDetail) {
   const [name, setName] = useState(character?.name ?? "")
   const [subtitle, setSubtitle] = useState(version?.subtitle ?? "")
   const [profileImage, setProfileImage] = useState(version?.profileImage ?? "")
+  const [profileImageAssetId, setProfileImageAssetId] = useState<string | null>(version?.profileImageAssetId ?? null)
   const [description, setDescription] = useState(version?.description ?? "")
   const [instructions, setInstructions] = useState(version?.instructions ?? "")
   const [greeting, setGreeting] = useState(version?.greeting ?? "")
@@ -82,6 +83,7 @@ export function useCharacterForm(character?: CharacterDetail) {
       character?.name ?? "",
       version?.subtitle,
       version?.profileImage ?? "",
+      version?.profileImageAssetId ?? null,
       version?.description ?? "",
       version?.instructions,
       version?.greeting ?? "",
@@ -98,6 +100,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     setName(v.name)
     setSubtitle(v.subtitle ?? "")
     setProfileImage(v.profileImage)
+    setProfileImageAssetId(v.profileImageAssetId ?? null)
     setDescription(v.description)
     setInstructions(v.instructions ?? "")
     setGreeting(v.greeting)
@@ -112,6 +115,7 @@ export function useCharacterForm(character?: CharacterDetail) {
       v.name,
       v.subtitle,
       v.profileImage,
+      v.profileImageAssetId ?? null,
       v.description,
       v.instructions,
       v.greeting,
@@ -142,7 +146,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     )
 
   const currentSnapshot = buildSnapshot(
-    name, subtitle, profileImage, description, instructions, greeting,
+    name, subtitle, profileImage, profileImageAssetId, description, instructions, greeting,
     cards.map(c => ({ title: c.title, content: c.content, active: c.active })),
   )
   const dirty = isEditing && hasChanges(currentSnapshot, lastSnapshot)
@@ -166,6 +170,7 @@ export function useCharacterForm(character?: CharacterDetail) {
           name: name.trim() !== character.name ? name.trim() : undefined,
           subtitle: subtitle.trim() || null,
           profileImage: profileImage.trim() !== version?.profileImage ? profileImage.trim() : undefined,
+          profileImageAssetId: profileImageAssetId !== (version?.profileImageAssetId ?? null) ? profileImageAssetId : undefined,
           description: description.trim() !== version?.description ? description.trim() : undefined,
           instructions: instructions.trim() || null,
           greeting: greeting.trim() !== version?.greeting ? greeting.trim() : undefined,
@@ -180,6 +185,7 @@ export function useCharacterForm(character?: CharacterDetail) {
         setName(result.name)
         setSubtitle(result.currentVersion.subtitle ?? "")
         setProfileImage(result.currentVersion.profileImage)
+        setProfileImageAssetId(result.currentVersion.profileImageAssetId ?? null)
         setDescription(result.currentVersion.description)
         setInstructions(result.currentVersion.instructions ?? "")
         setGreeting(result.currentVersion.greeting)
@@ -195,6 +201,7 @@ export function useCharacterForm(character?: CharacterDetail) {
           result.name,
           result.currentVersion.subtitle,
           result.currentVersion.profileImage,
+          result.currentVersion.profileImageAssetId ?? null,
           result.currentVersion.description,
           result.currentVersion.instructions,
           result.currentVersion.greeting,
@@ -206,6 +213,7 @@ export function useCharacterForm(character?: CharacterDetail) {
           name: name.trim(),
           subtitle: subtitle.trim() || null,
           profileImage: profileImage.trim(),
+          profileImageAssetId: profileImageAssetId,
           description: description.trim(),
           instructions: instructions.trim() || null,
           greeting: greeting.trim(),
@@ -284,6 +292,7 @@ export function useCharacterForm(character?: CharacterDetail) {
     name, setName,
     subtitle, setSubtitle,
     profileImage, setProfileImage,
+    profileImageAssetId, setProfileImageAssetId,
     description, setDescription,
     instructions, setInstructions,
     greeting, setGreeting,

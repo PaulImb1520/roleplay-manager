@@ -2,6 +2,7 @@ export interface FormSnapshot {
   name: string
   subtitle: string | null
   profileImage: string
+  profileImageAssetId: string | null
   description: string
   instructions: string | null
   greeting: string
@@ -12,6 +13,7 @@ export function buildSnapshot(
   name: string,
   subtitle: string | null | undefined,
   profileImage: string,
+  profileImageAssetId: string | null,
   description: string,
   instructions: string | null | undefined,
   greeting: string,
@@ -21,6 +23,7 @@ export function buildSnapshot(
     name: name.trim(),
     subtitle: (subtitle ?? "").trim() || null,
     profileImage: profileImage.trim(),
+    profileImageAssetId,
     description: description.trim(),
     instructions: (instructions ?? "").trim() || null,
     greeting: greeting.trim(),
@@ -39,6 +42,7 @@ export function hasChanges(
   if (current.name !== previous.name) return true
   if (current.subtitle !== previous.subtitle) return true
   if (current.profileImage !== previous.profileImage) return true
+  if (current.profileImageAssetId !== previous.profileImageAssetId) return true
   if (current.description !== previous.description) return true
   if (current.instructions !== previous.instructions) return true
   if (current.greeting !== previous.greeting) return true

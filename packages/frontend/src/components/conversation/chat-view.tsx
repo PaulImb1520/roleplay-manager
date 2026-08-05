@@ -1,14 +1,21 @@
 import type { ConversationDetail } from "@workspace/shared/types/conversation"
 import { MessageList } from "./message-list"
+import { getCharacterAssetUrl } from "@/lib/api/client"
+
+function resolveImage(profileImage: string, assetId: string | null, characterId: string): string {
+  if (assetId) return getCharacterAssetUrl(characterId, assetId)
+  return profileImage
+}
 
 export function ChatView({ conversation }: { conversation: ConversationDetail }) {
+  const imageSrc = resolveImage(conversation.characterProfileImage, conversation.characterProfileImageAssetId, conversation.characterId)
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <div className="size-8 overflow-hidden rounded-full bg-muted">
-          {conversation.characterProfileImage ? (
+          {imageSrc ? (
             <img
-              src={conversation.characterProfileImage}
+              src={imageSrc}
               alt={`${conversation.characterName} avatar`}
               className="size-full object-cover"
             />

@@ -24,6 +24,37 @@ export const getBaseUrl = (): string => {
   return DEFAULT_BASE_URL
 }
 
+export const getCharacterAssetUrl = (characterId: string, assetId: string): string =>
+  `${getBaseUrl()}/api/characters/${characterId}/assets/${assetId}`
+
+export const uploadCharacterAsset = async (
+  characterId: string,
+  file: File,
+): Promise<{ assetId: string; characterId: string; mimeType: string; sizeBytes: number }> => {
+  const url = `${getBaseUrl()}/api/characters/${characterId}/assets`
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData,
+  })
+
+  const text = await response.text()
+  const data = text.length > 0 ? (JSON.parse(text) as unknown) : undefined
+
+  if (!response.ok) {
+    const err = (data as { error?: ApiError } | undefined)?.error
+    throw new ApiClientError(
+      response.status,
+      err?.code ?? "UNKNOWN_ERROR",
+      err?.message ?? response.statusText,
+    )
+  }
+
+  return data as { assetId: string; characterId: string; mimeType: string; sizeBytes: number }
+}
+
 export const apiRequest = async <T>(
   path: string,
   init: RequestInit = {},

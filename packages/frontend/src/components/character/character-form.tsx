@@ -5,7 +5,6 @@ import {
   Trash2Icon,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -45,6 +44,7 @@ import { Sortable, SortableItem, SortableItemHandle } from "@workspace/ui/compon
 
 import type { CharacterDetail } from "@workspace/shared/types/character"
 import { useCharacterForm } from "./use-character-form"
+import { ProfileImageInput } from "./profile-image-input"
 
 interface Props {
   character?: CharacterDetail
@@ -56,6 +56,7 @@ export function CharacterForm({ character }: Props) {
     name, setName,
     subtitle, setSubtitle,
     profileImage, setProfileImage,
+    setProfileImageAssetId,
     description, setDescription,
     instructions, setInstructions,
     greeting, setGreeting,
@@ -139,17 +140,15 @@ export function CharacterForm({ character }: Props) {
         </div>
       </header>
 
-      {profileImage ? (
-        <div className="flex items-center gap-3">
-          <Avatar className="size-16">
-            <AvatarImage src={profileImage} alt="Preview" />
-            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-medium">{name || "Sin nombre"}</p>
-            {subtitle ? <p className="text-muted-foreground text-xs">{subtitle}</p> : null}
-          </div>
-        </div>
+      {profileImage && character ? (
+        <ProfileImageInput
+          characterId={character.id}
+          name={name}
+          profileImage={profileImage}
+          onImageChange={setProfileImage}
+          onAssetUploaded={(id) => setProfileImageAssetId(id)}
+          onAssetClear={() => setProfileImageAssetId(null)}
+        />
       ) : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

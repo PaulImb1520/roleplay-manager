@@ -5,6 +5,7 @@ const base = {
   name: "Dr. House",
   subtitle: "Diagnosticador",
   profileImage: "img.jpg",
+  profileImageAssetId: null,
   description: "Un médico genio",
   instructions: "Sé sarcástico",
   greeting: "¡Hola!",
@@ -17,7 +18,7 @@ const base = {
 describe("buildSnapshot", () => {
   it("trims all string fields", () => {
     const snap = buildSnapshot(
-      "  Dr. House  ", "  sub  ", "  img.jpg  ",
+      "  Dr. House  ", "  sub  ", "  img.jpg  ", null,
       "  desc  ", "  instr  ", "  hello  ",
       [{ title: "  Card  ", content: "  Content  ", active: true }],
     )
@@ -25,6 +26,7 @@ describe("buildSnapshot", () => {
       name: "Dr. House",
       subtitle: "sub",
       profileImage: "img.jpg",
+      profileImageAssetId: null,
       description: "desc",
       instructions: "instr",
       greeting: "hello",
@@ -33,32 +35,32 @@ describe("buildSnapshot", () => {
   })
 
   it("converts empty subtitle to null", () => {
-    const snap = buildSnapshot("n", "", "i", "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "", "i", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts null subtitle to null", () => {
-    const snap = buildSnapshot("n", null, "i", "d", "instr", "g", [])
+    const snap = buildSnapshot("n", null, "i", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts whitespace-only subtitle to null", () => {
-    const snap = buildSnapshot("n", "  ", "i", "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "  ", "i", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts empty instructions to null", () => {
-    const snap = buildSnapshot("n", "sub", "i", "d", "", "g", [])
+    const snap = buildSnapshot("n", "sub", "i", null, "d", "", "g", [])
     expect(snap.instructions).toBeNull()
   })
 
   it("converts null instructions to null", () => {
-    const snap = buildSnapshot("n", "sub", "i", "d", null, "g", [])
+    const snap = buildSnapshot("n", "sub", "i", null, "d", null, "g", [])
     expect(snap.instructions).toBeNull()
   })
 
   it("preserves non-empty subtitle", () => {
-    const snap = buildSnapshot("n", "  sub  ", "i", "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "  sub  ", "i", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBe("sub")
   })
 })

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Badge } from "@workspace/ui/components/badge"
 import { ArchiveIcon, RotateCcwIcon } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
+import { getCharacterAssetUrl } from "@/lib/api/client"
 
 export function ConversationCard({
   conversation,
@@ -11,14 +12,17 @@ export function ConversationCard({
   conversation: ConversationSummary
   onToggleArchive: (id: string, action: "archive" | "unarchive") => void
 }) {
+  const imageSrc = conversation.characterProfileImageAssetId
+    ? getCharacterAssetUrl(conversation.characterId, conversation.characterProfileImageAssetId)
+    : conversation.characterProfileImage
   return (
     <Card className="transition-shadow hover:shadow-md">
       <a href={`/conversations/${conversation.id}`} className="block">
         <CardHeader className="flex flex-row items-center gap-4">
           <div className="size-10 overflow-hidden rounded-full bg-muted">
-            {conversation.characterProfileImage ? (
+            {imageSrc ? (
               <img
-                src={conversation.characterProfileImage}
+                src={imageSrc}
                 alt={`${conversation.characterName} avatar`}
                 className="size-full object-cover"
               />

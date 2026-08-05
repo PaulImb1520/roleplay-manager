@@ -1,16 +1,25 @@
 import type { CharacterSummary } from "@workspace/shared/types/character"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
+import { getCharacterAssetUrl } from "@/lib/api/client"
+
+function resolveCharacterImage(profileImage: string, profileImageAssetId: string | null, characterId: string): string {
+  if (profileImageAssetId) {
+    return getCharacterAssetUrl(characterId, profileImageAssetId)
+  }
+  return profileImage
+}
 
 export function CharacterCard({ character }: { character: CharacterSummary }) {
+  const imageSrc = resolveCharacterImage(character.profileImage, character.profileImageAssetId, character.id)
   return (
     <a href={`/characters/${character.id}`} className="block">
       <Card className="transition-shadow hover:shadow-md">
         <CardHeader className="flex flex-row items-center gap-4">
           <div className="size-12 overflow-hidden rounded-full bg-muted">
-            {character.profileImage ? (
+            {imageSrc ? (
               <img
-                src={character.profileImage}
+                src={imageSrc}
                 alt={`${character.name} avatar`}
                 className="size-full object-cover"
               />
