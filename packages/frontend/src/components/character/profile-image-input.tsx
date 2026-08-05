@@ -6,12 +6,14 @@ import { Button } from "@workspace/ui/components/button"
 import { toast } from "@workspace/ui/components/sonner"
 import { ImagePlusIcon, XIcon } from "lucide-react"
 import { getCharacterAssetUrl } from "@/lib/api/client"
+import { ImageCropperDialog } from "./image-cropper-dialog"
 
 interface ProfileImageInputProps {
   characterId: string
   name: string
   profileImageAssetId: string | null
   pendingFile: File | null
+  aspect?: number
   onFileSelected: (file: File) => void
   onClear: () => void
 }
@@ -36,11 +38,13 @@ export function ProfileImageInput({
   name,
   profileImageAssetId,
   pendingFile,
+  aspect = 1,
   onFileSelected,
   onClear,
 }: ProfileImageInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
+  const [cropperFile, setCropperFile] = useState<File | null>(null)
   const previewUrl = useMemo(
     () => (pendingFile ? URL.createObjectURL(pendingFile) : null),
     [pendingFile],
@@ -54,9 +58,9 @@ export function ProfileImageInput({
 
   const handleFile = useCallback((file: File) => {
     if (validateFile(file)) {
-      onFileSelected(file)
+      setCropperFile(file)
     }
-  }, [onFileSelected])
+  }, [])
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -132,6 +136,19 @@ export function ProfileImageInput({
           Quitar imagen
         </Button>
       ) : null}
+
+      <ImageCropperDialog
+        open={!!cropperFile}
+        onOpenChange={(open) => {
+          if (!open) setCropperFile(null)
+        }}
+        file={cropperFile}
+        aspect={aspect}
+        onCropComplete={(croppedFile) => {
+          onFileSelected(croppedFile)
+          setCropperFile(null)
+        }}
+      />
     </div>
   )
 }

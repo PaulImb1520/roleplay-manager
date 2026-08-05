@@ -51,14 +51,14 @@ describe("ProfileImageInput", () => {
     expect(screen.getByText(/PNG, JPEG, WEBP o GIF · máximo 3 MB/)).toBeInTheDocument()
   })
 
-  it("calls onFileSelected when a valid file is dropped", async () => {
+  it("opens the cropper dialog when a valid file is dropped", async () => {
     const handlers = renderDropzone()
     const dropzone = screen.getByRole("button", { name: /Subir imagen de perfil/ })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [pngFile] } })
 
-    expect(handlers.onFileSelected).toHaveBeenCalledTimes(1)
-    expect(handlers.onFileSelected).toHaveBeenCalledWith(pngFile)
+    expect(await screen.findByText("Recortar imagen")).toBeInTheDocument()
+    expect(handlers.onFileSelected).not.toHaveBeenCalled()
   })
 
   it("rejects an oversized file and does not call onFileSelected", async () => {
@@ -85,7 +85,7 @@ describe("ProfileImageInput", () => {
     expect(handlers.onFileSelected).not.toHaveBeenCalled()
   })
 
-  it("calls onFileSelected when a file is chosen via the picker", async () => {
+  it("opens the cropper dialog when a file is chosen via the picker", async () => {
     const handlers = renderDropzone()
     const dropzone = screen.getByRole("button", { name: /Subir imagen de perfil/ })
 
@@ -94,7 +94,8 @@ describe("ProfileImageInput", () => {
     expect(input).not.toBeNull()
 
     fireEvent.change(input!, { target: { files: [pngFile] } })
-    expect(handlers.onFileSelected).toHaveBeenCalledWith(pngFile)
+    expect(await screen.findByText("Recortar imagen")).toBeInTheDocument()
+    expect(handlers.onFileSelected).not.toHaveBeenCalled()
   })
 
   it("shows the asset URL preview when profileImageAssetId is set", async () => {
