@@ -50,6 +50,13 @@
       "when": 1785508889827,
       "tag": "0006_third_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1785939072403,
+      "tag": "0007_sour_silverclaw",
+      "breakpoints": true
     }
   ]
 }

@@ -88,3 +88,17 @@ export class InvalidVersionForCharacterError extends DomainError {
     this.name = "InvalidVersionForCharacterError"
   }
 }
+
+export class CharacterAssetNotFoundError extends NotFoundError {
+  constructor(id: string) {
+    super("CHARACTER_ASSET_NOT_FOUND", `Character asset with id '${id}' not found.`)
+    this.name = "CharacterAssetNotFoundError"
+  }
+}
+
+export class CharacterAssetValidationError extends DomainError {
+  constructor(message: string) {
+    super("CHARACTER_ASSET_VALIDATION_ERROR", message, 400)
+    this.name = "CharacterAssetValidationError"
+  }
+}

@@ -7,6 +7,9 @@ import type { ListCharactersUseCase } from "../../../../application/use-cases/ch
 import type { UpdateCharacterUseCase } from "../../../../application/use-cases/character/update-character.use-case"
 import type { DeleteCharacterUseCase } from "../../../../application/use-cases/character/delete-character.use-case"
 import type { ListCharacterVersionsUseCase } from "../../../../application/use-cases/character/list-character-versions.use-case"
+import type { UploadCharacterAssetUseCase } from "../../../../application/use-cases/character/upload-character-asset.use-case"
+import type { GetCharacterAssetUseCase } from "../../../../application/use-cases/character/get-character-asset.use-case"
+import { parseMultipartBody } from "../middlewares/multipart"
 
 const CardSchema = z.object({
   title: z.string().min(1, "Card title is required"),
@@ -18,6 +21,7 @@ const CreateCharacterSchema = z.object({
   name: z.string().min(1, "Name is required"),
   subtitle: z.string().nullable().optional(),
   profileImage: z.string().min(1, "Profile image is required"),
+  profileImageAssetId: z.string().nullable().optional(),
   description: z.string().min(1, "Description is required"),
   instructions: z.string().nullable().optional(),
   greeting: z.string().min(1, "Greeting is required"),
@@ -36,6 +40,7 @@ const UpdateCharacterSchema = z.object({
   name: z.string().min(1).optional(),
   subtitle: z.string().nullable().optional(),
   profileImage: z.string().min(1).optional(),
+  profileImageAssetId: z.string().nullable().optional(),
   description: z.string().min(1).optional(),
   instructions: z.string().nullable().optional(),
   greeting: z.string().min(1).optional(),
@@ -49,6 +54,9 @@ export const buildCharacterRouter = (deps: {
   updateCharacter: UpdateCharacterUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
+  uploadCharacterAsset: UploadCharacterAssetUseCase
+  getCharacterAsset: GetCharacterAssetUseCase
+  maxProfileImageBytes: number
 }): Router => {
   const router = Router()
 
@@ -103,6 +111,32 @@ export const buildCharacterRouter = (deps: {
     try {
       const result = await deps.listCharacterVersions.execute(req.params.id)
       res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.post("/characters/:id/assets", async (req, res, next) => {
+    try {
+      const parsed = await parseMultipartBody(req, deps.maxProfileImageBytes)
+      const result = await deps.uploadCharacterAsset.execute({
+        characterId: req.params.id,
+        mimeType: parsed.mimeType,
+        sizeBytes: parsed.data.length,
+        data: parsed.data,
+      })
+      res.status(201).json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.get("/characters/:id/assets/:assetId", async (req, res, next) => {
+    try {
+      const result = await deps.getCharacterAsset.execute({ assetId: req.params.assetId })
+      res.setHeader("Content-Type", result.asset.mimeType)
+      res.setHeader("Cache-Control", "private, max-age=300")
+      result.stream.pipe(res)
     } catch (error) {
       next(error)
     }

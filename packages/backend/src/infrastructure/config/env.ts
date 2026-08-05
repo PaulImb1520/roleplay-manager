@@ -6,8 +6,10 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_PATH: z.string().min(1).default("./data/roleplay.db"),
+  DATA_DIR: z.string().min(1).default("./data"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("debug"),
   CORS_ORIGIN: z.string().url().default("http://localhost:4321"),
+  MAX_PROFILE_IMAGE_BYTES: z.coerce.number().int().positive().default(3 * 1024 * 1024),
   PROVIDER_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
   PROVIDER_STREAMING_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
   OLLAMA_BASE_URL: z

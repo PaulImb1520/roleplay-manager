@@ -1,6 +1,7 @@
 export { characters } from "./characters.schema"
 export { characterVersions } from "./character-versions.schema"
 export { characterCards } from "./character-cards.schema"
+export { characterAssets } from "./character-assets.schema"
 export { conversations } from "./conversations.schema"
 export { messages } from "./messages.schema"
 export { memories } from "./memories.schema"

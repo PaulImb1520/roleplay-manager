@@ -32,6 +32,8 @@ const main = (): void => {
     logger,
     pino,
     database: db,
+    dataDir: env.DATA_DIR,
+    maxProfileImageBytes: env.MAX_PROFILE_IMAGE_BYTES,
     ollamaBaseUrl: env.OLLAMA_BASE_URL,
     providerTimeoutMs: env.PROVIDER_TIMEOUT_MS,
     providerStreamingTimeoutMs: env.PROVIDER_STREAMING_TIMEOUT_MS,

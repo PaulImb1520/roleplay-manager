@@ -20,6 +20,7 @@ export class ListCharacterVersionsUseCase {
       name: v.name,
       subtitle: v.subtitle,
       profileImage: v.profileImage,
+      profileImageAssetId: v.profileImageAssetId,
       description: v.description,
       instructions: v.instructions,
       greeting: v.greeting,

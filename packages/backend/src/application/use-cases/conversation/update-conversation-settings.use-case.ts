@@ -155,6 +155,7 @@ export class UpdateConversationSettingsUseCase {
       characterId,
       characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
       characterProfileImage: result?.currentVersion.profileImage ?? "",
+      characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
       title: updated.title,
       titleSource: updated.titleSource,
       status: updated.status,

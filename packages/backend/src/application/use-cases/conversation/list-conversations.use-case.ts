@@ -27,8 +27,10 @@ export class ListConversationsUseCase {
 
       summaries.push({
         id: conv.id,
+        characterId: result?.currentVersion.characterId ?? version?.characterId ?? "",
         characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
         characterProfileImage: result?.currentVersion.profileImage ?? "",
+        characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
         title: conv.title,
         status: conv.status,
         messageCount: messages.length,

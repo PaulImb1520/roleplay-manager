@@ -6,6 +6,7 @@ export interface CharacterVersionProps {
   name: string
   subtitle: string | null
   profileImage: string
+  profileImageAssetId?: string | null
   description: string
   instructions: string | null
   greeting: string
@@ -25,7 +26,10 @@ export class CharacterVersion {
     if (props.cards.some((c) => !c.title.trim() || !c.content.trim())) {
       throw new Error("Cards must have non-empty title and content")
     }
-    return new CharacterVersion(props)
+    return new CharacterVersion({
+      ...props,
+      profileImageAssetId: props.profileImageAssetId ?? null,
+    })
   }
 
   get id(): string { return this.props.id }
@@ -33,6 +37,7 @@ export class CharacterVersion {
   get name(): string { return this.props.name }
   get subtitle(): string | null { return this.props.subtitle }
   get profileImage(): string { return this.props.profileImage }
+  get profileImageAssetId(): string | null { return this.props.profileImageAssetId ?? null }
   get description(): string { return this.props.description }
   get instructions(): string | null { return this.props.instructions }
   get greeting(): string { return this.props.greeting }

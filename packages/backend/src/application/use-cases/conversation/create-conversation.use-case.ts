@@ -112,6 +112,7 @@ export class CreateConversationUseCase {
       characterId: result.character.id,
       characterName: version.name,
       characterProfileImage: version.profileImage,
+      characterProfileImageAssetId: version.profileImageAssetId,
       title: conversation.title,
       titleSource: conversation.titleSource,
       status: conversation.status,

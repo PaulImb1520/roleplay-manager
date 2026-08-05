@@ -20,6 +20,7 @@
   "dependencies": {
     "@workspace/shared": "workspace:*",
     "better-sqlite3": "^12.11.1",
+    "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.36.4",
     "express": "^4.21.1",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@eslint/js": "^10",
     "@types/better-sqlite3": "^7.6.11",
+    "@types/busboy": "^1.5.4",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^24",

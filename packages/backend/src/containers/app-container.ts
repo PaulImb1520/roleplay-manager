@@ -9,6 +9,8 @@ import { GetDefaultProviderUseCase } from "../application/use-cases/provider/get
 import { ConfigureDefaultProviderUseCase } from "../application/use-cases/provider/configure-default-provider.use-case"
 import { DrizzleSettingsRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-settings.repository"
 import { DrizzleCharacterRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-character.repository"
+import { DrizzleCharacterAssetRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-character-asset.repository"
+import { FilesystemCharacterAssetStorage } from "../infrastructure/adapters/secondary/filesystem/filesystem-character-asset-storage"
 import { DrizzleConversationRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-conversation.repository"
 import { DrizzleMessageRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-message.repository"
 import { DrizzleProviderInstanceRepository } from "../infrastructure/adapters/secondary/drizzle/repositories/drizzle-provider-instance.repository"
@@ -21,6 +23,7 @@ import { PromptContextBuilderImpl } from "../infrastructure/adapters/secondary/p
 import type { ProviderRegistry } from "../domain/ports/provider.port"
 import type { SettingsRepository } from "../domain/ports/settings.repository"
 import type { CharacterRepository } from "../domain/ports/character.repository"
+import type { CharacterAssetRepository, CharacterAssetStorage } from "../domain/ports/character-asset.repository"
 import type { ConversationRepository } from "../domain/ports/conversation.repository"
 import type { MessageRepository } from "../domain/ports/message.repository"
 import type { MemoryRepository } from "../domain/ports/memory.repository"
@@ -34,6 +37,8 @@ import { ListCharactersUseCase } from "../application/use-cases/character/list-c
 import { UpdateCharacterUseCase } from "../application/use-cases/character/update-character.use-case"
 import { DeleteCharacterUseCase } from "../application/use-cases/character/delete-character.use-case"
 import { ListCharacterVersionsUseCase } from "../application/use-cases/character/list-character-versions.use-case"
+import { UploadCharacterAssetUseCase } from "../application/use-cases/character/upload-character-asset.use-case"
+import { GetCharacterAssetUseCase } from "../application/use-cases/character/get-character-asset.use-case"
 import { CreateConversationUseCase } from "../application/use-cases/conversation/create-conversation.use-case"
 import { GetConversationUseCase } from "../application/use-cases/conversation/get-conversation.use-case"
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
@@ -81,6 +86,8 @@ export interface AppContainer {
   providerRegistry: ProviderRegistry
   providerInstanceRepository: ProviderInstanceRepository
   characterRepository: CharacterRepository
+  characterAssetRepository: CharacterAssetRepository
+  characterAssetStorage: CharacterAssetStorage
   conversationRepository: ConversationRepository
   messageRepository: MessageRepository
   memoryRepository: MemoryRepository
@@ -92,6 +99,9 @@ export interface AppContainer {
   updateCharacter: UpdateCharacterUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
+  uploadCharacterAsset: UploadCharacterAssetUseCase
+  getCharacterAsset: GetCharacterAssetUseCase
+  maxProfileImageBytes: number
   createConversation: CreateConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
@@ -136,6 +146,8 @@ export interface BuildContainerOptions {
   logger: Logger
   pino: PinoLogger
   database: Database
+  dataDir: string
+  maxProfileImageBytes: number
   ollamaBaseUrl: string
   providerTimeoutMs: number
   providerStreamingTimeoutMs: number
@@ -145,6 +157,8 @@ export const buildContainer = ({
   logger,
   pino,
   database,
+  dataDir,
+  maxProfileImageBytes,
   ollamaBaseUrl,
   providerTimeoutMs,
   providerStreamingTimeoutMs,
@@ -158,6 +172,8 @@ export const buildContainer = ({
     logger,
   })
   const characterRepository: CharacterRepository = new DrizzleCharacterRepository(database)
+  const characterAssetRepository: CharacterAssetRepository = new DrizzleCharacterAssetRepository(database)
+  const characterAssetStorage: CharacterAssetStorage = new FilesystemCharacterAssetStorage(dataDir)
   const conversationRepository: ConversationRepository = new DrizzleConversationRepository(database)
   const messageRepository: MessageRepository = new DrizzleMessageRepository(database)
   const memoryRepository: MemoryRepository =
@@ -287,6 +303,8 @@ export const buildContainer = ({
     providerRegistry,
     providerInstanceRepository,
     characterRepository,
+    characterAssetRepository,
+    characterAssetStorage,
     conversationRepository,
     messageRepository,
     memoryRepository,
@@ -303,6 +321,17 @@ export const buildContainer = ({
     updateCharacter: new UpdateCharacterUseCase(characterRepository),
     deleteCharacter: new DeleteCharacterUseCase(characterRepository),
     listCharacterVersions: new ListCharacterVersionsUseCase(characterRepository),
+    uploadCharacterAsset: new UploadCharacterAssetUseCase(
+      characterRepository,
+      characterAssetRepository,
+      characterAssetStorage,
+      maxProfileImageBytes,
+    ),
+    getCharacterAsset: new GetCharacterAssetUseCase(
+      characterAssetRepository,
+      characterAssetStorage,
+    ),
+    maxProfileImageBytes,
     createConversation: new CreateConversationUseCase(
       conversationRepository,
       messageRepository,

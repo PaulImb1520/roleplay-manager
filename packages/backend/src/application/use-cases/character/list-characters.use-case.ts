@@ -17,6 +17,7 @@ export class ListCharactersUseCase {
           name: character.name,
           subtitle: result.currentVersion.subtitle,
           profileImage: result.currentVersion.profileImage,
+          profileImageAssetId: result.currentVersion.profileImageAssetId,
           versionNumber: result.currentVersion.versionNumber,
           createdAt: character.createdAt.toISOString(),
           updatedAt: character.updatedAt.toISOString(),

@@ -32,6 +32,7 @@ export class UpdateCharacterUseCase {
     const newName = input.name ?? existing.character.name
     const newSubtitle = input.subtitle !== undefined ? input.subtitle : prevVersion.subtitle
     const newProfileImage = input.profileImage ?? prevVersion.profileImage
+    const newProfileImageAssetId = input.profileImageAssetId !== undefined ? input.profileImageAssetId : prevVersion.profileImageAssetId
     const newDescription = input.description ?? prevVersion.description
     const newInstructions = input.instructions !== undefined ? input.instructions : prevVersion.instructions
     const newGreeting = input.greeting ?? prevVersion.greeting
@@ -40,6 +41,7 @@ export class UpdateCharacterUseCase {
       newName === existing.character.name &&
       newSubtitle === prevVersion.subtitle &&
       newProfileImage === prevVersion.profileImage &&
+      newProfileImageAssetId === prevVersion.profileImageAssetId &&
       newDescription === prevVersion.description &&
       newInstructions === prevVersion.instructions &&
       newGreeting === prevVersion.greeting &&
@@ -83,6 +85,7 @@ export class UpdateCharacterUseCase {
       name: newName,
       subtitle: newSubtitle,
       profileImage: newProfileImage,
+      profileImageAssetId: newProfileImageAssetId,
       description: newDescription,
       instructions: newInstructions,
       greeting: newGreeting,
@@ -106,6 +109,7 @@ export class UpdateCharacterUseCase {
         name: newVersion.name,
         subtitle: newVersion.subtitle,
         profileImage: newVersion.profileImage,
+        profileImageAssetId: newVersion.profileImageAssetId,
         description: newVersion.description,
         instructions: newVersion.instructions,
         greeting: newVersion.greeting,
@@ -126,6 +130,7 @@ export class UpdateCharacterUseCase {
         name: v.name,
         subtitle: v.subtitle,
         profileImage: v.profileImage,
+        profileImageAssetId: v.profileImageAssetId,
         description: v.description,
         instructions: v.instructions,
         greeting: v.greeting,
