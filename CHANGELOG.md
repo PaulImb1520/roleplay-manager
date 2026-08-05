@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-08-05
+
+### Added
+
+- Drag & drop profile image dropzone in the character form (also supports click-to-select). Always visible in the "General" tab for both create and edit.
+- New-character flow: the selected file is held in state and uploaded after the character is created, then the character is updated with the new asset id.
+- The dropzone is structured so a cropper step (PM.2) can be added later.
+
+### Removed
+
+- The legacy `profileImage: string` (URL/data-URI) field is gone from all DTOs, the `CharacterVersion` entity, the character and conversation surfaces, and the database. `profileImageAssetId` is now the only image reference (offline-first: no external links).
+- Dropped `profile_image` column from `character_versions` (migration `0008_superb_spencer_smythe.sql`).
+- Removed the URL text input from the character form.
+
 ## [Unreleased]
 
 ## [1.3.0] - 2026-08-04
