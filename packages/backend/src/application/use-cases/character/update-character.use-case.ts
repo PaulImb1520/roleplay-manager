@@ -31,7 +31,6 @@ export class UpdateCharacterUseCase {
 
     const newName = input.name ?? existing.character.name
     const newSubtitle = input.subtitle !== undefined ? input.subtitle : prevVersion.subtitle
-    const newProfileImage = input.profileImage ?? prevVersion.profileImage
     const newProfileImageAssetId = input.profileImageAssetId !== undefined ? input.profileImageAssetId : prevVersion.profileImageAssetId
     const newDescription = input.description ?? prevVersion.description
     const newInstructions = input.instructions !== undefined ? input.instructions : prevVersion.instructions
@@ -40,7 +39,6 @@ export class UpdateCharacterUseCase {
     if (
       newName === existing.character.name &&
       newSubtitle === prevVersion.subtitle &&
-      newProfileImage === prevVersion.profileImage &&
       newProfileImageAssetId === prevVersion.profileImageAssetId &&
       newDescription === prevVersion.description &&
       newInstructions === prevVersion.instructions &&
@@ -84,7 +82,6 @@ export class UpdateCharacterUseCase {
       characterId: id,
       name: newName,
       subtitle: newSubtitle,
-      profileImage: newProfileImage,
       profileImageAssetId: newProfileImageAssetId,
       description: newDescription,
       instructions: newInstructions,
@@ -108,7 +105,6 @@ export class UpdateCharacterUseCase {
         characterId: newVersion.characterId,
         name: newVersion.name,
         subtitle: newVersion.subtitle,
-        profileImage: newVersion.profileImage,
         profileImageAssetId: newVersion.profileImageAssetId,
         description: newVersion.description,
         instructions: newVersion.instructions,
@@ -129,7 +125,6 @@ export class UpdateCharacterUseCase {
         characterId: v.characterId,
         name: v.name,
         subtitle: v.subtitle,
-        profileImage: v.profileImage,
         profileImageAssetId: v.profileImageAssetId,
         description: v.description,
         instructions: v.instructions,

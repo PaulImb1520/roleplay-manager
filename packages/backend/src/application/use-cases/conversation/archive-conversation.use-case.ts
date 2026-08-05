@@ -47,7 +47,6 @@ export class ArchiveConversationUseCase {
       id: conversation.id,
       characterId,
       characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
-      characterProfileImage: result?.currentVersion.profileImage ?? "",
       characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
       title: conversation.title,
       titleSource: conversation.titleSource,

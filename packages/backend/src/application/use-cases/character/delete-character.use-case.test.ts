@@ -9,7 +9,7 @@ const now = new Date()
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
 const version = CharacterVersion.create({
   id: "v1", characterId: "char-1", name: "Test", subtitle: null,
-  profileImage: "img.png", description: "Desc", instructions: null,
+  profileImageAssetId: null, description: "Desc", instructions: null,
   greeting: "Hi",
   versionNumber: 1, createdAt: now, cards: [],
 })

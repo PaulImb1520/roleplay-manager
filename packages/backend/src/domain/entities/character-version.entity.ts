@@ -5,7 +5,6 @@ export interface CharacterVersionProps {
   characterId: string
   name: string
   subtitle: string | null
-  profileImage: string
   profileImageAssetId?: string | null
   description: string
   instructions: string | null
@@ -20,7 +19,6 @@ export class CharacterVersion {
 
   static create(props: CharacterVersionProps): CharacterVersion {
     if (!props.name.trim()) throw new Error("Version name is required")
-    if (!props.profileImage.trim()) throw new Error("Profile image is required")
     if (!props.description.trim()) throw new Error("Description is required")
     if (!props.greeting.trim()) throw new Error("Greeting is required")
     if (props.cards.some((c) => !c.title.trim() || !c.content.trim())) {
@@ -36,7 +34,6 @@ export class CharacterVersion {
   get characterId(): string { return this.props.characterId }
   get name(): string { return this.props.name }
   get subtitle(): string | null { return this.props.subtitle }
-  get profileImage(): string { return this.props.profileImage }
   get profileImageAssetId(): string | null { return this.props.profileImageAssetId ?? null }
   get description(): string { return this.props.description }
   get instructions(): string | null { return this.props.instructions }

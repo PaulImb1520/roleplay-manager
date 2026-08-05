@@ -10,13 +10,13 @@ const char1 = Character.create({ id: "c1", name: "Alpha", createdAt: now, update
 const char2 = Character.create({ id: "c2", name: "Beta", createdAt: now, updatedAt: now })
 const ver1 = CharacterVersion.create({
   id: "v1", characterId: "c1", name: "Alpha", subtitle: "Sub",
-  profileImage: "img.png", description: "Desc", instructions: null,
+  profileImageAssetId: null, description: "Desc", instructions: null,
   greeting: "Hi",
   versionNumber: 1, createdAt: now, cards: [],
 })
 const ver2 = CharacterVersion.create({
   id: "v2", characterId: "c2", name: "Beta", subtitle: null,
-  profileImage: "img2.png", description: "Desc2", instructions: null,
+  profileImageAssetId: null, description: "Desc2", instructions: null,
   greeting: "Hey",
   versionNumber: 1, createdAt: now, cards: [],
 })

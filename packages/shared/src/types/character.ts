@@ -10,7 +10,6 @@ export interface CharacterSummary {
   id: string
   name: string
   subtitle: string | null
-  profileImage: string
   profileImageAssetId: string | null
   versionNumber: number
   createdAt: string
@@ -31,7 +30,6 @@ export interface CharacterVersionDTO {
   characterId: string
   name: string
   subtitle: string | null
-  profileImage: string
   profileImageAssetId: string | null
   description: string
   instructions: string | null
@@ -53,7 +51,6 @@ export interface CharacterCardDTO {
 export interface CreateCharacterInput {
   name: string
   subtitle?: string | null
-  profileImage: string
   profileImageAssetId?: string | null
   description: string
   instructions?: string | null
@@ -70,7 +67,6 @@ export interface CreateCardInput {
 export interface UpdateCharacterInput {
   name?: string
   subtitle?: string | null
-  profileImage?: string
   profileImageAssetId?: string | null
   description?: string
   instructions?: string | null

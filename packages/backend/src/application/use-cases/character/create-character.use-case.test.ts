@@ -22,7 +22,7 @@ describe("CreateCharacterUseCase", () => {
     const result = await useCase.execute({
       name: "Test Character",
       subtitle: "A test",
-      profileImage: "https://example.com/avatar.png",
+      profileImageAssetId: null,
       description: "A test character",
       greeting: "Hello!",
       cards: [
@@ -44,7 +44,7 @@ describe("CreateCharacterUseCase", () => {
 
     const result = await useCase.execute({
       name: "Minimal",
-      profileImage: "https://example.com/avatar.png",
+      profileImageAssetId: null,
       description: "Desc",
       greeting: "Hi",
     })
@@ -59,7 +59,7 @@ describe("CreateCharacterUseCase", () => {
     await expect(
       useCase.execute({
         name: "Bad",
-        profileImage: "https://example.com/avatar.png",
+        profileImageAssetId: null,
         description: "Desc",
         greeting: "Hi",
         cards: [{ title: "", content: "something" }],

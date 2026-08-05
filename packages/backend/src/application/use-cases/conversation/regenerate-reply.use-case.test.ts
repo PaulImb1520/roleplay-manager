@@ -57,7 +57,7 @@ const baseVersion = CharacterVersion.create({
   characterId: "char-1",
   name: "Alice",
   subtitle: null,
-  profileImage: "https://example.com/avatar.png",
+  profileImageAssetId: null,
   description: "A character",
   instructions: null,
   greeting: "Hello",

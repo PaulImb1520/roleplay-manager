@@ -12,7 +12,7 @@ const baseVersionProps = {
   characterId: "char-1",
   name: "Test Character",
   subtitle: null as string | null,
-  profileImage: "https://example.com/avatar.png",
+  profileImageAssetId: null,
   description: "A mysterious character.",
   instructions: null as string | null,
   greeting: "Hello!",

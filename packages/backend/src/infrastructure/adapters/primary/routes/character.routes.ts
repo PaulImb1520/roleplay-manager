@@ -20,7 +20,6 @@ const CardSchema = z.object({
 const CreateCharacterSchema = z.object({
   name: z.string().min(1, "Name is required"),
   subtitle: z.string().nullable().optional(),
-  profileImage: z.string().min(1, "Profile image is required"),
   profileImageAssetId: z.string().nullable().optional(),
   description: z.string().min(1, "Description is required"),
   instructions: z.string().nullable().optional(),
@@ -39,7 +38,6 @@ const UpdateCardSchema = z.object({
 const UpdateCharacterSchema = z.object({
   name: z.string().min(1).optional(),
   subtitle: z.string().nullable().optional(),
-  profileImage: z.string().min(1).optional(),
   profileImageAssetId: z.string().nullable().optional(),
   description: z.string().min(1).optional(),
   instructions: z.string().nullable().optional(),

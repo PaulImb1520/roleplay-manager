@@ -14,7 +14,7 @@ const now = new Date()
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
 const version = CharacterVersion.create({
   id: "ver-1", characterId: "char-1", name: "Test",
-  subtitle: null, profileImage: "https://example.com/avatar.png",
+  subtitle: null, profileImageAssetId: null,
   description: "A test character", instructions: null,
   greeting: "Hello!", versionNumber: 1, createdAt: now, cards: [],
 })

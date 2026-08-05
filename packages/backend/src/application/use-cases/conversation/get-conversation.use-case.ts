@@ -23,14 +23,12 @@ export class GetConversationUseCase {
     const characterId = version?.characterId ?? ""
     const result = characterId ? await this.characterRepository.findById(characterId) : null
     const characterName = result?.currentVersion.name ?? version?.name ?? "Unknown"
-    const characterProfileImage = result?.currentVersion.profileImage ?? ""
     const characterProfileImageAssetId = result?.currentVersion.profileImageAssetId ?? null
 
     return {
       id: convWithMessages.conversation.id,
       characterId,
       characterName,
-      characterProfileImage,
       characterProfileImageAssetId,
       title: convWithMessages.conversation.title,
       titleSource: convWithMessages.conversation.titleSource,

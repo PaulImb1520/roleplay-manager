@@ -9,7 +9,6 @@ export const characterVersions = sqliteTable("character_versions", {
     .references(() => characters.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   subtitle: text("subtitle"),
-  profileImage: text("profile_image").notNull(),
   profileImageAssetId: text("profile_image_asset_id"),
   description: text("description").notNull(),
   instructions: text("instructions"),

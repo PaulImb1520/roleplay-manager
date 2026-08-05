@@ -21,7 +21,7 @@ const buildVersion = () =>
     characterId: "char-1",
     name: "Test",
     subtitle: null,
-    profileImage: "img.png",
+    profileImageAssetId: null,
     description: "desc",
     instructions: null,
     greeting: "hi",

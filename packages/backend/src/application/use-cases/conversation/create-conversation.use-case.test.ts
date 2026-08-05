@@ -25,19 +25,19 @@ const now = new Date()
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
 const version = CharacterVersion.create({
   id: "ver-1", characterId: "char-1", name: "Test",
-  subtitle: null, profileImage: "https://example.com/avatar.png",
+  subtitle: null, profileImageAssetId: null,
   description: "A test character", instructions: null,
   greeting: "Hello!", versionNumber: 1, createdAt: now, cards: [],
 })
 const versionV2 = CharacterVersion.create({
   id: "ver-2", characterId: "char-1", name: "Test",
-  subtitle: null, profileImage: "https://example.com/avatar.png",
+  subtitle: null, profileImageAssetId: null,
   description: "A test character", instructions: null,
   greeting: "Bonjour!", versionNumber: 2, createdAt: now, cards: [],
 })
 const otherVersion = CharacterVersion.create({
   id: "ver-3", characterId: "char-other", name: "Other",
-  subtitle: null, profileImage: "https://example.com/other.png",
+  subtitle: null, profileImageAssetId: "asset-other",
   description: "Another character", instructions: null,
   greeting: "Hi!", versionNumber: 1, createdAt: now, cards: [],
 })

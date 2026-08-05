@@ -1,0 +1,1 @@
+ALTER TABLE `character_versions` DROP COLUMN `profile_image`;

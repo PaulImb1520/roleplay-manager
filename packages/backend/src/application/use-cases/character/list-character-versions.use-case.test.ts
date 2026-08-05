@@ -14,13 +14,13 @@ const card = CharacterCard.create({
 const character = Character.create({ id: "char-1", name: "Test", createdAt: now, updatedAt: now })
 const v1 = CharacterVersion.create({
   id: "v1", characterId: "char-1", name: "Test v1", subtitle: null,
-  profileImage: "img.png", description: "Desc", instructions: null,
+  profileImageAssetId: null, description: "Desc", instructions: null,
   greeting: "Hi",
   versionNumber: 1, createdAt: now, cards: [card],
 })
 const v2 = CharacterVersion.create({
   id: "v2", characterId: "char-1", name: "Test v2", subtitle: "updated",
-  profileImage: "img.png", description: "Desc", instructions: null,
+  profileImageAssetId: null, description: "Desc", instructions: null,
   greeting: "Hey",
   versionNumber: 2, createdAt: new Date(now.getTime() + 1000), cards: [],
 })

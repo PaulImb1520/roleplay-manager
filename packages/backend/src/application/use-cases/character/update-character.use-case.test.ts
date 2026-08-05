@@ -14,7 +14,7 @@ const card = CharacterCard.create({
 const character = Character.create({ id: "char-1", name: "Original", createdAt: now, updatedAt: now })
 const version = CharacterVersion.create({
   id: "ver-1", characterId: "char-1", name: "Original",
-  subtitle: "sub", profileImage: "img.png", description: "desc",
+  subtitle: "sub", profileImageAssetId: null, description: "desc",
   instructions: "instr", greeting: "hi", versionNumber: 1, createdAt: now, cards: [card],
 })
 

@@ -12,7 +12,6 @@ export interface ConversationSummary {
   id: string
   characterId: string
   characterName: string
-  characterProfileImage: string
   characterProfileImageAssetId: string | null
   title: string | null
   status: ConversationStatus
@@ -26,7 +25,6 @@ export interface ConversationDetail {
   id: string
   characterId: string
   characterName: string
-  characterProfileImage: string
   characterProfileImageAssetId: string | null
   title: string | null
   titleSource: TitleSource | null
