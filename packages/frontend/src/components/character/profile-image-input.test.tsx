@@ -4,6 +4,11 @@ import userEvent from "@testing-library/user-event"
 
 import { ProfileImageInput } from "./profile-image-input"
 
+vi.mock("react-easy-crop", () => ({
+  __esModule: true,
+  default: () => null,
+}))
+
 class MockImage {
   onload: ((this: GlobalEventHandlers, ev: Event) => unknown) | null = null
   set src(_value: string) {
@@ -59,6 +64,19 @@ describe("ProfileImageInput", () => {
 
     expect(await screen.findByText("Recortar imagen")).toBeInTheDocument()
     expect(handlers.onFileSelected).not.toHaveBeenCalled()
+  })
+
+  it("closes the cropper dialog and does not select the file on cancel", async () => {
+    const handlers = renderDropzone()
+    const dropzone = screen.getByRole("button", { name: /Subir imagen de perfil/ })
+
+    fireEvent.drop(dropzone, { dataTransfer: { files: [pngFile] } })
+    await screen.findByText("Recortar imagen")
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }))
+
+    expect(handlers.onFileSelected).not.toHaveBeenCalled()
+    expect(screen.queryByText("Recortar imagen")).not.toBeInTheDocument()
   })
 
   it("rejects an oversized file and does not call onFileSelected", async () => {
