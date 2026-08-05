@@ -7,7 +7,7 @@ See `S9-plan.md` for the v1.0 polish tasks and the rationale for deferring
 these. The dependency graph below reflects which PMs must land together or in
 sequence.
 
-Last updated: 2026-07-31
+Last updated: 2026-08-05
 
 ## Images & media
 
@@ -15,9 +15,15 @@ Last updated: 2026-07-31
 |---|----------|--------------|
 | PM.1 | Import images and store them in the DB (not just links) for the profile photo. | New column/table, storage |
 | PM.2 | Add an image cropper for the profile photo. | PM.1 |
-| PM.3 | Image compressor for the background image and square-section cropper. | PM.1 |
+| PM.3 | Image compressor for the background image and square-section cropper. <br>*Deferred — revisit with PM.5 (see note).* | PM.1 |
 | PM.4 | Modify the profile image without creating a new character version. | PM.1 |
 | PM.5 | Allow choosing a background image for the chat (default: profile photo), with fit modes (fill, crop, etc.). | PM.1 |
+
+> **PM.3 (compressor) — deferred (2026-08-05):** Not needed for profile photos. Storage is
+> filesystem-based (cheap, and the user can re-upload any image at any time), compression
+> permanently destroys quality, and there is no background image yet (PM.5). Revisit PM.3
+> when PM.5 is picked up: a full-screen background (1920×1080) is much larger than the
+> 512×512 avatar, so a compressor and a free-aspect (non-square) cropper make sense there.
 
 ## Grouping & navigation
 

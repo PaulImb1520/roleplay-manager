@@ -1,7 +1,8 @@
 # S12 — PM.2 Profile image cropper (square)
 
-**Estado:** En progreso
+**Estado:** Completado
 **Inicio:** 2026-08-05
+**Fin:** 2026-08-05
 
 ## Descripción
 
@@ -18,12 +19,12 @@ Añadir un recortador de imagen para la foto de perfil, forzando una forma cuadr
 
 ## Criterios de aceptación
 
-- [ ] El usuario puede soltar o seleccionar una imagen en el dropzone del formulario de personaje.
-- [ ] Se abre automáticamente un diálogo de recorte cuadrado.
-- [ ] El usuario puede desplazar y hacer zoom sobre una selección cuadrada.
-- [ ] "Aplicar" devuelve un `File` PNG al dropzone; el flujo de subida existente continúa.
-- [ ] El recortador admite aspecto configurable (por defecto cuadrado).
-- [ ] Todos los tests pasan: `pnpm check`, backend tests (sin cambios), frontend tests.
+- [x] El usuario puede soltar o seleccionar una imagen en el dropzone del formulario de personaje.
+- [x] Se abre automáticamente un diálogo de recorte cuadrado.
+- [x] El usuario puede desplazar y hacer zoom sobre una selección cuadrada.
+- [x] "Aplicar" devuelve un `File` PNG al dropzone; el flujo de subida existente continúa.
+- [x] El recortador admite aspecto configurable (por defecto cuadrado).
+- [x] Todos los tests pasan: `pnpm check`, backend tests (sin cambios), frontend tests.
 
 ## Commits
 
