@@ -14,7 +14,7 @@ export function ConversationCard({
 }) {
   const imageSrc = conversation.characterProfileImageAssetId
     ? getCharacterAssetUrl(conversation.characterId, conversation.characterProfileImageAssetId)
-    : conversation.characterProfileImage
+    : null
   return (
     <Card className="transition-shadow hover:shadow-md">
       <a href={`/conversations/${conversation.id}`} className="block">

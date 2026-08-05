@@ -2,13 +2,10 @@ import type { ConversationDetail } from "@workspace/shared/types/conversation"
 import { MessageList } from "./message-list"
 import { getCharacterAssetUrl } from "@/lib/api/client"
 
-function resolveImage(profileImage: string, assetId: string | null, characterId: string): string {
-  if (assetId) return getCharacterAssetUrl(characterId, assetId)
-  return profileImage
-}
-
 export function ChatView({ conversation }: { conversation: ConversationDetail }) {
-  const imageSrc = resolveImage(conversation.characterProfileImage, conversation.characterProfileImageAssetId, conversation.characterId)
+  const imageSrc = conversation.characterProfileImageAssetId
+    ? getCharacterAssetUrl(conversation.characterId, conversation.characterProfileImageAssetId)
+    : null
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b px-4 py-3">

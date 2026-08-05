@@ -3,15 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Badge } from "@workspace/ui/components/badge"
 import { getCharacterAssetUrl } from "@/lib/api/client"
 
-function resolveCharacterImage(profileImage: string, profileImageAssetId: string | null, characterId: string): string {
-  if (profileImageAssetId) {
-    return getCharacterAssetUrl(characterId, profileImageAssetId)
-  }
-  return profileImage
-}
-
 export function CharacterCard({ character }: { character: CharacterSummary }) {
-  const imageSrc = resolveCharacterImage(character.profileImage, character.profileImageAssetId, character.id)
+  const imageSrc = character.profileImageAssetId
+    ? getCharacterAssetUrl(character.id, character.profileImageAssetId)
+    : null
   return (
     <a href={`/characters/${character.id}`} className="block">
       <Card className="transition-shadow hover:shadow-md">

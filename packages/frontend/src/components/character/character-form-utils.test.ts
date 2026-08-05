@@ -4,7 +4,6 @@ import { buildSnapshot, hasChanges } from "./character-form-utils"
 const base = {
   name: "Dr. House",
   subtitle: "Diagnosticador",
-  profileImage: "img.jpg",
   profileImageAssetId: null,
   description: "Un médico genio",
   instructions: "Sé sarcástico",
@@ -18,14 +17,13 @@ const base = {
 describe("buildSnapshot", () => {
   it("trims all string fields", () => {
     const snap = buildSnapshot(
-      "  Dr. House  ", "  sub  ", "  img.jpg  ", null,
+      "  Dr. House  ", "  sub  ", null,
       "  desc  ", "  instr  ", "  hello  ",
       [{ title: "  Card  ", content: "  Content  ", active: true }],
     )
     expect(snap).toEqual({
       name: "Dr. House",
       subtitle: "sub",
-      profileImage: "img.jpg",
       profileImageAssetId: null,
       description: "desc",
       instructions: "instr",
@@ -35,32 +33,32 @@ describe("buildSnapshot", () => {
   })
 
   it("converts empty subtitle to null", () => {
-    const snap = buildSnapshot("n", "", "i", null, "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts null subtitle to null", () => {
-    const snap = buildSnapshot("n", null, "i", null, "d", "instr", "g", [])
+    const snap = buildSnapshot("n", null, null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts whitespace-only subtitle to null", () => {
-    const snap = buildSnapshot("n", "  ", "i", null, "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "  ", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBeNull()
   })
 
   it("converts empty instructions to null", () => {
-    const snap = buildSnapshot("n", "sub", "i", null, "d", "", "g", [])
+    const snap = buildSnapshot("n", "sub", null, "d", "", "g", [])
     expect(snap.instructions).toBeNull()
   })
 
   it("converts null instructions to null", () => {
-    const snap = buildSnapshot("n", "sub", "i", null, "d", null, "g", [])
+    const snap = buildSnapshot("n", "sub", null, "d", null, "g", [])
     expect(snap.instructions).toBeNull()
   })
 
   it("preserves non-empty subtitle", () => {
-    const snap = buildSnapshot("n", "  sub  ", "i", null, "d", "instr", "g", [])
+    const snap = buildSnapshot("n", "  sub  ", null, "d", "instr", "g", [])
     expect(snap.subtitle).toBe("sub")
   })
 })
@@ -86,8 +84,8 @@ describe("hasChanges", () => {
     expect(hasChanges({ ...base, subtitle: null }, { ...base, subtitle: null })).toBe(false)
   })
 
-  it("returns true when profileImage changes", () => {
-    expect(hasChanges({ ...base, profileImage: "new.jpg" }, base)).toBe(true)
+  it("returns true when profileImageAssetId changes", () => {
+    expect(hasChanges({ ...base, profileImageAssetId: "asset-new" }, base)).toBe(true)
   })
 
   it("returns true when description changes", () => {

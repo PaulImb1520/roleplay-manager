@@ -11,6 +11,7 @@ import {
   createCharacter,
   updateCharacter,
 } from "@/lib/api/characters"
+import { uploadCharacterAsset } from "@/lib/api/client"
 import { createConversation } from "@/lib/api/conversations"
 import { buildSnapshot, hasChanges } from "./character-form-utils"
 
@@ -31,8 +32,8 @@ export function useCharacterForm(character?: CharacterDetail) {
 
   const [name, setName] = useState(character?.name ?? "")
   const [subtitle, setSubtitle] = useState(version?.subtitle ?? "")
-  const [profileImage, setProfileImage] = useState(version?.profileImage ?? "")
   const [profileImageAssetId, setProfileImageAssetId] = useState<string | null>(version?.profileImageAssetId ?? null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [description, setDescription] = useState(version?.description ?? "")
   const [instructions, setInstructions] = useState(version?.instructions ?? "")
   const [greeting, setGreeting] = useState(version?.greeting ?? "")
@@ -56,7 +57,7 @@ export function useCharacterForm(character?: CharacterDetail) {
   const validationErrors = useMemo(() => {
     const errors: Record<string, string | null> = {}
     errors.name = !name.trim() ? "El nombre es obligatorio" : null
-    errors.profileImage = !profileImage.trim() ? "La imagen de perfil es obligatoria" : null
+    errors.profileImage = !profileImageAssetId && !pendingFile ? "La imagen de perfil es obligatoria" : null
     errors.description = !description.trim() ? "La descripción es obligatoria" : null
     errors.greeting = !greeting.trim() ? "El saludo inicial es obligatorio" : null
     cards.forEach((c, i) => {
@@ -65,7 +66,7 @@ export function useCharacterForm(character?: CharacterDetail) {
       }
     })
     return errors
-  }, [name, profileImage, description, greeting, cards])
+  }, [name, profileImageAssetId, pendingFile, description, greeting, cards])
 
   const hasValidationErrors = Object.values(validationErrors).some(Boolean)
 
@@ -82,7 +83,6 @@ export function useCharacterForm(character?: CharacterDetail) {
     buildSnapshot(
       character?.name ?? "",
       version?.subtitle,
-      version?.profileImage ?? "",
       version?.profileImageAssetId ?? null,
       version?.description ?? "",
       version?.instructions,
@@ -99,8 +99,8 @@ export function useCharacterForm(character?: CharacterDetail) {
     if (!v) return
     setName(v.name)
     setSubtitle(v.subtitle ?? "")
-    setProfileImage(v.profileImage)
     setProfileImageAssetId(v.profileImageAssetId ?? null)
+    setPendingFile(null)
     setDescription(v.description)
     setInstructions(v.instructions ?? "")
     setGreeting(v.greeting)
@@ -114,7 +114,6 @@ export function useCharacterForm(character?: CharacterDetail) {
     setLastSnapshot(buildSnapshot(
       v.name,
       v.subtitle,
-      v.profileImage,
       v.profileImageAssetId ?? null,
       v.description,
       v.instructions,
@@ -146,11 +145,31 @@ export function useCharacterForm(character?: CharacterDetail) {
     )
 
   const currentSnapshot = buildSnapshot(
-    name, subtitle, profileImage, profileImageAssetId, description, instructions, greeting,
+    name, subtitle, profileImageAssetId, description, instructions, greeting,
     cards.map(c => ({ title: c.title, content: c.content, active: c.active })),
   )
   const dirty = isEditing && hasChanges(currentSnapshot, lastSnapshot)
   const canSubmit = !saving && !hasValidationErrors && (!isEditing || dirty)
+
+  const handleImageSelected = useCallback(async (file: File) => {
+    setPendingFile(file)
+    if (character?.id) {
+      try {
+        const result = await uploadCharacterAsset(character.id, file)
+        setProfileImageAssetId(result.assetId)
+        setPendingFile(null)
+        toast.success("Imagen subida correctamente")
+      } catch {
+        setPendingFile(null)
+        toast.error("Error al subir la imagen")
+      }
+    }
+  }, [character])
+
+  const handleImageClear = useCallback(() => {
+    setPendingFile(null)
+    setProfileImageAssetId(null)
+  }, [])
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
@@ -169,7 +188,6 @@ export function useCharacterForm(character?: CharacterDetail) {
         const input: UpdateCharacterInput = {
           name: name.trim() !== character.name ? name.trim() : undefined,
           subtitle: subtitle.trim() || null,
-          profileImage: profileImage.trim() !== version?.profileImage ? profileImage.trim() : undefined,
           profileImageAssetId: profileImageAssetId !== (version?.profileImageAssetId ?? null) ? profileImageAssetId : undefined,
           description: description.trim() !== version?.description ? description.trim() : undefined,
           instructions: instructions.trim() || null,
@@ -184,7 +202,6 @@ export function useCharacterForm(character?: CharacterDetail) {
         const result = await updateCharacter(character.id, input)
         setName(result.name)
         setSubtitle(result.currentVersion.subtitle ?? "")
-        setProfileImage(result.currentVersion.profileImage)
         setProfileImageAssetId(result.currentVersion.profileImageAssetId ?? null)
         setDescription(result.currentVersion.description)
         setInstructions(result.currentVersion.instructions ?? "")
@@ -200,7 +217,6 @@ export function useCharacterForm(character?: CharacterDetail) {
         setLastSnapshot(buildSnapshot(
           result.name,
           result.currentVersion.subtitle,
-          result.currentVersion.profileImage,
           result.currentVersion.profileImageAssetId ?? null,
           result.currentVersion.description,
           result.currentVersion.instructions,
@@ -212,8 +228,7 @@ export function useCharacterForm(character?: CharacterDetail) {
         const input: CreateCharacterInput = {
           name: name.trim(),
           subtitle: subtitle.trim() || null,
-          profileImage: profileImage.trim(),
-          profileImageAssetId: profileImageAssetId,
+          profileImageAssetId: null,
           description: description.trim(),
           instructions: instructions.trim() || null,
           greeting: greeting.trim(),
@@ -222,6 +237,10 @@ export function useCharacterForm(character?: CharacterDetail) {
             .map((c) => ({ title: c.title, content: c.content, active: c.active })),
         }
         const result = await createCharacter(input)
+        if (pendingFile) {
+          const upload = await uploadCharacterAsset(result.id, pendingFile)
+          await updateCharacter(result.id, { profileImageAssetId: upload.assetId })
+        }
         const conv = await createConversation({ characterId: result.id })
         if (conv.defaultProviderStatus !== "available") {
           toast.warning(
@@ -291,8 +310,10 @@ export function useCharacterForm(character?: CharacterDetail) {
     version,
     name, setName,
     subtitle, setSubtitle,
-    profileImage, setProfileImage,
-    profileImageAssetId, setProfileImageAssetId,
+    profileImageAssetId,
+    pendingFile,
+    handleImageSelected,
+    handleImageClear,
     description, setDescription,
     instructions, setInstructions,
     greeting, setGreeting,

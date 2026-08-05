@@ -1,7 +1,6 @@
 export interface FormSnapshot {
   name: string
   subtitle: string | null
-  profileImage: string
   profileImageAssetId: string | null
   description: string
   instructions: string | null
@@ -12,7 +11,6 @@ export interface FormSnapshot {
 export function buildSnapshot(
   name: string,
   subtitle: string | null | undefined,
-  profileImage: string,
   profileImageAssetId: string | null,
   description: string,
   instructions: string | null | undefined,
@@ -22,7 +20,6 @@ export function buildSnapshot(
   return {
     name: name.trim(),
     subtitle: (subtitle ?? "").trim() || null,
-    profileImage: profileImage.trim(),
     profileImageAssetId,
     description: description.trim(),
     instructions: (instructions ?? "").trim() || null,
@@ -41,7 +38,6 @@ export function hasChanges(
 ): boolean {
   if (current.name !== previous.name) return true
   if (current.subtitle !== previous.subtitle) return true
-  if (current.profileImage !== previous.profileImage) return true
   if (current.profileImageAssetId !== previous.profileImageAssetId) return true
   if (current.description !== previous.description) return true
   if (current.instructions !== previous.instructions) return true

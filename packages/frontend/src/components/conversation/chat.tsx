@@ -29,11 +29,6 @@ import {
 } from "../../lib/api/conversations"
 import { useChatStreaming } from "../../lib/hooks/use-chat-streaming"
 import { getCharacterAssetUrl } from "../../lib/api/client"
-
-function resolveImage(profileImage: string, assetId: string | null, characterId: string): string {
-  if (assetId) return getCharacterAssetUrl(characterId, assetId)
-  return profileImage
-}
 import { getPromptContext } from "../../lib/api/context"
 import { MessageBubble } from "./message"
 import { MessageInput } from "./message-input"
@@ -248,9 +243,9 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           className="block size-8 overflow-hidden rounded-full bg-muted transition-shadow hover:ring-2 hover:ring-primary/50"
           aria-label={`Ir a la definición de ${conv.characterName}`}
         >
-          {conv.characterProfileImage ? (
+          {conv.characterProfileImageAssetId ? (
             <img
-              src={resolveImage(conv.characterProfileImage, conv.characterProfileImageAssetId, conv.characterId)}
+              src={getCharacterAssetUrl(conv.characterId, conv.characterProfileImageAssetId)}
               alt={`${conv.characterName} avatar`}
               className="size-full object-cover"
             />

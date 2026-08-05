@@ -55,8 +55,10 @@ export function CharacterForm({ character }: Props) {
     isEditing,
     name, setName,
     subtitle, setSubtitle,
-    profileImage, setProfileImage,
-    setProfileImageAssetId,
+    profileImageAssetId,
+    pendingFile,
+    handleImageSelected,
+    handleImageClear,
     description, setDescription,
     instructions, setInstructions,
     greeting, setGreeting,
@@ -140,17 +142,6 @@ export function CharacterForm({ character }: Props) {
         </div>
       </header>
 
-      {profileImage && character ? (
-        <ProfileImageInput
-          characterId={character.id}
-          name={name}
-          profileImage={profileImage}
-          onImageChange={setProfileImage}
-          onAssetUploaded={(id) => setProfileImageAssetId(id)}
-          onAssetClear={() => setProfileImageAssetId(null)}
-        />
-      ) : null}
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
@@ -191,16 +182,15 @@ export function CharacterForm({ character }: Props) {
 
             <Field>
               <FieldLabel htmlFor="profileImage">Imagen de perfil *</FieldLabel>
-              <Input
-                id="profileImage"
-                value={profileImage}
-                onChange={(e) => setProfileImage(e.target.value)}
-                onBlur={() => markTouched("profileImage")}
-                placeholder="URL o data-URI"
-                maxLength={2048}
+              <ProfileImageInput
+                characterId={character?.id ?? ""}
+                name={name}
+                profileImageAssetId={profileImageAssetId}
+                pendingFile={pendingFile}
+                onFileSelected={handleImageSelected}
+                onClear={handleImageClear}
               />
               <FieldError>{showError("profileImage")}</FieldError>
-              <CharCounter current={profileImage.length} max={2048} />
             </Field>
 
             <Field>
