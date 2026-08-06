@@ -1,7 +1,8 @@
 # S14 — Rediseño responsive del panel de configuración (Sheet → DropdownMenu)
 
-**Estado:** En progreso
+**Estado:** Completado
 **Inicio:** 2026-08-06
+**Fin:** 2026-08-06
 
 ## Descripción
 
@@ -43,6 +44,24 @@ momento.
   de confirmación cuando hay cambios sin guardar.
 - **Nueva primitiva UI:** `DropdownMenu` añadido a `@workspace/ui` (Base UI
   `Menu`, vía shadcn CLI).
+
+## Criterios de aceptación
+
+- [x] El botón de configuración (icon-only) abre un `DropdownMenu` con tres
+      opciones: Historia, Modelo y Personalización.
+- [x] Cada opción abre su propio `Dialog` responsive (max-w-lg, scroll interior)
+      con el contenido que antes vivía en su tab.
+- [x] Los dialogs de Historia y Modelo tienen footer "Restablecer valores" /
+      "Aplicar cambios"; Personalización no.
+- [x] "Restablecer valores" es por-dialog y pregunta confirmación cuando hay
+      cambios sin guardar.
+- [x] Aplicar cambios de Modelo envía solo parámetros de inferencia; el de
+      Historia envía `recentMessageCount` / `summaryFrequency`.
+- [x] Se eliminó la persistencia de "última pestaña" (`settings-tab`).
+- [x] El `Accordion` de Historia persiste los items abiertos
+      (`settings-accordion`), todo cerrado por defecto.
+- [x] El layout no se rompe en pantallas de teléfono pequeñas.
+- [x] Todos los tests pasan: backend tests, frontend tests (78) y `pnpm check`.
 
 ## Commits
 

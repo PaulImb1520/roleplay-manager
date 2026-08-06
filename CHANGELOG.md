@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-08-06
+
+### Changed
+
+- Chat settings panel rebuilt for small screens: the right-side Sheet with three tabs is replaced by a `DropdownMenu` trigger whose items (Historia, Modelo, Personalización) each open a dedicated responsive `Dialog`. Content is unchanged; only the container changed.
+- The "Restablecer valores" / "Aplicar cambios" footer now lives inside the Historia and Modelo dialogs; both are scoped to their own fields (Historia persists `summaryFrequency` / `recentMessageCount`, Modelo persists the inference parameters). Personalización keeps its own save flow.
+- The "last opened tab" (`settings-tab`) is no longer persisted.
+
+### Added
+
+- New `DropdownMenu` primitive in `@workspace/ui` (Base UI `Menu`).
+- The Historia accordion now remembers only the open items (`settings-accordion`); it defaults to all closed.
+
 ## [1.4.0] - 2026-08-06
 
 ### Added
