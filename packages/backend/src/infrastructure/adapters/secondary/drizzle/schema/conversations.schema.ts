@@ -35,6 +35,7 @@ export const conversations = sqliteTable("conversations", {
   })
     .notNull()
     .default("auto"),
+  customProfileImageAssetId: text("custom_profile_image_asset_id"),
   memoryDecayMode: text("memory_decay_mode", {
     enum: ["silent", "manual", "off"],
   })

@@ -15,8 +15,10 @@ import type { CycleAlternativeUseCase } from "../../../../application/use-cases/
 import type { ConversationRepository } from "../../../../domain/ports/conversation.repository"
 import type { GenerateConversationTitleUseCase } from "../../../../application/use-cases/conversation/generate-conversation-title.use-case"
 import type { UpdateConversationSettingsUseCase } from "../../../../application/use-cases/conversation/update-conversation-settings.use-case"
+import type { UploadConversationCustomImageUseCase } from "../../../../application/use-cases/conversation/upload-conversation-custom-image.use-case"
 import type { Logger } from "../../../../domain/ports/logger.port"
 import { validate } from "../middlewares/validation"
+import { parseMultipartBody } from "../middlewares/multipart"
 
 const CreateConversationSchema = z.object({
   characterId: z.string().min(1, "characterId is required"),
@@ -69,8 +71,10 @@ export const buildConversationRouter = (deps: {
   continueConversation: ContinueConversationUseCase
   cycleAlternative: CycleAlternativeUseCase
   updateConversationSettings: UpdateConversationSettingsUseCase
+  uploadConversationCustomImage: UploadConversationCustomImageUseCase
   generateConversationTitle: GenerateConversationTitleUseCase
   conversationRepository: ConversationRepository
+  maxProfileImageBytes: number
 }): Router => {
   const router = Router()
 
@@ -386,6 +390,25 @@ export const buildConversationRouter = (deps: {
           body,
         )
         res.json(result)
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
+
+  router.post(
+    "/conversations/:id/customization/profile-image",
+    async (req, res, next) => {
+      try {
+        const { id } = req.params as { id: string }
+        const parsed = await parseMultipartBody(req, deps.maxProfileImageBytes)
+        const result = await deps.uploadConversationCustomImage.execute({
+          conversationId: id,
+          mimeType: parsed.mimeType,
+          sizeBytes: parsed.data.length,
+          data: parsed.data,
+        })
+        res.status(201).json(result)
       } catch (error) {
         next(error)
       }

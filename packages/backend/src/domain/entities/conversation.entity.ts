@@ -24,6 +24,7 @@ export interface ConversationProps {
   presencePenalty: number
   stopSequences: string[]
   memoryProposalMode: MemoryProposalMode
+  customProfileImageAssetId?: string | null
   memoryDecayMode?: MemoryDecayMode
   memoryDecayThreshold?: number
   memoryDecayAgeThreshold?: number
@@ -45,6 +46,7 @@ export class Conversation {
   static create(props: ConversationProps): Conversation {
     return new Conversation({
       ...props,
+      customProfileImageAssetId: props.customProfileImageAssetId ?? null,
       memoryDecayMode: props.memoryDecayMode ?? DEFAULT_MEMORY_DECAY.mode,
       memoryDecayThreshold: props.memoryDecayThreshold ?? DEFAULT_MEMORY_DECAY.threshold,
       memoryDecayAgeThreshold: props.memoryDecayAgeThreshold ?? DEFAULT_MEMORY_DECAY.ageThreshold,
@@ -69,6 +71,7 @@ export class Conversation {
   get presencePenalty(): number { return this.props.presencePenalty }
   get stopSequences(): string[] { return this.props.stopSequences }
   get memoryProposalMode(): MemoryProposalMode { return this.props.memoryProposalMode }
+  get customProfileImageAssetId(): string | null { return this.props.customProfileImageAssetId ?? null }
   get memoryDecayMode(): MemoryDecayMode { return this.props.memoryDecayMode as MemoryDecayMode }
   get memoryDecayThreshold(): number { return this.props.memoryDecayThreshold as number }
   get memoryDecayAgeThreshold(): number { return this.props.memoryDecayAgeThreshold as number }
@@ -100,6 +103,15 @@ export class Conversation {
       ...this.props,
       title,
       titleSource: source,
+      updatedAt: new Date(),
+    })
+  }
+
+  withCustomProfileImageAssetId(assetId: string | null): Conversation {
+    if (this.props.customProfileImageAssetId === assetId) return this
+    return new Conversation({
+      ...this.props,
+      customProfileImageAssetId: assetId,
       updatedAt: new Date(),
     })
   }

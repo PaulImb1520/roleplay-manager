@@ -1,0 +1,1 @@
+ALTER TABLE `conversations` ADD `custom_profile_image_asset_id` text;

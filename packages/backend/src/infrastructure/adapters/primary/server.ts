@@ -81,6 +81,8 @@ export const buildServer = ({
       conversationRepository: container.conversationRepository,
       cycleAlternative: container.cycleAlternative,
       updateConversationSettings: container.updateConversationSettings,
+      uploadConversationCustomImage: container.uploadConversationCustomImage,
+      maxProfileImageBytes: container.maxProfileImageBytes,
     }),
   )
   app.use(

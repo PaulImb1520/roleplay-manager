@@ -51,6 +51,7 @@ import { RewindConversationUseCase } from "../application/use-cases/conversation
 import { ContinueConversationUseCase } from "../application/use-cases/conversation/continue-conversation.use-case"
 import { CycleAlternativeUseCase } from "../application/use-cases/conversation/cycle-alternative.use-case"
 import { UpdateConversationSettingsUseCase } from "../application/use-cases/conversation/update-conversation-settings.use-case"
+import { UploadConversationCustomImageUseCase } from "../application/use-cases/conversation/upload-conversation-custom-image.use-case"
 import { ApplyMemoryChangesUseCase } from "../application/use-cases/memory/apply-memory-changes.use-case"
 import { ApplyAllMemoryChangesUseCase } from "../application/use-cases/memory/apply-all-memory-changes.use-case"
 import { DecayConversationMemoryUseCase } from "../application/use-cases/memory/decay-conversation-memory.use-case"
@@ -116,6 +117,7 @@ export interface AppContainer {
   generateConversationTitle: GenerateConversationTitleUseCase
   cycleAlternative: CycleAlternativeUseCase
   updateConversationSettings: UpdateConversationSettingsUseCase
+  uploadConversationCustomImage: UploadConversationCustomImageUseCase
   listProviderInstances: ListProviderInstancesUseCase
   createProviderInstance: CreateProviderInstanceUseCase
   updateProviderInstance: UpdateProviderInstanceUseCase
@@ -388,6 +390,13 @@ export const buildContainer = ({
       providerRegistry,
       providerInstanceRepository,
       logger,
+    ),
+    uploadConversationCustomImage: new UploadConversationCustomImageUseCase(
+      conversationRepository,
+      characterRepository,
+      characterAssetRepository,
+      characterAssetStorage,
+      maxProfileImageBytes,
     ),
     listProviderInstances: new ListProviderInstancesUseCase(
       providerInstanceRepository,
