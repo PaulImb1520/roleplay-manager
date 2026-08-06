@@ -41,6 +41,7 @@ export interface ConversationDetail {
   presencePenalty: number | null
   stopSequences: string[]
   memoryProposalMode: MemoryProposalMode
+  customProfileImageAssetId: string | null
   memoryDecayMode: MemoryDecayMode
   memoryDecayThreshold: number
   memoryDecayAgeThreshold: number
@@ -63,6 +64,7 @@ export interface ConversationSettingsUpdate {
   presencePenalty?: number
   stopSequences?: string[]
   memoryProposalMode?: MemoryProposalMode
+  customProfileImageAssetId?: string | null
   memoryDecayMode?: MemoryDecayMode
   memoryDecayThreshold?: number
   memoryDecayAgeThreshold?: number

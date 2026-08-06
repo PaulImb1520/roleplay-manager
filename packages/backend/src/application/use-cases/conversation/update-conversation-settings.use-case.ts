@@ -8,10 +8,12 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { Logger } from "../../../domain/ports/logger.port"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository, CharacterAssetStorage } from "../../../domain/ports/character-asset.repository"
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
+  CharacterAssetNotFoundError,
   DomainError,
 } from "../../../domain/errors"
 
@@ -28,6 +30,8 @@ export class UpdateConversationSettingsUseCase {
     private readonly providerRegistry: ProviderRegistry,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
     private readonly logger: Logger,
+    private readonly assetRepository: CharacterAssetRepository,
+    private readonly assetStorage: CharacterAssetStorage,
   ) {}
 
   async execute(
@@ -40,6 +44,17 @@ export class UpdateConversationSettingsUseCase {
     }
     if (conv.status === "archived") {
       throw new ConversationArchivedError(conversationId)
+    }
+
+    const previousOverride = conv.customProfileImageAssetId
+
+    if (input.customProfileImageAssetId !== undefined) {
+      if (input.customProfileImageAssetId !== null) {
+        const asset = await this.assetRepository.findById(input.customProfileImageAssetId)
+        if (!asset) {
+          throw new CharacterAssetNotFoundError(input.customProfileImageAssetId)
+        }
+      }
     }
 
     if (input.provider !== undefined) {
@@ -142,6 +157,12 @@ export class UpdateConversationSettingsUseCase {
       input,
     )
 
+    if (input.customProfileImageAssetId !== undefined) {
+      if (input.customProfileImageAssetId !== previousOverride) {
+        await this.deleteAssetIfExists(previousOverride)
+      }
+    }
+
     const version = await this.characterRepository.findVersionById(
       updated.versionId,
     )
@@ -170,6 +191,7 @@ export class UpdateConversationSettingsUseCase {
       presencePenalty: updated.presencePenalty,
       stopSequences: updated.stopSequences,
       memoryProposalMode: updated.memoryProposalMode,
+      customProfileImageAssetId: updated.customProfileImageAssetId,
       memoryDecayMode: updated.memoryDecayMode,
       memoryDecayThreshold: updated.memoryDecayThreshold,
       memoryDecayAgeThreshold: updated.memoryDecayAgeThreshold,
@@ -178,5 +200,13 @@ export class UpdateConversationSettingsUseCase {
       updatedAt: updated.updatedAt.toISOString(),
       messages: [],
     }
+  }
+
+  private async deleteAssetIfExists(assetId: string | null): Promise<void> {
+    if (!assetId) return
+    const asset = await this.assetRepository.findById(assetId)
+    if (!asset) return
+    await this.assetStorage.delete(asset.characterId, asset.id, asset.extension)
+    await this.assetRepository.deleteById(asset.id)
   }
 }

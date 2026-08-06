@@ -63,6 +63,7 @@ export class ArchiveConversationUseCase {
       presencePenalty: conversation.presencePenalty,
       stopSequences: conversation.stopSequences,
       memoryProposalMode: conversation.memoryProposalMode,
+      customProfileImageAssetId: conversation.customProfileImageAssetId,
       memoryDecayMode: conversation.memoryDecayMode,
       memoryDecayThreshold: conversation.memoryDecayThreshold,
       memoryDecayAgeThreshold: conversation.memoryDecayAgeThreshold,

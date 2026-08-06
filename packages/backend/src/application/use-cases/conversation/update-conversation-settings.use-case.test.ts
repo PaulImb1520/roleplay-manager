@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest"
 
 import { UpdateConversationSettingsUseCase } from "./update-conversation-settings.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
@@ -6,6 +6,8 @@ import type { CharacterRepository } from "../../../domain/ports/character.reposi
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { Logger } from "../../../domain/ports/logger.port"
+import type { CharacterAssetRepository, CharacterAssetStorage } from "../../../domain/ports/character-asset.repository"
+import type { CharacterAssetMetadata } from "../../../domain/ports/character-asset.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Character } from "../../../domain/entities/character.entity"
 import { CharacterVersion } from "../../../domain/entities/character-version.entity"
@@ -114,14 +116,47 @@ const buildLogger = (): Logger => ({
   child: () => buildLogger(),
 })
 
+let deletedAssetIds: string[] = []
+
+const buildAssetRepo = (): CharacterAssetRepository => ({
+  create: async () => {},
+  findById: async (id: string): Promise<CharacterAssetMetadata | null> => {
+    if (id === "asset-1" || id === "asset-2") {
+      return {
+        id,
+        characterId: "char-1",
+        mimeType: "image/png",
+        sizeBytes: 10,
+        extension: "png",
+        createdAt: now,
+      }
+    }
+    return null
+  },
+  findByCharacterId: async () => [],
+  deleteById: async (id) => { deletedAssetIds.push(id) },
+})
+
+const buildAssetStorage = (): CharacterAssetStorage => ({
+  write: async () => {},
+  read: async () => {
+    throw new Error("not implemented")
+  },
+  delete: async () => {},
+  resolvePath: () => "",
+})
+
 function buildUseCase(conv: Conversation = existingConv) {
   capturedSettings = {}
+  deletedAssetIds = []
   return new UpdateConversationSettingsUseCase(
     buildConversationRepo(conv),
     buildCharacterRepo(),
     buildProviderRegistry(),
     buildProviderInstanceRepo(),
     buildLogger(),
+    buildAssetRepo(),
+    buildAssetStorage(),
   )
 }
 
@@ -162,5 +197,50 @@ describe("UpdateConversationSettingsUseCase", () => {
     })
     expect(capturedSettings.recentMessageCount).toBeUndefined()
     expect(capturedSettings.summaryFrequency).toBe(30)
+  })
+
+  it("acepta customProfileImageAssetId y no borra assets previos cuando no hay override", async () => {
+    const useCase = buildUseCase()
+    const result = await useCase.execute("conv-1", {
+      customProfileImageAssetId: "asset-1",
+    })
+    expect(capturedSettings.customProfileImageAssetId).toBe("asset-1")
+    expect(deletedAssetIds).toEqual([])
+    expect(result.customProfileImageAssetId).toBeNull()
+  })
+
+  it("borra el override anterior al reemplazarlo", async () => {
+    const conv = existingConv.withCustomProfileImageAssetId("asset-1")
+    const useCase = buildUseCase(conv)
+    await useCase.execute("conv-1", {
+      customProfileImageAssetId: "asset-2",
+    })
+    expect(deletedAssetIds).toEqual(["asset-1"])
+  })
+
+  it("borra el override anterior al limpiarlo", async () => {
+    const conv = existingConv.withCustomProfileImageAssetId("asset-1")
+    const useCase = buildUseCase(conv)
+    await useCase.execute("conv-1", {
+      customProfileImageAssetId: null,
+    })
+    expect(deletedAssetIds).toEqual(["asset-1"])
+  })
+
+  it("no borra nada al reenviar el mismo override", async () => {
+    const conv = existingConv.withCustomProfileImageAssetId("asset-1")
+    const useCase = buildUseCase(conv)
+    await useCase.execute("conv-1", {
+      customProfileImageAssetId: "asset-1",
+    })
+    expect(deletedAssetIds).toEqual([])
+  })
+
+  it("rechaza un asset inexistente", async () => {
+    const useCase = buildUseCase()
+    await expect(
+      useCase.execute("conv-1", { customProfileImageAssetId: "missing" }),
+    ).rejects.toThrow("not found")
+    expect(deletedAssetIds).toEqual([])
   })
 })

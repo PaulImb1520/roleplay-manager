@@ -181,6 +181,8 @@ export class DrizzleConversationRepository implements ConversationRepository {
       values.stopSequences = JSON.stringify(settings.stopSequences)
     if (settings.memoryProposalMode !== undefined)
       values.memoryProposalMode = settings.memoryProposalMode
+    if (settings.customProfileImageAssetId !== undefined)
+      values.customProfileImageAssetId = settings.customProfileImageAssetId
     if (settings.memoryDecayMode !== undefined)
       values.memoryDecayMode = settings.memoryDecayMode
     if (settings.memoryDecayThreshold !== undefined)
