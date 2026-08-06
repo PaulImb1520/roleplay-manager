@@ -4,13 +4,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
-import {
-  CardFooter,
-  CardHeader,
-} from "@workspace/ui/components/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +61,7 @@ interface ActionsFooterProps {
 
 function ActionsFooter({ hasChanges, saving, onSave, onReset }: ActionsFooterProps) {
   return (
-    <CardFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+    <DialogFooter>
       <Button variant="outline" onClick={onReset} disabled={saving}>
         Restablecer valores
       </Button>
@@ -72,7 +69,7 @@ function ActionsFooter({ hasChanges, saving, onSave, onReset }: ActionsFooterPro
         {saving ? <Spinner /> : null}
         Aplicar cambios
       </Button>
-    </CardFooter>
+    </DialogFooter>
   )
 }
 
@@ -263,14 +260,14 @@ export function SettingsPanel({
       </DropdownMenu>
 
       <Dialog open={section === "historia"} onOpenChange={(open) => setSection(open ? "historia" : null)}>
-        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
-          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="pr-8">
             <DialogTitle>Historia del chat</DialogTitle>
             <DialogDescription>
               Memorias, propuestas, resúmenes y auto-degradación.
             </DialogDescription>
-          </CardHeader>
-          <div className="min-h-0 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
+          </DialogHeader>
+          <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
             <Accordion value={openSections} onValueChange={setOpenSections} multiple>
               <AccordionItem value="mode">
                 <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
@@ -337,14 +334,14 @@ export function SettingsPanel({
       </Dialog>
 
       <Dialog open={section === "modelo"} onOpenChange={(open) => setSection(open ? "modelo" : null)}>
-        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
-          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="pr-8">
             <DialogTitle>Modelo</DialogTitle>
             <DialogDescription>
               Proveedor, modelo e hiperparámetros de inferencia.
             </DialogDescription>
-          </CardHeader>
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
+          </DialogHeader>
+          <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
             <ModelSelector
               current={current}
               onChange={setModelUpdate}
@@ -375,14 +372,14 @@ export function SettingsPanel({
       </Dialog>
 
       <Dialog open={section === "personalizacion"} onOpenChange={(open) => setSection(open ? "personalizacion" : null)}>
-        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
-          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="pr-8">
             <DialogTitle>Personalización</DialogTitle>
             <DialogDescription>
               Imagen de perfil exclusiva para este chat.
             </DialogDescription>
-          </CardHeader>
-          <div className="min-h-0 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
+          </DialogHeader>
+          <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
             <CustomizationTab
               conversation={current}
               onSettingsChanged={onSettingsChanged}
