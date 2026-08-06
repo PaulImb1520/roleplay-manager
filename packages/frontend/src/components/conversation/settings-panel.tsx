@@ -341,7 +341,7 @@ export function SettingsPanel({
               Proveedor, modelo e hiperparámetros de inferencia.
             </DialogDescription>
           </DialogHeader>
-          <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
+          <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4 pb-0.5">
             <ModelSelector
               current={current}
               onChange={setModelUpdate}
