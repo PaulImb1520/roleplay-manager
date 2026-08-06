@@ -3,12 +3,15 @@ import type { ConversationSummary, ConversationStatus } from "@workspace/shared/
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
+import { resolveEffectiveProfileImageAssetId } from "../../../domain/value-objects/effective-profile-image"
 
 export class ListConversationsUseCase {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly assetRepository: CharacterAssetRepository,
   ) {}
 
   async execute(status?: ConversationStatus): Promise<ConversationSummary[]> {
@@ -29,7 +32,11 @@ export class ListConversationsUseCase {
         id: conv.id,
         characterId: result?.currentVersion.characterId ?? version?.characterId ?? "",
         characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
-        characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
+        profileImageAssetId: await resolveEffectiveProfileImageAssetId(
+          conv.customProfileImageAssetId,
+          result?.currentVersion.profileImageAssetId ?? null,
+          this.assetRepository,
+        ),
         title: conv.title,
         status: conv.status,
         messageCount: messages.length,

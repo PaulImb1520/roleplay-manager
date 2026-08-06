@@ -12,7 +12,7 @@ export interface ConversationSummary {
   id: string
   characterId: string
   characterName: string
-  characterProfileImageAssetId: string | null
+  profileImageAssetId: string | null
   title: string | null
   status: ConversationStatus
   messageCount: number
@@ -25,7 +25,7 @@ export interface ConversationDetail {
   id: string
   characterId: string
   characterName: string
-  characterProfileImageAssetId: string | null
+  profileImageAssetId: string | null
   title: string | null
   titleSource: TitleSource | null
   status: ConversationStatus

@@ -16,6 +16,7 @@ import {
   CharacterAssetNotFoundError,
   DomainError,
 } from "../../../domain/errors"
+import { resolveEffectiveProfileImageAssetId } from "../../../domain/value-objects/effective-profile-image"
 
 const VALID_PROVIDERS: ProviderId[] = ["ollama", "openai-compatible"]
 
@@ -170,12 +171,17 @@ export class UpdateConversationSettingsUseCase {
     const result = characterId
       ? await this.characterRepository.findById(characterId)
       : null
+    const profileImageAssetId = await resolveEffectiveProfileImageAssetId(
+      updated.customProfileImageAssetId,
+      result?.currentVersion.profileImageAssetId ?? null,
+      this.assetRepository,
+    )
 
     return {
       id: updated.id,
       characterId,
       characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
-      characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
+      profileImageAssetId,
       title: updated.title,
       titleSource: updated.titleSource,
       status: updated.status,

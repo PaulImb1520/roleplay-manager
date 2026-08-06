@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest"
 import { GetConversationUseCase } from "./get-conversation.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import { Character } from "../../../domain/entities/character.entity"
@@ -77,11 +78,19 @@ const buildCharacterRepo = (): CharacterRepository => ({
   saveVersion: async (v) => v,
 })
 
+const buildAssetRepo = (): CharacterAssetRepository => ({
+  create: async () => {},
+  findById: async () => null,
+  findByCharacterId: async () => [],
+  deleteById: async () => {},
+})
+
 describe("GetConversationUseCase", () => {
   it("retorna conversación con mensajes", async () => {
     const useCase = new GetConversationUseCase(
       buildConversationRepo(),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute("conv-1")
@@ -96,7 +105,7 @@ describe("GetConversationUseCase", () => {
     const repo = buildConversationRepo()
     repo.findByIdWithMessages = async () => null
 
-    const useCase = new GetConversationUseCase(repo, buildCharacterRepo())
+    const useCase = new GetConversationUseCase(repo, buildCharacterRepo(), buildAssetRepo())
 
     await expect(
       useCase.execute("nonexistent"),

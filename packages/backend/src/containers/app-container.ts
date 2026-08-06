@@ -340,19 +340,23 @@ export const buildContainer = ({
       characterRepository,
       getDefaultProvider,
       providerInstanceRepository,
+      characterAssetRepository,
     ),
     getConversation: new GetConversationUseCase(
       conversationRepository,
       characterRepository,
+      characterAssetRepository,
     ),
     listConversations: new ListConversationsUseCase(
       conversationRepository,
       messageRepository,
       characterRepository,
+      characterAssetRepository,
     ),
     archiveConversation: new ArchiveConversationUseCase(
       conversationRepository,
       characterRepository,
+      characterAssetRepository,
     ),
     sendMessage,
     editMessage: new EditMessageUseCase(

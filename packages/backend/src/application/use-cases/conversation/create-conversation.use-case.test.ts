@@ -4,6 +4,7 @@ import { CreateConversationUseCase } from "./create-conversation.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
@@ -83,6 +84,13 @@ const buildMessageRepo = (): MessageRepository => ({
   clearAlternatives: async () => {},
 })
 
+const buildAssetRepo = (): CharacterAssetRepository => ({
+  create: async () => {},
+  findById: async () => null,
+  findByCharacterId: async () => [],
+  deleteById: async () => {},
+})
+
 describe("CreateConversationUseCase", () => {
   it("crea conversación con greeting del personaje", async () => {
     const useCase = new CreateConversationUseCase(
@@ -91,6 +99,7 @@ describe("CreateConversationUseCase", () => {
       buildCharacterRepo(),
       buildDefaultProvider(),
       buildProviderInstanceRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute({ characterId: "char-1" })
@@ -116,6 +125,7 @@ describe("CreateConversationUseCase", () => {
       repo,
       buildDefaultProvider(),
       buildProviderInstanceRepo(),
+      buildAssetRepo(),
     )
 
     await expect(
@@ -134,6 +144,7 @@ describe("CreateConversationUseCase", () => {
       repo,
       buildDefaultProvider(),
       buildProviderInstanceRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute({ characterId: "char-1", versionId: "ver-2" })
@@ -152,6 +163,7 @@ describe("CreateConversationUseCase", () => {
       repo,
       buildDefaultProvider(),
       buildProviderInstanceRepo(),
+      buildAssetRepo(),
     )
 
     await expect(
@@ -169,6 +181,7 @@ describe("CreateConversationUseCase", () => {
       repo,
       buildDefaultProvider(),
       buildProviderInstanceRepo(),
+      buildAssetRepo(),
     )
 
     await expect(

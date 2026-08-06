@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest"
 import { ArchiveConversationUseCase } from "./archive-conversation.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import { Character } from "../../../domain/entities/character.entity"
@@ -98,11 +99,19 @@ const buildCharacterRepo = (): CharacterRepository => ({
   saveVersion: async (v) => v,
 })
 
+const buildAssetRepo = (): CharacterAssetRepository => ({
+  create: async () => {},
+  findById: async () => null,
+  findByCharacterId: async () => [],
+  deleteById: async () => {},
+})
+
 describe("ArchiveConversationUseCase", () => {
   it("archiva una conversación activa", async () => {
     const useCase = new ArchiveConversationUseCase(
       buildConversationRepo(activeConv),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute("conv-1", "archive")
@@ -113,6 +122,7 @@ describe("ArchiveConversationUseCase", () => {
     const useCase = new ArchiveConversationUseCase(
       buildConversationRepo(archivedConv),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     await expect(
@@ -124,6 +134,7 @@ describe("ArchiveConversationUseCase", () => {
     const useCase = new ArchiveConversationUseCase(
       buildConversationRepo(archivedConv),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute("conv-2", "unarchive")
@@ -134,6 +145,7 @@ describe("ArchiveConversationUseCase", () => {
     const useCase = new ArchiveConversationUseCase(
       buildConversationRepo(activeConv),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     await expect(
@@ -145,7 +157,7 @@ describe("ArchiveConversationUseCase", () => {
     const repo = buildConversationRepo(activeConv)
     repo.findByIdWithMessages = async () => null
 
-    const useCase = new ArchiveConversationUseCase(repo, buildCharacterRepo())
+    const useCase = new ArchiveConversationUseCase(repo, buildCharacterRepo(), buildAssetRepo())
 
     await expect(
       useCase.execute("nonexistent", "archive"),

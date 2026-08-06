@@ -3,13 +3,16 @@ import type { MessageDTO } from "@workspace/shared/types/message"
 
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import { ConversationNotFoundError } from "../../../domain/errors"
 import type { Message } from "../../../domain/entities/message.entity"
+import { resolveEffectiveProfileImageAssetId } from "../../../domain/value-objects/effective-profile-image"
 
 export class GetConversationUseCase {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly assetRepository: CharacterAssetRepository,
   ) {}
 
   async execute(id: string): Promise<ConversationDetail> {
@@ -23,13 +26,17 @@ export class GetConversationUseCase {
     const characterId = version?.characterId ?? ""
     const result = characterId ? await this.characterRepository.findById(characterId) : null
     const characterName = result?.currentVersion.name ?? version?.name ?? "Unknown"
-    const characterProfileImageAssetId = result?.currentVersion.profileImageAssetId ?? null
+    const profileImageAssetId = await resolveEffectiveProfileImageAssetId(
+      convWithMessages.conversation.customProfileImageAssetId,
+      result?.currentVersion.profileImageAssetId ?? null,
+      this.assetRepository,
+    )
 
     return {
       id: convWithMessages.conversation.id,
       characterId,
       characterName,
-      characterProfileImageAssetId,
+      profileImageAssetId,
       title: convWithMessages.conversation.title,
       titleSource: convWithMessages.conversation.titleSource,
       status: convWithMessages.conversation.status,

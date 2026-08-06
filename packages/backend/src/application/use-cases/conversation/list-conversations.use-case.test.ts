@@ -4,6 +4,7 @@ import { ListConversationsUseCase } from "./list-conversations.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import { Conversation } from "../../../domain/entities/conversation.entity"
 import { Message } from "../../../domain/entities/message.entity"
 import { Character } from "../../../domain/entities/character.entity"
@@ -110,12 +111,20 @@ const buildCharacterRepo = (): CharacterRepository => ({
   saveVersion: async (v) => v,
 })
 
+const buildAssetRepo = (): CharacterAssetRepository => ({
+  create: async () => {},
+  findById: async () => null,
+  findByCharacterId: async () => [],
+  deleteById: async () => {},
+})
+
 describe("ListConversationsUseCase", () => {
   it("retorna lista de conversaciones con resumen", async () => {
     const useCase = new ListConversationsUseCase(
       buildConversationRepo(),
       buildMessageRepo(5),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute()
@@ -134,6 +143,7 @@ describe("ListConversationsUseCase", () => {
       buildConversationRepo(),
       buildMessageRepo(3),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute("archived")
@@ -216,6 +226,7 @@ describe("ListConversationsUseCase", () => {
       repo(),
       messageRepo(),
       buildCharacterRepo(),
+      buildAssetRepo(),
     )
 
     const result = await useCase.execute()

@@ -9,6 +9,7 @@ import { Message } from "../../../domain/entities/message.entity"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import type { ProviderInstanceRepository } from "../../../domain/ports/provider-instance.repository"
 import type { GetDefaultProviderUseCase } from "../provider/get-default-provider.use-case"
 import {
@@ -16,6 +17,7 @@ import {
   CharacterVersionNotFoundError,
   InvalidVersionForCharacterError,
 } from "../../../domain/errors"
+import { resolveEffectiveProfileImageAssetId } from "../../../domain/value-objects/effective-profile-image"
 
 export class CreateConversationUseCase {
   constructor(
@@ -24,6 +26,7 @@ export class CreateConversationUseCase {
     private readonly characterRepository: CharacterRepository,
     private readonly getDefaultProvider: GetDefaultProviderUseCase,
     private readonly providerInstanceRepository: ProviderInstanceRepository,
+    private readonly assetRepository: CharacterAssetRepository,
   ) {}
 
   async execute(input: CreateConversationInput): Promise<CreateConversationResult> {
@@ -111,7 +114,11 @@ export class CreateConversationUseCase {
       id: conversation.id,
       characterId: result.character.id,
       characterName: version.name,
-      characterProfileImageAssetId: version.profileImageAssetId,
+      profileImageAssetId: await resolveEffectiveProfileImageAssetId(
+        conversation.customProfileImageAssetId,
+        version.profileImageAssetId,
+        this.assetRepository,
+      ),
       title: conversation.title,
       titleSource: conversation.titleSource,
       status: conversation.status,

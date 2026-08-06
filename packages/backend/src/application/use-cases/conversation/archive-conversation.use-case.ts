@@ -3,17 +3,20 @@ import type { MessageDTO } from "@workspace/shared/types/message"
 
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
+import type { CharacterAssetRepository } from "../../../domain/ports/character-asset.repository"
 import {
   ConversationNotFoundError,
   ConversationArchivedError,
   ConversationAlreadyActiveError,
 } from "../../../domain/errors"
 import type { Message } from "../../../domain/entities/message.entity"
+import { resolveEffectiveProfileImageAssetId } from "../../../domain/value-objects/effective-profile-image"
 
 export class ArchiveConversationUseCase {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly characterRepository: CharacterRepository,
+    private readonly assetRepository: CharacterAssetRepository,
   ) {}
 
   async execute(id: string, action: "archive" | "unarchive"): Promise<ConversationDetail> {
@@ -42,12 +45,17 @@ export class ArchiveConversationUseCase {
     const version = await this.characterRepository.findVersionById(conversation.versionId)
     const characterId = version?.characterId ?? ""
     const result = characterId ? await this.characterRepository.findById(characterId) : null
+    const profileImageAssetId = await resolveEffectiveProfileImageAssetId(
+      conversation.customProfileImageAssetId,
+      result?.currentVersion.profileImageAssetId ?? null,
+      this.assetRepository,
+    )
 
     return {
       id: conversation.id,
       characterId,
       characterName: result?.currentVersion.name ?? version?.name ?? "Unknown",
-      characterProfileImageAssetId: result?.currentVersion.profileImageAssetId ?? null,
+      profileImageAssetId,
       title: conversation.title,
       titleSource: conversation.titleSource,
       status: conversation.status,
