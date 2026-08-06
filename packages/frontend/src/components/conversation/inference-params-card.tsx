@@ -43,7 +43,8 @@ export function InferenceParamsCard({
           Ajusta como el modelo genera las respuestas.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="-mb-(--card-spacing)">
+        <div className="-mx-(--card-spacing) max-h-96 overflow-y-auto border-t bg-muted/50 px-(--card-spacing) py-4">
         <FieldGroup>
           <Field>
             <FieldLabel>Temperatura ({temperature.toFixed(1)})</FieldLabel>
@@ -115,6 +116,7 @@ export function InferenceParamsCard({
             <FieldDescription>Separadas por coma</FieldDescription>
           </Field>
         </FieldGroup>
+        </div>
       </CardContent>
     </Card>
   )
