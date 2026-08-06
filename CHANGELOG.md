@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-08-06
+
+### Added
+
+- Per-conversation profile image override (PM.4): a new "Personalización" tab in the chat settings panel lets you replace the profile picture for a single conversation without creating a new character version.
+- New `POST /api/conversations/:id/customization/profile-image` endpoint (multipart upload, reuses the filesystem asset storage and the 3 MB limit).
+- `PATCH /api/conversations/:id/settings` now accepts `customProfileImageAssetId` (set/clear), validating that the referenced asset exists.
+- Replacing or clearing the override garbage-collects the previous asset file and row; if the character is deleted (cascade), the effective image falls back to `null` without breaking the UI.
+- Drizzle migration `0009_silly_the_hunter.sql` adds `custom_profile_image_asset_id` to `conversations`.
+- Tests for the upload use case, the effective-image helper, and the Personalización tab.
+
+### Changed
+
+- DTO field renamed `characterProfileImageAssetId` → `profileImageAssetId` on `ConversationSummary` and `ConversationDetail`; frontend consumers updated accordingly.
+- Chat settings now show three tabs: Historia / Modelo / Personalización.
+
 ## [1.3.2] - 2026-08-05
 
 ### Added

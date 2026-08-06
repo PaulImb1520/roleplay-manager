@@ -1,7 +1,8 @@
 # S13 — PM.4 Override de imagen de perfil por conversación
 
-**Estado:** En progreso
+**Estado:** Completado
 **Inicio:** 2026-08-06
+**Fin:** 2026-08-06
 
 ## Descripción
 
@@ -40,21 +41,21 @@ visualización cae al la imagen del personaje cuando no hay override.
 
 ## Criterios de aceptación
 
-- [ ] El usuario puede abrir el panel de configuración de un chat, ir a
+- [x] El usuario puede abrir el panel de configuración de un chat, ir a
       "Personalización" y subir una nueva imagen de perfil.
-- [ ] La nueva imagen aparece en el header del chat, en el avatar y en el card
+- [x] La nueva imagen aparece en el header del chat, en el avatar y en el card
       de conversación sin recargar la página.
-- [ ] La imagen del personaje en el card de personajes y en otras
+- [x] La imagen del personaje en el card de personajes y en otras
       conversaciones no cambia.
-- [ ] Aparece un botón "Quitar imagen personalizada" cuando hay override; al
+- [x] Aparece un botón "Quitar imagen personalizada" cuando hay override; al
       pulsarlo se vuelve a la imagen del personaje.
-- [ ] Cambiar la imagen crea una fila nueva en `character_assets` pero NO crea
+- [x] Cambiar la imagen crea una fila nueva en `character_assets` pero NO crea
       una versión nueva en `character_versions`.
-- [ ] Reemplazar el override borra el archivo anterior del disco.
-- [ ] Limpiar el override borra el archivo del disco.
-- [ ] Si el personaje es borrado (cascada), la imagen efectiva cae a null sin
+- [x] Reemplazar el override borra el archivo anterior del disco.
+- [x] Limpiar el override borra el archivo del disco.
+- [x] Si el personaje es borrado (cascada), la imagen efectiva cae a null sin
       romper la UI.
-- [ ] Todos los tests pasan: `pnpm check`, backend tests, frontend tests.
+- [x] Todos los tests pasan: `pnpm check`, backend tests, frontend tests.
 
 ## Commits
 

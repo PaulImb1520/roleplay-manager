@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect } from "vitest"
 
 import { UpdateConversationSettingsUseCase } from "./update-conversation-settings.use-case"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"

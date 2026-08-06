@@ -39,9 +39,9 @@ vi.mock("@/components/character/image-cropper-dialog", () => ({
 
 vi.mock("@/components/character/image-cropper.utils", () => ({
   __esModule: true,
-  blobToFile: (blob: Blob, name: string) =>
-    new File([blob], name, { type: blob.type }),
-  fileToDataUrl: (file: File) => Promise.resolve("data:image/png;base64,xx"),
+  blobToFile: (_blob: Blob, name: string) =>
+    new File([_blob], name, { type: _blob.type }),
+  fileToDataUrl: (_file: File) => Promise.resolve("data:image/png;base64,xx"),
   getCroppedImg: () => Promise.resolve(new Blob(["fake"], { type: "image/png" })),
 }))
 
