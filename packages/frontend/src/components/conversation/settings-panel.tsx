@@ -4,10 +4,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import {
+  CardFooter,
+  CardHeader,
+} from "@workspace/ui/components/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +64,7 @@ interface ActionsFooterProps {
 
 function ActionsFooter({ hasChanges, saving, onSave, onReset }: ActionsFooterProps) {
   return (
-    <DialogFooter>
+    <CardFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       <Button variant="outline" onClick={onReset} disabled={saving}>
         Restablecer valores
       </Button>
@@ -69,7 +72,7 @@ function ActionsFooter({ hasChanges, saving, onSave, onReset }: ActionsFooterPro
         {saving ? <Spinner /> : null}
         Aplicar cambios
       </Button>
-    </DialogFooter>
+    </CardFooter>
   )
 }
 
@@ -260,14 +263,14 @@ export function SettingsPanel({
       </DropdownMenu>
 
       <Dialog open={section === "historia"} onOpenChange={(open) => setSection(open ? "historia" : null)}>
-        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
-          <DialogHeader className="pr-8">
+        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
+          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
             <DialogTitle>Historia del chat</DialogTitle>
             <DialogDescription>
               Memorias, propuestas, resúmenes y auto-degradación.
             </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-0 py-4">
+          </CardHeader>
+          <div className="min-h-0 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
             <Accordion value={openSections} onValueChange={setOpenSections} multiple>
               <AccordionItem value="mode">
                 <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
@@ -334,14 +337,14 @@ export function SettingsPanel({
       </Dialog>
 
       <Dialog open={section === "modelo"} onOpenChange={(open) => setSection(open ? "modelo" : null)}>
-        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
-          <DialogHeader className="pr-8">
+        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
+          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
             <DialogTitle>Modelo</DialogTitle>
             <DialogDescription>
               Proveedor, modelo e hiperparámetros de inferencia.
             </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
+          </CardHeader>
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
             <ModelSelector
               current={current}
               onChange={setModelUpdate}
@@ -372,14 +375,14 @@ export function SettingsPanel({
       </Dialog>
 
       <Dialog open={section === "personalizacion"} onOpenChange={(open) => setSection(open ? "personalizacion" : null)}>
-        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
-          <DialogHeader className="pr-8">
+        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 [--card-spacing:--spacing(4)] sm:max-w-lg">
+          <CardHeader className="shrink-0 pr-8 pt-(--card-spacing)">
             <DialogTitle>Personalización</DialogTitle>
             <DialogDescription>
               Imagen de perfil exclusiva para este chat.
             </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
+          </CardHeader>
+          <div className="min-h-0 overflow-y-auto px-(--card-spacing) py-(--card-spacing)">
             <CustomizationTab
               conversation={current}
               onSettingsChanged={onSettingsChanged}
