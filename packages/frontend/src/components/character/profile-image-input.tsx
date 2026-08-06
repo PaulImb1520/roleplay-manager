@@ -14,6 +14,8 @@ interface ProfileImageInputProps {
   profileImageAssetId: string | null
   pendingFile: File | null
   aspect?: number
+  showClearButton?: boolean
+  clearLabel?: string
   onFileSelected: (file: File) => void
   onClear: () => void
 }
@@ -39,6 +41,8 @@ export function ProfileImageInput({
   profileImageAssetId,
   pendingFile,
   aspect = 1,
+  showClearButton = true,
+  clearLabel = "Quitar imagen",
   onFileSelected,
   onClear,
 }: ProfileImageInputProps) {
@@ -130,10 +134,10 @@ export function ProfileImageInput({
           Imagen pendiente de guardar al crear el personaje.
         </p>
       ) : null}
-      {imageSrc ? (
+      {imageSrc && showClearButton ? (
         <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="mt-2">
           <XIcon className="size-3" />
-          Quitar imagen
+          {clearLabel}
         </Button>
       ) : null}
 

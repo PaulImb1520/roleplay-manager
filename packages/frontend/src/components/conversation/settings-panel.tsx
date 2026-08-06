@@ -26,6 +26,9 @@ import { MemoryList } from "../memory/memory-list"
 import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
 import { usePersistedStringList } from "@/lib/hooks/use-persisted-string-list"
 import { ModelSelector } from "./model-selector"
+import { CustomizationTab } from "./customization-tab"
+
+type SettingsTab = "modelo" | "historia" | "personalizacion"
 
 interface SettingsPanelProps {
   conversationId: string
@@ -70,7 +73,8 @@ export function SettingsPanel({
     scope: conversationId,
     key: "settings-tab",
     defaultValue: "modelo",
-    validate: (v): v is "modelo" | "historia" => v === "modelo" || v === "historia",
+    validate: (v): v is SettingsTab =>
+      v === "modelo" || v === "historia" || v === "personalizacion",
   })
 
   const [openSections, setOpenSections] = usePersistedStringList({
@@ -177,11 +181,12 @@ export function SettingsPanel({
             </SheetDescription>
           </SheetHeader>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "modelo" | "historia")} className="flex min-h-0 flex-col">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as SettingsTab)} className="flex min-h-0 flex-col">
             <div className="sticky top-0 z-10 bg-popover px-4 pt-2">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="historia">Historia</TabsTrigger>
                 <TabsTrigger value="modelo">Modelo</TabsTrigger>
+                <TabsTrigger value="personalizacion">Personalización</TabsTrigger>
               </TabsList>
             </div>
 
@@ -263,6 +268,13 @@ export function SettingsPanel({
                   onPresencePenaltyChange={setPresencePenalty}
                   onMaxTokensChange={setMaxTokens}
                   onStopSequencesChange={setStopSequences}
+                />
+              </TabsContent>
+
+              <TabsContent value="personalizacion" className="flex flex-col gap-4 mt-4">
+                <CustomizationTab
+                  conversation={current}
+                  onSettingsChanged={onSettingsChanged}
                 />
               </TabsContent>
             </div>
