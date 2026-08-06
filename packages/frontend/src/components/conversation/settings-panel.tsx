@@ -1,13 +1,29 @@
 import { useState, type ReactElement } from "react"
 import { toast } from "@workspace/ui/components/sonner"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@workspace/ui/components/sheet"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@workspace/ui/components/accordion"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-
 import { Spinner } from "@workspace/ui/components/spinner"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@workspace/ui/components/accordion"
+import { SettingsIcon } from "lucide-react"
 
 import type { ConversationDetail, ConversationSettingsUpdate, MemoryProposalMode } from "@workspace/shared/types/conversation"
 import type { ProviderId } from "@workspace/shared/types/provider"
@@ -23,12 +39,11 @@ import { MemoryModeCard } from "../memory/memory-mode-card"
 import { MemoryDecayCard } from "../memory/memory-decay-card"
 import { ProposalList } from "../memory/proposal-list"
 import { MemoryList } from "../memory/memory-list"
-import { usePersistedValue } from "@/lib/hooks/use-persisted-value"
 import { usePersistedStringList } from "@/lib/hooks/use-persisted-string-list"
 import { ModelSelector } from "./model-selector"
 import { CustomizationTab } from "./customization-tab"
 
-type SettingsTab = "modelo" | "historia" | "personalizacion"
+type SettingsSection = "historia" | "modelo" | "personalizacion"
 
 interface SettingsPanelProps {
   conversationId: string
@@ -37,13 +52,36 @@ interface SettingsPanelProps {
   children?: React.ReactNode
 }
 
+interface ActionsFooterProps {
+  hasChanges: boolean
+  saving: boolean
+  onSave: () => void
+  onReset: () => void
+}
+
+function ActionsFooter({ hasChanges, saving, onSave, onReset }: ActionsFooterProps) {
+  return (
+    <DialogFooter>
+      <Button variant="outline" onClick={onReset} disabled={saving}>
+        Restablecer valores
+      </Button>
+      <Button onClick={onSave} disabled={!hasChanges || saving}>
+        {saving ? <Spinner /> : null}
+        Aplicar cambios
+      </Button>
+    </DialogFooter>
+  )
+}
+
 export function SettingsPanel({
   conversationId,
   current,
   onSettingsChanged,
   children,
 }: SettingsPanelProps) {
-  const [open, setOpen] = useState(false)
+  const [section, setSection] = useState<SettingsSection | null>(null)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  const [resetTarget, setResetTarget] = useState<SettingsSection | null>(null)
 
   const [modelUpdate, setModelUpdate] = useState<{
     provider: ProviderId | string | null
@@ -64,33 +102,26 @@ export function SettingsPanel({
   const [summaryFrequency, setSummaryFrequency] = useState(current.summaryFrequency ?? 20)
 
   const [saving, setSaving] = useState(false)
-  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
   const pendingCount = useMemoryStore((s) => s.proposals.filter((p) => p.status === "pending").length)
   const summaryCount = useSummaryStore((s) => s.summaries.length)
 
-  const [tab, setTab] = usePersistedValue({
-    scope: conversationId,
-    key: "settings-tab",
-    defaultValue: "modelo",
-    validate: (v): v is SettingsTab =>
-      v === "modelo" || v === "historia" || v === "personalizacion",
-  })
-
   const [openSections, setOpenSections] = usePersistedStringList({
     scope: conversationId,
     key: "settings-accordion",
-    defaultValue: ["mode", "memories"],
+    defaultValue: [],
     validateItem: (v) => v === "mode" || v === "proposals" || v === "memories" || v === "summaries" || v === "decay",
   })
 
-  const isDefaultValues =
+  const isModeloDefaults =
     temperature === 0.7 && maxTokens === 2048 && topP === 0.9 &&
     frequencyPenalty === 0 && presencePenalty === 0 &&
-    stopSequences === "" && recentMessageCount === 10 &&
-    summaryFrequency === 20
+    stopSequences === ""
 
-  const hasChanges =
+  const isHistoriaDefaults =
+    recentMessageCount === 10 && summaryFrequency === 20
+
+  const modeloHasChanges =
     modelUpdate.provider !== (current.provider ?? "ollama") ||
     modelUpdate.providerInstanceId !== current.providerInstanceId ||
     modelUpdate.model !== current.model ||
@@ -99,12 +130,70 @@ export function SettingsPanel({
     topP !== (current.topP ?? 0.9) ||
     frequencyPenalty !== (current.frequencyPenalty ?? 0) ||
     presencePenalty !== (current.presencePenalty ?? 0) ||
-    stopSequences !== (current.stopSequences?.join(", ") ?? "") ||
+    stopSequences !== (current.stopSequences?.join(", ") ?? "")
+
+  const historiaHasChanges =
     recentMessageCount !== (current.recentMessageCount ?? 10) ||
     summaryFrequency !== (current.summaryFrequency ?? 20)
 
-  const handleSave = async () => {
+  const persistSettings = async (settings: ConversationSettingsUpdate) => {
     setSaving(true)
+    try {
+      const updated = await updateConversationSettings(conversationId, settings)
+      onSettingsChanged(updated)
+      toast.success("Configuración guardada", {
+        description: "Los cambios se aplicarán en la próxima respuesta.",
+      })
+    } catch (error) {
+      const message = error instanceof ApiClientError ? `[${error.code}] ${error.message}` : "Error desconocido"
+      toast.error("No se pudo guardar la configuración", { description: message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const resetModeloValues = () => {
+    setTemperature(0.7)
+    setMaxTokens(2048)
+    setTopP(0.9)
+    setFrequencyPenalty(0)
+    setPresencePenalty(0)
+    setStopSequences("")
+  }
+
+  const resetHistoriaValues = () => {
+    setRecentMessageCount(10)
+    setSummaryFrequency(20)
+  }
+
+  const handleModeloReset = () => {
+    if (isModeloDefaults) {
+      resetModeloValues()
+    } else {
+      setResetTarget("modelo")
+      setResetConfirmOpen(true)
+    }
+  }
+
+  const handleHistoriaReset = () => {
+    if (isHistoriaDefaults) {
+      resetHistoriaValues()
+    } else {
+      setResetTarget("historia")
+      setResetConfirmOpen(true)
+    }
+  }
+
+  const doReset = () => {
+    if (resetTarget === "modelo") {
+      resetModeloValues()
+    } else if (resetTarget === "historia") {
+      resetHistoriaValues()
+    }
+    setResetConfirmOpen(false)
+  }
+
+  const handleSaveModelo = async () => {
     const settings: ConversationSettingsUpdate = {}
     if (modelUpdate.provider !== (current.provider ?? "ollama")) {
       settings.provider = modelUpdate.provider ?? undefined
@@ -122,38 +211,16 @@ export function SettingsPanel({
       settings.presencePenalty = presencePenalty
     if (stopSequences !== (current.stopSequences?.join(", ") ?? ""))
       settings.stopSequences = stopSequences.split(",").map((s) => s.trim()).filter(Boolean)
+    await persistSettings(settings)
+  }
+
+  const handleSaveHistoria = async () => {
+    const settings: ConversationSettingsUpdate = {}
     if (recentMessageCount !== (current.recentMessageCount ?? 10))
       settings.recentMessageCount = recentMessageCount
     if (summaryFrequency !== (current.summaryFrequency ?? 20))
       settings.summaryFrequency = summaryFrequency
-    try {
-      const updated = await updateConversationSettings(conversationId, settings)
-      onSettingsChanged(updated)
-      toast.success("Configuración guardada", {
-        description: "Los cambios se aplicaran en la proxima respuesta.",
-      })
-    } catch (e) {
-      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
-      toast.error("No se pudo guardar la configuracion", { description: message })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleResetDefaults = () => {
-    setTemperature(0.7)
-    setMaxTokens(2048)
-    setTopP(0.9)
-    setFrequencyPenalty(0)
-    setPresencePenalty(0)
-    setStopSequences("")
-    setRecentMessageCount(10)
-    setSummaryFrequency(20)
-  }
-
-  const doReset = () => {
-    handleResetDefaults()
-    setResetConfirmOpen(false)
+    await persistSettings(settings)
   }
 
   const handleMemoryModeChange = async (mode: MemoryProposalMode) => {
@@ -163,144 +230,163 @@ export function SettingsPanel({
       })
       onSettingsChanged(updated)
       toast.success("Modo de memorias actualizado")
-    } catch (e) {
-      const message = e instanceof ApiClientError ? `[${e.code}] ${e.message}` : "Error desconocido"
+    } catch (error) {
+      const message = error instanceof ApiClientError ? `[${error.code}] ${error.message}` : "Error desconocido"
       toast.error("No se pudo cambiar el modo", { description: message })
     }
   }
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        {children ? <SheetTrigger render={children as ReactElement} /> : null}
-        <SheetContent side="right" className="flex h-full flex-col w-full max-w-md sm:max-w-lg">
-          <SheetHeader className="shrink-0 px-4 pt-4">
-            <SheetTitle>Configuración del chat</SheetTitle>
-            <SheetDescription>
-              Ajusta los parametros de la conversación y del modelo.
-            </SheetDescription>
-          </SheetHeader>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            children
+              ? (children as ReactElement)
+              : <Button variant="ghost" size="icon" data-icon="inline-start"><SettingsIcon /></Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSection("historia")}>
+            Historia
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSection("modelo")}>
+            Modelo
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSection("personalizacion")}>
+            Personalización
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as SettingsTab)} className="flex min-h-0 flex-col">
-            <div className="sticky top-0 z-10 bg-popover px-4 pt-2">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="historia">Historia</TabsTrigger>
-                <TabsTrigger value="modelo">Modelo</TabsTrigger>
-                <TabsTrigger value="personalizacion">Personalización</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
-              <TabsContent value="historia" className="flex flex-col gap-4 mt-4">
-                <Accordion value={openSections} onValueChange={setOpenSections} multiple>
-                  <AccordionItem value="mode">
-                    <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
-                    <AccordionContent>
-                      <MemoryModeCard
-                        current={current.memoryProposalMode}
-                        onChange={handleMemoryModeChange}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="proposals">
-                    <AccordionTrigger className="flex items-center gap-2">
-                      Propuestas pendientes
-                      {pendingCount > 0 ? (
-                        <Badge>{pendingCount}</Badge>
-                      ) : null}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ProposalList conversationId={conversationId} />
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="summaries">
-                    <AccordionTrigger className="flex items-center gap-2">
-                      Resúmenes
-                      {summaryCount > 0 ? (
-                        <Badge>{summaryCount}</Badge>
-                      ) : null}
-                    </AccordionTrigger>
-                    <AccordionContent className="flex flex-col gap-4">
-                      <SummarySettingsCard
-                        recentMessageCount={recentMessageCount}
-                        summaryFrequency={summaryFrequency}
-                        onRecentMessageCountChange={setRecentMessageCount}
-                        onSummaryFrequencyChange={setSummaryFrequency}
-                      />
-                      <SummaryViewer conversationId={conversationId} summaryFrequency={summaryFrequency} />
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="decay">
-                    <AccordionTrigger>Auto-degradación de memorias</AccordionTrigger>
-                    <AccordionContent>
-                      <MemoryDecayCard
-                        conversationId={conversationId}
-                        current={current}
-                        onSettingsChanged={onSettingsChanged}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="memories">
-                    <AccordionTrigger>Memoria dinámica</AccordionTrigger>
-                    <AccordionContent>
-                      <MemoryList conversationId={conversationId} conversation={current} />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </TabsContent>
-
-              <TabsContent value="modelo" className="flex flex-col gap-4 mt-4">
-                <ModelSelector
-                  current={current}
-                  onChange={setModelUpdate}
-                />
-
-                <InferenceParamsCard
-                  temperature={temperature}
-                  topP={topP}
-                  frequencyPenalty={frequencyPenalty}
-                  presencePenalty={presencePenalty}
-                  maxTokens={maxTokens}
-                  stopSequences={stopSequences}
-                  onTemperatureChange={setTemperature}
-                  onTopPChange={setTopP}
-                  onFrequencyPenaltyChange={setFrequencyPenalty}
-                  onPresencePenaltyChange={setPresencePenalty}
-                  onMaxTokensChange={setMaxTokens}
-                  onStopSequencesChange={setStopSequences}
-                />
-              </TabsContent>
-
-              <TabsContent value="personalizacion" className="flex flex-col gap-4 mt-4">
-                <CustomizationTab
-                  conversation={current}
-                  onSettingsChanged={onSettingsChanged}
-                />
-              </TabsContent>
-            </div>
-          </Tabs>
-
-          <div className="shrink-0 border-t px-4 py-3 flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (isDefaultValues) {
-                  handleResetDefaults()
-                } else {
-                  setResetConfirmOpen(true)
-                }
-              }}
-              disabled={saving}
-            >
-              Restablecer valores
-            </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || saving}>
-              {saving ? <Spinner /> : null}
-              Aplicar cambios
-            </Button>
+      <Dialog open={section === "historia"} onOpenChange={(open) => setSection(open ? "historia" : null)}>
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
+          <DialogHeader className="pr-8">
+            <DialogTitle>Historia del chat</DialogTitle>
+            <DialogDescription>
+              Memorias, propuestas, resúmenes y auto-degradación.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-0 py-4">
+            <Accordion value={openSections} onValueChange={setOpenSections} multiple>
+              <AccordionItem value="mode">
+                <AccordionTrigger>Modo de gestión de memorias</AccordionTrigger>
+                <AccordionContent>
+                  <MemoryModeCard
+                    current={current.memoryProposalMode}
+                    onChange={handleMemoryModeChange}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="proposals">
+                <AccordionTrigger className="flex items-center gap-2">
+                  Propuestas pendientes
+                  {pendingCount > 0 ? (
+                    <Badge>{pendingCount}</Badge>
+                  ) : null}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ProposalList conversationId={conversationId} />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="summaries">
+                <AccordionTrigger className="flex items-center gap-2">
+                  Resúmenes
+                  {summaryCount > 0 ? (
+                    <Badge>{summaryCount}</Badge>
+                  ) : null}
+                </AccordionTrigger>
+                <AccordionContent className="flex flex-col gap-4">
+                  <SummarySettingsCard
+                    recentMessageCount={recentMessageCount}
+                    summaryFrequency={summaryFrequency}
+                    onRecentMessageCountChange={setRecentMessageCount}
+                    onSummaryFrequencyChange={setSummaryFrequency}
+                  />
+                  <SummaryViewer conversationId={conversationId} summaryFrequency={summaryFrequency} />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="decay">
+                <AccordionTrigger>Auto-degradación de memorias</AccordionTrigger>
+                <AccordionContent>
+                  <MemoryDecayCard
+                    conversationId={conversationId}
+                    current={current}
+                    onSettingsChanged={onSettingsChanged}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="memories">
+                <AccordionTrigger>Memoria dinámica</AccordionTrigger>
+                <AccordionContent>
+                  <MemoryList conversationId={conversationId} conversation={current} />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
-        </SheetContent>
-      </Sheet>
+          <ActionsFooter
+            hasChanges={historiaHasChanges}
+            saving={saving}
+            onSave={handleSaveHistoria}
+            onReset={handleHistoriaReset}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={section === "modelo"} onOpenChange={(open) => setSection(open ? "modelo" : null)}>
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
+          <DialogHeader className="pr-8">
+            <DialogTitle>Modelo</DialogTitle>
+            <DialogDescription>
+              Proveedor, modelo e hiperparámetros de inferencia.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
+            <ModelSelector
+              current={current}
+              onChange={setModelUpdate}
+            />
+
+            <InferenceParamsCard
+              temperature={temperature}
+              topP={topP}
+              frequencyPenalty={frequencyPenalty}
+              presencePenalty={presencePenalty}
+              maxTokens={maxTokens}
+              stopSequences={stopSequences}
+              onTemperatureChange={setTemperature}
+              onTopPChange={setTopP}
+              onFrequencyPenaltyChange={setFrequencyPenalty}
+              onPresencePenaltyChange={setPresencePenalty}
+              onMaxTokensChange={setMaxTokens}
+              onStopSequencesChange={setStopSequences}
+            />
+          </div>
+          <ActionsFooter
+            hasChanges={modeloHasChanges}
+            saving={saving}
+            onSave={handleSaveModelo}
+            onReset={handleModeloReset}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={section === "personalizacion"} onOpenChange={(open) => setSection(open ? "personalizacion" : null)}>
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
+          <DialogHeader className="pr-8">
+            <DialogTitle>Personalización</DialogTitle>
+            <DialogDescription>
+              Imagen de perfil exclusiva para este chat.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
+            <CustomizationTab
+              conversation={current}
+              onSettingsChanged={onSettingsChanged}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
         <DialogContent>
