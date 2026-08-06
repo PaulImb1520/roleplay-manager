@@ -23,7 +23,7 @@ import {
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { CpuIcon, HistoryIcon, PaletteIcon, SettingsIcon } from "lucide-react"
+import { BookOpenTextIcon, CpuIcon, PaletteIcon, SettingsIcon } from "lucide-react"
 
 import type { ConversationDetail, ConversationSettingsUpdate, MemoryProposalMode } from "@workspace/shared/types/conversation"
 import type { ProviderId } from "@workspace/shared/types/provider"
@@ -246,9 +246,9 @@ export function SettingsPanel({
               : <Button variant="ghost" size="icon" data-icon="inline-start"><SettingsIcon /></Button>
           }
         />
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem onClick={() => setSection("historia")}>
-            <HistoryIcon />
+            <BookOpenTextIcon />
             Historia
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setSection("modelo")}>
