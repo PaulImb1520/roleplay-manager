@@ -9,6 +9,18 @@ sequence.
 
 Last updated: 2026-08-06
 
+## UI polish
+
+| # | Proposal | Dependencies |
+|---|----------|--------------|
+| PM.17 | Settings panel responsive redesign: Sheet → DropdownMenu of three dialogs (Historia / Modelo / Personalización). <br>*In progress as S14 — prioritized before PM.5 onwards.* | — |
+
+> **PM.17 (S14) — in progress (2026-08-06):** The chat settings panel grew to three tabs and the
+> right-side Sheet breaks text layout on small phone screens. It is being reworked into a
+> `DropdownMenu` trigger whose three items (Historia, Modelo, Personalización) each open a
+> dedicated responsive `Dialog`. The panel is being fixed first, ahead of the sequential
+> PM.5→PM.16 roadmap. See `S14-progress.md`.
+
 ## Images & media
 
 | # | Proposal | Dependencies |
