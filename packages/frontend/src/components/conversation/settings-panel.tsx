@@ -346,7 +346,7 @@ export function SettingsPanel({
               current={current}
               onChange={setModelUpdate}
             />
-
+            <div className="h-4"></div>
             <InferenceParamsCard
               temperature={temperature}
               topP={topP}
