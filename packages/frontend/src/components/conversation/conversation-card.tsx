@@ -12,8 +12,8 @@ export function ConversationCard({
   conversation: ConversationSummary
   onToggleArchive: (id: string, action: "archive" | "unarchive") => void
 }) {
-  const imageSrc = conversation.characterProfileImageAssetId
-    ? getCharacterAssetUrl(conversation.characterId, conversation.characterProfileImageAssetId)
+  const imageSrc = conversation.profileImageAssetId
+    ? getCharacterAssetUrl(conversation.characterId, conversation.profileImageAssetId)
     : null
   return (
     <Card className="transition-shadow hover:shadow-md">

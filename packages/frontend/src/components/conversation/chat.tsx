@@ -243,9 +243,9 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           className="block size-8 overflow-hidden rounded-full bg-muted transition-shadow hover:ring-2 hover:ring-primary/50"
           aria-label={`Ir a la definición de ${conv.characterName}`}
         >
-          {conv.characterProfileImageAssetId ? (
+          {conv.profileImageAssetId ? (
             <img
-              src={getCharacterAssetUrl(conv.characterId, conv.characterProfileImageAssetId)}
+              src={getCharacterAssetUrl(conv.characterId, conv.profileImageAssetId)}
               alt={`${conv.characterName} avatar`}
               className="size-full object-cover"
             />

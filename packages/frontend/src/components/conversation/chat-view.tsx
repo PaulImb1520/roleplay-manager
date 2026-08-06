@@ -3,8 +3,8 @@ import { MessageList } from "./message-list"
 import { getCharacterAssetUrl } from "@/lib/api/client"
 
 export function ChatView({ conversation }: { conversation: ConversationDetail }) {
-  const imageSrc = conversation.characterProfileImageAssetId
-    ? getCharacterAssetUrl(conversation.characterId, conversation.characterProfileImageAssetId)
+  const imageSrc = conversation.profileImageAssetId
+    ? getCharacterAssetUrl(conversation.characterId, conversation.profileImageAssetId)
     : null
   return (
     <div className="flex h-full flex-col">

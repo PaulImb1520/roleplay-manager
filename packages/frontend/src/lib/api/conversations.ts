@@ -51,6 +51,12 @@ export const updateConversationSettings = (
     body: JSON.stringify(settings),
   })
 
+export const setConversationCustomProfileImage = (
+  id: string,
+  assetId: string | null,
+): Promise<ConversationDetail> =>
+  updateConversationSettings(id, { customProfileImageAssetId: assetId })
+
 export const editMessage = (
   conversationId: string,
   messageId: string,
