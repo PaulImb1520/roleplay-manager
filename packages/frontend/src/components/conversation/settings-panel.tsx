@@ -246,7 +246,7 @@ export function SettingsPanel({
               : <Button variant="ghost" size="icon" data-icon="inline-start"><SettingsIcon /></Button>
           }
         />
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuItem onClick={() => setSection("historia")}>
             <BookOpenTextIcon />
             Historia
