@@ -66,6 +66,7 @@ describe("UploadCharacterAssetUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
     const useCase = buildUseCase(charRepo)
 
@@ -95,6 +96,7 @@ describe("UploadCharacterAssetUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
     const useCase = buildUseCase(charRepo)
 
@@ -119,6 +121,7 @@ describe("UploadCharacterAssetUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
     const useCase = new UploadCharacterAssetUseCase(charRepo, {
       create: async () => {},
@@ -148,6 +151,7 @@ describe("UploadCharacterAssetUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
     const useCase = buildUseCase(charRepo)
 

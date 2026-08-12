@@ -5,6 +5,7 @@ import type { CreateCharacterUseCase } from "../../../../application/use-cases/c
 import type { GetCharacterUseCase } from "../../../../application/use-cases/character/get-character.use-case"
 import type { ListCharactersUseCase } from "../../../../application/use-cases/character/list-characters.use-case"
 import type { UpdateCharacterUseCase } from "../../../../application/use-cases/character/update-character.use-case"
+import type { UpdateCharacterProfileImageUseCase } from "../../../../application/use-cases/character/update-character-profile-image.use-case"
 import type { DeleteCharacterUseCase } from "../../../../application/use-cases/character/delete-character.use-case"
 import type { ListCharacterVersionsUseCase } from "../../../../application/use-cases/character/list-character-versions.use-case"
 import type { UploadCharacterAssetUseCase } from "../../../../application/use-cases/character/upload-character-asset.use-case"
@@ -45,11 +46,16 @@ const UpdateCharacterSchema = z.object({
   cards: z.array(UpdateCardSchema).optional(),
 })
 
+const UpdateCharacterProfileImageSchema = z.object({
+  profileImageAssetId: z.string().nullable(),
+})
+
 export const buildCharacterRouter = (deps: {
   createCharacter: CreateCharacterUseCase
   getCharacter: GetCharacterUseCase
   listCharacters: ListCharactersUseCase
   updateCharacter: UpdateCharacterUseCase
+  updateCharacterProfileImage: UpdateCharacterProfileImageUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
   uploadCharacterAsset: UploadCharacterAssetUseCase
@@ -90,6 +96,19 @@ export const buildCharacterRouter = (deps: {
     try {
       const input = UpdateCharacterSchema.parse(req.body)
       const result = await deps.updateCharacter.execute(req.params.id, input)
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.patch("/characters/:id/profile-image", async (req, res, next) => {
+    try {
+      const { profileImageAssetId } = UpdateCharacterProfileImageSchema.parse(req.body)
+      const result = await deps.updateCharacterProfileImage.execute(
+        req.params.id,
+        profileImageAssetId,
+      )
       res.json(result)
     } catch (error) {
       next(error)

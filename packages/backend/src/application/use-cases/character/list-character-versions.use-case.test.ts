@@ -36,6 +36,7 @@ const buildRepo = (): CharacterRepository => ({
   findVersionsByCharacterId: async () => [v1, v2],
   findMaxVersionNumber: async () => 2,
   saveVersion: async (v) => v,
+  updateProfileImageAssetId: async () => {},
 })
 
 describe("ListCharacterVersionsUseCase", () => {

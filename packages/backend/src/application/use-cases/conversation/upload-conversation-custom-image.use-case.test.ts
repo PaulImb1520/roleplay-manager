@@ -83,6 +83,7 @@ describe("UploadConversationCustomImageUseCase", () => {
     findVersionsByCharacterId: async () => [],
     findMaxVersionNumber: async () => 0,
     saveVersion: async (v) => v,
+    updateProfileImageAssetId: async () => {},
   })
 
   const buildAssetRepo = (): CharacterAssetRepository => ({

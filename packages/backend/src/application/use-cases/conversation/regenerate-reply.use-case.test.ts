@@ -110,6 +110,7 @@ function buildCharacterRepo(): CharacterRepository {
     findVersionsByCharacterId: async () => [baseVersion],
     findMaxVersionNumber: async () => 1,
     saveVersion: async (v) => v,
+    updateProfileImageAssetId: async () => {},
     createWithFirstVersion: async () => ({ character: baseCharacter, version: baseVersion }),
     list: async () => [],
     update: async () => baseCharacter,

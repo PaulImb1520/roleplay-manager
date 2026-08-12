@@ -67,6 +67,7 @@ const buildCharacterRepo = (): CharacterRepository => ({
   findVersionsByCharacterId: async () => [],
   findMaxVersionNumber: async () => 0,
   saveVersion: async (v) => v,
+  updateProfileImageAssetId: async () => {},
 })
 
 const buildProviderRegistry = (): ProviderRegistry => ({

@@ -28,6 +28,7 @@ describe("DeleteCharacterUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
 
     const useCase = new DeleteCharacterUseCase(repo)
@@ -46,6 +47,7 @@ describe("DeleteCharacterUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
 
     const useCase = new DeleteCharacterUseCase(repo)

@@ -35,6 +35,7 @@ const buildRepo = (): CharacterRepository => ({
     savedVersion = v
     return v
   },
+  updateProfileImageAssetId: async () => {},
 })
 
 describe("UpdateCharacterUseCase", () => {

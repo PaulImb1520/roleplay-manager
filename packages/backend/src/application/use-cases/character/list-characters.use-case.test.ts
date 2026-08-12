@@ -35,6 +35,7 @@ const buildRepo = (): CharacterRepository => ({
   findVersionsByCharacterId: async () => [],
   findMaxVersionNumber: async () => 0,
   saveVersion: async (v) => v,
+  updateProfileImageAssetId: async () => {},
 })
 
 describe("ListCharactersUseCase", () => {
@@ -60,6 +61,7 @@ describe("ListCharactersUseCase", () => {
       findVersionsByCharacterId: async () => [],
       findMaxVersionNumber: async () => 0,
       saveVersion: async (v) => v,
+      updateProfileImageAssetId: async () => {},
     }
     const useCase = new ListCharactersUseCase(emptyRepo)
     expect(await useCase.execute()).toEqual([])

@@ -24,4 +24,9 @@ export interface CharacterRepository {
   findMaxVersionNumber(characterId: string): Promise<number>
 
   saveVersion(version: CharacterVersion): Promise<CharacterVersion>
+
+  updateProfileImageAssetId(
+    versionId: string,
+    profileImageAssetId: string | null,
+  ): Promise<void>
 }

@@ -246,4 +246,14 @@ export class DrizzleCharacterRepository implements CharacterRepository {
 
     return version
   }
+
+  async updateProfileImageAssetId(
+    versionId: string,
+    profileImageAssetId: string | null,
+  ): Promise<void> {
+    await this.db
+      .update(characterVersions)
+      .set({ profileImageAssetId })
+      .where(eq(characterVersions.id, versionId))
+  }
 }
