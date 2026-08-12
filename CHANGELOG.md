@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-08-12
+
+### Added
+
+- Unified character screen (PM.6): characters and their conversations are now grouped in a single card grid. Each card shows a large profile image, the character name, subtitle, current version, creation date, and last activity date.
+- Clicking a card image opens the most recent conversation for that character; if there is none, a conversation is created with the current version and the chat is opened.
+- Right-clicking a card opens a `ContextMenu` with: "Ir a la más reciente", a "Conversaciones" submenu (sorted by most recent), a "Nueva conversación" submenu where you pick a version (lazy-loaded), "Editar personaje", and "Eliminar personaje" (with confirmation dialog).
+- Tests for the new card (rendering, image click, context menu actions, delete dialog) and for the list orchestrator (rendering, navigation, conversation creation).
+
+### Removed
+
+- The `/conversations` page and its sidebar entry are gone; conversations are reached from the character card. `pages/conversations/index.astro`, `conversation-list.tsx`, and `conversation-card.tsx` were deleted.
+- The archive conversation feature (front + back): no UI, no `archive`/`unarchive` endpoints, no DB column. `Conversation.status` was removed from the domain entity, shared DTOs, and the `conversations` table (migration `0010_reflective_lord_hawal.sql`). Use cases that previously blocked operations on archived conversations no longer guard on status, and `ArchiveConversationUseCase` (plus its tests) was deleted.
+- `ConversationArchivedError` and `ConversationAlreadyActiveError` from the backend error set.
+
+### Changed
+
+- `GET /api/conversations` no longer accepts a `status` query parameter (it returns all conversations).
+- The `ConversationStatus` type was removed from `@workspace/shared`; `ConversationSummary` and `ConversationDetail` no longer expose `status`.
+
 ## [1.5.0] - 2026-08-06
 
 ### Changed
@@ -59,8 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - The legacy `profileImage: string` (URL/data-URI) field is gone from all DTOs, the `CharacterVersion` entity, the character and conversation surfaces, and the database. `profileImageAssetId` is now the only image reference (offline-first: no external links).
 - Dropped `profile_image` column from `character_versions` (migration `0008_superb_spencer_smythe.sql`).
 - Removed the URL text input from the character form.
-
-## [Unreleased]
 
 ## [1.3.0] - 2026-08-04
 
