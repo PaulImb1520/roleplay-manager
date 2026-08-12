@@ -28,6 +28,15 @@ export const updateCharacter = (
     body: JSON.stringify(input),
   })
 
+export const updateCharacterProfileImage = (
+  id: string,
+  profileImageAssetId: string | null,
+): Promise<CharacterDetail> =>
+  apiRequest(`/api/characters/${id}/profile-image`, {
+    method: "PATCH",
+    body: JSON.stringify({ profileImageAssetId }),
+  })
+
 export const deleteCharacter = (id: string): Promise<void> =>
   apiRequest(`/api/characters/${id}`, { method: "DELETE" })
 

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.1] - 2026-08-12
+
+### Fixed
+
+- Creating a character no longer starts at version 2. The create flow deferred the profile-image upload to a second `PUT /api/characters/:id` call, which went through `UpdateCharacterUseCase` and created a new version, so every character created with an image ended up at v2. New `PATCH /api/characters/:id/profile-image` (and `UpdateCharacterProfileImageUseCase`) attaches the image to the current version in place, without creating a new version; the frontend uses it during creation.
+
 ## [1.6.0] - 2026-08-12
 
 ### Added

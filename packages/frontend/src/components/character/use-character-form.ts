@@ -10,6 +10,7 @@ import { ApiClientError } from "@/lib/api/client"
 import {
   createCharacter,
   updateCharacter,
+  updateCharacterProfileImage,
 } from "@/lib/api/characters"
 import { uploadCharacterAsset } from "@/lib/api/client"
 import { createConversation } from "@/lib/api/conversations"
@@ -239,7 +240,7 @@ export function useCharacterForm(character?: CharacterDetail) {
         const result = await createCharacter(input)
         if (pendingFile) {
           const upload = await uploadCharacterAsset(result.id, pendingFile)
-          await updateCharacter(result.id, { profileImageAssetId: upload.assetId })
+          await updateCharacterProfileImage(result.id, upload.assetId)
         }
         const conv = await createConversation({ characterId: result.id })
         if (conv.defaultProviderStatus !== "available") {
