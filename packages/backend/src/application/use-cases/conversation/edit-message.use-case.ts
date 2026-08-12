@@ -4,7 +4,6 @@ import { Message } from "../../../domain/entities/message.entity"
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import {
-  ConversationArchivedError,
   ConversationNotFoundError,
   MessageNotFoundError,
 } from "../../../domain/errors"
@@ -27,9 +26,6 @@ export class EditMessageUseCase {
     )
     if (!conversation) {
       throw new ConversationNotFoundError(input.conversationId)
-    }
-    if (conversation.status === "archived") {
-      throw new ConversationArchivedError(input.conversationId)
     }
 
     const message = await this.messageRepository.findById(input.messageId)

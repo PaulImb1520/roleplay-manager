@@ -11,13 +11,12 @@ import { Summary } from "../../../domain/entities/summary.entity"
 
 const now = new Date()
 
-const buildConversation = (id: string, status: "active" | "archived" = "active"): Conversation =>
+const buildConversation = (id: string): Conversation =>
   Conversation.create({
     id,
     versionId: "ver-1",
     title: null,
     titleSource: null,
-    status,
     model: null,
     provider: null,
     providerInstanceId: null,
@@ -188,19 +187,6 @@ describe("RewindConversationUseCase", () => {
     expect(deletedIds).toEqual([])
     // All 3 messages remain
     expect(result.messages).toHaveLength(3)
-  })
-
-  it("throws if conversation is archived", async () => {
-    const useCase = new RewindConversationUseCase(
-      buildConversationRepo(buildConversation("conv-1", "archived")),
-      buildMessageRepo([]),
-      buildMemoryRepo(),
-      buildSummaryRepo([]),
-    )
-
-    await expect(
-      useCase.execute({ conversationId: "conv-1", targetMessageId: "msg-1" }),
-    ).rejects.toThrow("is already archived")
   })
 
   it("throws if conversation does not exist", async () => {

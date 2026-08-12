@@ -71,6 +71,13 @@
       "when": 1786032253195,
       "tag": "0009_silly_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1786551726479,
+      "tag": "0010_reflective_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

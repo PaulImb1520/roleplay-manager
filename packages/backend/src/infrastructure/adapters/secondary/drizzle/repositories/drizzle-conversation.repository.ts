@@ -9,7 +9,6 @@ import type {
 import type { Database } from "../../../../config/database"
 import type {
   ConversationSettingsUpdate,
-  ConversationStatus,
   MemoryDecayMode,
   MemoryProposalMode,
   TitleSource,
@@ -25,7 +24,6 @@ const toConversation = (row: ConversationRow): Conversation =>
     versionId: row.versionId,
     title: row.title ?? null,
     titleSource: (row.titleSource as TitleSource) ?? null,
-    status: row.status as ConversationStatus,
     model: row.model ?? null,
     provider: row.provider ?? null,
     providerInstanceId: row.providerInstanceId ?? null,
@@ -68,7 +66,6 @@ export class DrizzleConversationRepository implements ConversationRepository {
       id: conversation.id,
       versionId: conversation.versionId,
       title: conversation.title,
-      status: conversation.status,
       model: conversation.model,
       provider: conversation.provider,
       providerInstanceId: conversation.providerInstanceId,
@@ -122,14 +119,11 @@ export class DrizzleConversationRepository implements ConversationRepository {
     return { conversation: conv, messages: msgRows.map(toMessage) }
   }
 
-  async list(status?: ConversationStatus): Promise<Conversation[]> {
-    const query = this.db.select().from(conversations)
-
-    if (status) {
-      query.where(eq(conversations.status, status))
-    }
-
-    const rows = await query.orderBy(conversations.updatedAt)
+  async list(): Promise<Conversation[]> {
+    const rows = await this.db
+      .select()
+      .from(conversations)
+      .orderBy(conversations.updatedAt)
     return rows.map(toConversation)
   }
 
@@ -139,7 +133,6 @@ export class DrizzleConversationRepository implements ConversationRepository {
       .set({
         title: conversation.title,
         titleSource: conversation.titleSource,
-        status: conversation.status,
         updatedAt: conversation.updatedAt,
       })
       .where(eq(conversations.id, conversation.id))

@@ -28,7 +28,6 @@ import {
   toolCallsToRawProposals,
 } from "../../../lib/propose-memory-changes.tool"
 import {
-  ConversationArchivedError,
   ConversationNotFoundError,
   MessageNotFoundError,
 } from "../../../domain/errors"
@@ -85,9 +84,6 @@ export class RegenerateReplyUseCase {
     )
     if (!conversation) {
       throw new ConversationNotFoundError(input.conversationId)
-    }
-    if (conversation.status === "archived") {
-      throw new ConversationArchivedError(input.conversationId)
     }
 
     const message = await this.messageRepository.findById(input.messageId)

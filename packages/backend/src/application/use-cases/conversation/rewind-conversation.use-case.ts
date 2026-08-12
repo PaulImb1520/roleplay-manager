@@ -6,7 +6,6 @@ import type { MemoryChangeProposalRepository } from "../../../domain/ports/memor
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { SummaryRepository } from "../../../domain/ports/summary.repository"
 import {
-  ConversationArchivedError,
   ConversationNotFoundError,
 } from "../../../domain/errors"
 
@@ -31,9 +30,6 @@ export class RewindConversationUseCase {
     )
     if (!conversation) {
       throw new ConversationNotFoundError(input.conversationId)
-    }
-    if (conversation.status === "archived") {
-      throw new ConversationArchivedError(input.conversationId)
     }
 
     const allMessages = await this.messageRepository.findByConversationId(

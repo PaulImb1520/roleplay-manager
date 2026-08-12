@@ -25,14 +25,13 @@ const buildConversationRepo = (): ConversationRepository => ({
   findByIdWithMessages: async () => null,
   updateSettings: async (_id: string, _settings: any) => ({} as Conversation),
   clearProviderInstanceId: async () => {},
-  list: async (status) => {
+  list: async () => {
     const all = [
       Conversation.create({
         id: "conv-1",
         versionId: "ver-1",
         title: null,
         titleSource: null,
-        status: "active",
         model: null,
         provider: null,
         providerInstanceId: null,
@@ -53,7 +52,6 @@ const buildConversationRepo = (): ConversationRepository => ({
         versionId: "ver-1",
         title: "Chat sobre Test",
         titleSource: null,
-        status: "archived",
         model: null,
         provider: null,
         providerInstanceId: null,
@@ -70,7 +68,7 @@ const buildConversationRepo = (): ConversationRepository => ({
         updatedAt: now,
       }),
     ]
-    return status ? all.filter((c) => c.status === status) : all
+    return all
   },
   update: async (c) => c,
 })
@@ -132,23 +130,8 @@ describe("ListConversationsUseCase", () => {
     expect(result).toHaveLength(2)
     expect(result[0].characterName).toBe("Test")
     expect(result[0].messageCount).toBe(5)
-    expect(result[0].status).toBe("active")
-    expect(result[1].status).toBe("archived")
     expect(result[0].lastActivityAt).toBeDefined()
     expect(result[1].lastActivityAt).toBeDefined()
-  })
-
-  it("filtra por estado", async () => {
-    const useCase = new ListConversationsUseCase(
-      buildConversationRepo(),
-      buildMessageRepo(3),
-      buildCharacterRepo(),
-      buildAssetRepo(),
-    )
-
-    const result = await useCase.execute("archived")
-    expect(result).toHaveLength(1)
-    expect(result[0].status).toBe("archived")
   })
 
   it("ordena por lastActivityAt descendente", async () => {
@@ -165,7 +148,7 @@ describe("ListConversationsUseCase", () => {
         Conversation.create({
           id: "old-conv",
           versionId: "ver-1",
-          title: null, titleSource: null, status: "active",
+          title: null, titleSource: null,
           model: null, provider: null, providerInstanceId: null,
           recentMessageCount: 10, summaryFrequency: 20,
           temperature: 0.7, maxTokens: 2048, topP: 0.9,
@@ -178,7 +161,7 @@ describe("ListConversationsUseCase", () => {
         Conversation.create({
           id: "recent-conv",
           versionId: "ver-1",
-          title: null, titleSource: null, status: "active",
+          title: null, titleSource: null,
           model: null, provider: null, providerInstanceId: null,
           recentMessageCount: 10, summaryFrequency: 20,
           temperature: 0.7, maxTokens: 2048, topP: 0.9,

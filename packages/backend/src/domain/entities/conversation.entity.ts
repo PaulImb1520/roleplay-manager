@@ -1,5 +1,4 @@
 import type {
-  ConversationStatus,
   MemoryDecayMode,
   TitleSource,
 } from "@workspace/shared/types/conversation"
@@ -11,7 +10,6 @@ export interface ConversationProps {
   versionId: string
   title: string | null
   titleSource: TitleSource | null
-  status: ConversationStatus
   model: string | null
   provider: string | null
   providerInstanceId: string | null
@@ -58,7 +56,6 @@ export class Conversation {
   get versionId(): string { return this.props.versionId }
   get title(): string | null { return this.props.title }
   get titleSource(): TitleSource | null { return this.props.titleSource }
-  get status(): ConversationStatus { return this.props.status }
   get model(): string | null { return this.props.model }
   get provider(): string | null { return this.props.provider }
   get providerInstanceId(): string | null { return this.props.providerInstanceId }
@@ -78,20 +75,6 @@ export class Conversation {
   get memoryDecaySpeed(): number { return this.props.memoryDecaySpeed as number }
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
-
-  archive(): Conversation {
-    if (this.props.status === "archived") {
-      return this
-    }
-    return new Conversation({ ...this.props, status: "archived", updatedAt: new Date() })
-  }
-
-  unarchive(): Conversation {
-    if (this.props.status === "active") {
-      return this
-    }
-    return new Conversation({ ...this.props, status: "active", updatedAt: new Date() })
-  }
 
   withMemoryProposalMode(mode: MemoryProposalMode): Conversation {
     if (this.props.memoryProposalMode === mode) return this

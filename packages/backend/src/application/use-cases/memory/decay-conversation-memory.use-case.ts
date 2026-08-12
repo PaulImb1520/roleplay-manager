@@ -3,7 +3,6 @@ import type { MemoryRepository } from "../../../domain/ports/memory.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
 import type { Logger } from "../../../domain/ports/logger.port"
 import {
-  ConversationArchivedError,
   ConversationNotFoundError,
 } from "../../../domain/errors"
 import {
@@ -36,9 +35,6 @@ export class DecayConversationMemoryUseCase {
     )
     if (!conversation) {
       throw new ConversationNotFoundError(input.conversationId)
-    }
-    if (conversation.status === "archived") {
-      throw new ConversationArchivedError(input.conversationId)
     }
 
     if (conversation.memoryDecayMode === "off") {

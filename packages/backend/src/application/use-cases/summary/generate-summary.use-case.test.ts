@@ -29,7 +29,6 @@ const buildConversationRepo = (exists: boolean): ConversationRepository => ({
           frequencyPenalty: 0,
           presencePenalty: 0,
           stopSequences: [],
-          status: "active",
           memoryDecayMode: "silent",
           memoryDecayThreshold: 3,
           memoryDecayAgeThreshold: 30,

@@ -7,7 +7,6 @@ import type { ProviderInstanceRepository } from "../../../domain/ports/provider-
 import type { Logger } from "../../../domain/ports/logger.port"
 import {
   ConversationNotFoundError,
-  ConversationArchivedError,
 } from "../../../domain/errors"
 import type { PromptContext } from "../../../domain/value-objects/prompt-context"
 
@@ -26,9 +25,6 @@ export class GenerateConversationTitleUseCase {
     const conv = await this.conversationRepository.findById(conversationId)
     if (!conv) {
       throw new ConversationNotFoundError(conversationId)
-    }
-    if (conv.status === "archived") {
-      throw new ConversationArchivedError(conversationId)
     }
 
     const version = await this.characterRepository.findVersionById(conv.versionId)

@@ -70,7 +70,6 @@ export const buildServer = ({
       createConversation: container.createConversation,
       getConversation: container.getConversation,
       listConversations: container.listConversations,
-      archiveConversation: container.archiveConversation,
       sendMessage: container.sendMessage,
       editMessage: container.editMessage,
       deleteMessage: container.deleteMessage,

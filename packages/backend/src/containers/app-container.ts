@@ -42,7 +42,6 @@ import { GetCharacterAssetUseCase } from "../application/use-cases/character/get
 import { CreateConversationUseCase } from "../application/use-cases/conversation/create-conversation.use-case"
 import { GetConversationUseCase } from "../application/use-cases/conversation/get-conversation.use-case"
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
-import { ArchiveConversationUseCase } from "../application/use-cases/conversation/archive-conversation.use-case"
 import { SendMessageUseCase } from "../application/use-cases/conversation/send-message.use-case"
 import { EditMessageUseCase } from "../application/use-cases/conversation/edit-message.use-case"
 import { DeleteMessageUseCase } from "../application/use-cases/conversation/delete-message.use-case"
@@ -106,7 +105,6 @@ export interface AppContainer {
   createConversation: CreateConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
-  archiveConversation: ArchiveConversationUseCase
   sendMessage: SendMessageUseCase
   editMessage: EditMessageUseCase
   deleteMessage: DeleteMessageUseCase
@@ -350,11 +348,6 @@ export const buildContainer = ({
     listConversations: new ListConversationsUseCase(
       conversationRepository,
       messageRepository,
-      characterRepository,
-      characterAssetRepository,
-    ),
-    archiveConversation: new ArchiveConversationUseCase(
-      conversationRepository,
       characterRepository,
       characterAssetRepository,
     ),

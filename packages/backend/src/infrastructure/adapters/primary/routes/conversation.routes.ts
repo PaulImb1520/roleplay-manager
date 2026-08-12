@@ -4,7 +4,6 @@ import { z } from "zod"
 import type { CreateConversationUseCase } from "../../../../application/use-cases/conversation/create-conversation.use-case"
 import type { GetConversationUseCase } from "../../../../application/use-cases/conversation/get-conversation.use-case"
 import type { ListConversationsUseCase } from "../../../../application/use-cases/conversation/list-conversations.use-case"
-import type { ArchiveConversationUseCase } from "../../../../application/use-cases/conversation/archive-conversation.use-case"
 import type { SendMessageUseCase } from "../../../../application/use-cases/conversation/send-message.use-case"
 import type { EditMessageUseCase } from "../../../../application/use-cases/conversation/edit-message.use-case"
 import type { DeleteMessageUseCase } from "../../../../application/use-cases/conversation/delete-message.use-case"
@@ -63,7 +62,6 @@ export const buildConversationRouter = (deps: {
   createConversation: CreateConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
-  archiveConversation: ArchiveConversationUseCase
   sendMessage: SendMessageUseCase
   editMessage: EditMessageUseCase
   deleteMessage: DeleteMessageUseCase
@@ -91,9 +89,7 @@ export const buildConversationRouter = (deps: {
 
   router.get("/conversations", async (req, res, next) => {
     try {
-      const status = req.query.status as string | undefined
-      const validStatus = status === "active" || status === "archived" ? status : undefined
-      const result = await deps.listConversations.execute(validStatus)
+      const result = await deps.listConversations.execute()
       res.json(result)
     } catch (error) {
       next(error)
@@ -104,26 +100,6 @@ export const buildConversationRouter = (deps: {
     try {
       const { id } = req.params as { id: string }
       const result = await deps.getConversation.execute(id)
-      res.json(result)
-    } catch (error) {
-      next(error)
-    }
-  })
-
-  router.post("/conversations/:id/archive", async (req, res, next) => {
-    try {
-      const { id } = req.params as { id: string }
-      const result = await deps.archiveConversation.execute(id, "archive")
-      res.json(result)
-    } catch (error) {
-      next(error)
-    }
-  })
-
-  router.post("/conversations/:id/unarchive", async (req, res, next) => {
-    try {
-      const { id } = req.params as { id: string }
-      const result = await deps.archiveConversation.execute(id, "unarchive")
       res.json(result)
     } catch (error) {
       next(error)

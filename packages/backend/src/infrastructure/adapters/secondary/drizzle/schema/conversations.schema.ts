@@ -11,9 +11,6 @@ export const conversations = sqliteTable("conversations", {
     .references(() => characterVersions.id, { onDelete: "cascade" }),
   title: text("title"),
   titleSource: text("title_source", { enum: ["auto", "manual"] }),
-  status: text("status", { enum: ["active", "archived"] })
-    .notNull()
-    .default("active"),
   model: text("model"),
   provider: text("provider"),
   providerInstanceId: text("provider_instance_id").references(

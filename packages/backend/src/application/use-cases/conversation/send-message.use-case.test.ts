@@ -41,29 +41,6 @@ const activeConversation = Conversation.create({
   versionId: "ver-1",
   title: null,
   titleSource: null,
-  status: "active",
-  model: null,
-  provider: "ollama",
-  providerInstanceId: null,
-  recentMessageCount: 10,
-  summaryFrequency: 20,
-  temperature: 0.7,
-  maxTokens: 2048,
-  topP: 0.9,
-  frequencyPenalty: 0,
-  presencePenalty: 0,
-  stopSequences: [],
-  memoryProposalMode: "auto",
-  createdAt: now,
-  updatedAt: now,
-})
-
-const archivedConversation = Conversation.create({
-  id: "conv-archived",
-  versionId: "ver-1",
-  title: null,
-  titleSource: null,
-  status: "archived",
   model: null,
   provider: "ollama",
   providerInstanceId: null,
@@ -85,7 +62,6 @@ const manualDecayConversation = Conversation.create({
   versionId: "ver-1",
   title: null,
   titleSource: null,
-  status: "active",
   model: null,
   provider: "ollama",
   providerInstanceId: null,
@@ -108,7 +84,6 @@ const offDecayConversation = Conversation.create({
   versionId: "ver-1",
   title: null,
   titleSource: null,
-  status: "active",
   model: null,
   provider: "ollama",
   providerInstanceId: null,
@@ -144,7 +119,6 @@ const buildConversationRepo = (): ConversationRepository => ({
   create: async () => activeConversation,
   findById: async (id) => {
     if (id === "conv-1") return activeConversation
-    if (id === "conv-archived") return archivedConversation
     return null
   },
   findByIdWithMessages: async () => null,
@@ -330,35 +304,6 @@ describe("SendMessageUseCase", () => {
         }
       },
     ).rejects.toThrow("Conversation with id 'nonexistent' not found.")
-  })
-
-  it("lanza ConversationArchivedError si la conversacion esta archivada", async () => {
-    const useCase = new SendMessageUseCase(
-      buildConversationRepo(),
-      buildMessageRepo(),
-      buildCharacterRepo(),
-      buildMemoryRepo(),
-      memoryChangeProposalRepository,
-      buildPromptContextBuilder(),
-      buildProviderRegistry(),
-      buildLogger(),
-      buildDefaultProvider(),
-      providerInstanceRepository,
-      applyAllMemoryChanges,
-      buildSummaryRepo(),
-      buildGenerateSummary(),
-      buildGenerateConversationTitle(),
-      decayMemories,
-    )
-
-    await expect(
-      async () => {
-        const gen = useCase.execute({ conversationId: "conv-archived", content: "Hola" })
-        for await (const _ of gen) {
-          // consume
-        }
-      },
-    ).rejects.toThrow("is already archived")
   })
 
   it("emite evento user-message-saved al guardar el mensaje", async () => {

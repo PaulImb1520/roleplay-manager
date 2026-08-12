@@ -5,7 +5,6 @@ import type { ConversationRepository } from "../../../domain/ports/conversation.
 import type { CharacterRepository } from "../../../domain/ports/character.repository"
 import {
   ConversationNotFoundError,
-  ConversationArchivedError,
   CharacterAssetValidationError,
 } from "../../../domain/errors"
 import { mimeToExtension, isAllowedImageMime } from "@workspace/shared/lib/image"
@@ -40,9 +39,6 @@ export class UploadConversationCustomImageUseCase {
     const conv = await this.conversationRepository.findById(input.conversationId)
     if (!conv) {
       throw new ConversationNotFoundError(input.conversationId)
-    }
-    if (conv.status === "archived") {
-      throw new ConversationArchivedError(input.conversationId)
     }
 
     if (!isAllowedImageMime(input.mimeType)) {

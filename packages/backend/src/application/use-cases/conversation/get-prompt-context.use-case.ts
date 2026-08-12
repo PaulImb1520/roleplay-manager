@@ -8,7 +8,6 @@ import type { PromptContextDTO, PromptContextMetadataDTO } from "@workspace/shar
 import { filterMemoriesForPrompt } from "../../../lib/memory-decay"
 import {
   ConversationNotFoundError,
-  ConversationArchivedError,
 } from "../../../domain/errors"
 
 export class GetPromptContextUseCase {
@@ -28,9 +27,6 @@ export class GetPromptContextUseCase {
     const conv = await this.conversationRepository.findById(conversationId)
     if (!conv) {
       throw new ConversationNotFoundError(conversationId)
-    }
-    if (conv.status === "archived") {
-      throw new ConversationArchivedError(conversationId)
     }
 
     const characterVersion = await this.characterRepository.findVersionById(conv.versionId)

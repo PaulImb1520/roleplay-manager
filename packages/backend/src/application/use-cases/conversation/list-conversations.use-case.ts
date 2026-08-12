@@ -1,4 +1,4 @@
-import type { ConversationSummary, ConversationStatus } from "@workspace/shared/types/conversation"
+import type { ConversationSummary } from "@workspace/shared/types/conversation"
 
 import type { ConversationRepository } from "../../../domain/ports/conversation.repository"
 import type { MessageRepository } from "../../../domain/ports/message.repository"
@@ -14,8 +14,8 @@ export class ListConversationsUseCase {
     private readonly assetRepository: CharacterAssetRepository,
   ) {}
 
-  async execute(status?: ConversationStatus): Promise<ConversationSummary[]> {
-    const conversations = await this.conversationRepository.list(status)
+  async execute(): Promise<ConversationSummary[]> {
+    const conversations = await this.conversationRepository.list()
     const summaries: ConversationSummary[] = []
 
     for (const conv of conversations) {
@@ -38,7 +38,6 @@ export class ListConversationsUseCase {
           this.assetRepository,
         ),
         title: conv.title,
-        status: conv.status,
         messageCount: messages.length,
         lastActivityAt: lastActivityAt.toISOString(),
         createdAt: conv.createdAt.toISOString(),

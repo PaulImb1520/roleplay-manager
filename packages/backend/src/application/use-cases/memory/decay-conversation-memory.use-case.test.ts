@@ -18,7 +18,6 @@ const buildConversation = (overrides: Partial<Parameters<typeof Conversation.cre
     versionId: "ver-1",
     title: null,
     titleSource: null,
-    status: "active",
     model: null,
     provider: "ollama",
     providerInstanceId: null,
@@ -366,25 +365,6 @@ describe("DecayConversationMemoryUseCase", () => {
 
     expect(result.deleted).toBe(1)
     expect(deletedIds).toEqual(["m-old"])
-  })
-
-  it("lanza ConversationArchivedError si la conversación está archivada", async () => {
-    const conversation = buildConversation({ status: "archived" })
-    const { memoryRepo, conversationRepo, messageRepo, logger } = buildRepos({
-      conversation,
-      memories: [],
-      messages: [],
-    })
-
-    const useCase = new DecayConversationMemoryUseCase(
-      conversationRepo,
-      memoryRepo,
-      messageRepo,
-      logger,
-    )
-    await expect(
-      useCase.execute({ conversationId: "conv-1" }),
-    ).rejects.toThrow("archived")
   })
 
   it("verifica que el logger no se llame cuando no hay candidatas", async () => {

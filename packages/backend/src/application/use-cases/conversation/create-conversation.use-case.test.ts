@@ -105,7 +105,6 @@ describe("CreateConversationUseCase", () => {
     const result = await useCase.execute({ characterId: "char-1" })
 
     expect(result.conversation.characterName).toBe("Test")
-    expect(result.conversation.status).toBe("active")
     expect(result.conversation.messages).toHaveLength(1)
     expect(result.conversation.messages[0].role).toBe("assistant")
     expect(result.conversation.messages[0].content).toBe("Hello!")

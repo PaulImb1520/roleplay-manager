@@ -22,13 +22,12 @@ const version = CharacterVersion.create({
   greeting: "Hello!", versionNumber: 1, createdAt: now, cards: [],
 })
 
-const buildConversation = (status: "active" | "archived" = "active") =>
+const buildConversation = () =>
   Conversation.create({
     id: "conv-1",
     versionId: "ver-1",
     title: null,
     titleSource: null,
-    status,
     model: null,
     provider: null,
     providerInstanceId: null,
@@ -130,19 +129,6 @@ describe("UploadConversationCustomImageUseCase", () => {
         data: pngBytes,
       }),
     ).rejects.toThrow("not found")
-  })
-
-  it("rejects archived conversations", async () => {
-    const useCase = buildUseCase(buildConversation("archived"))
-
-    await expect(
-      useCase.execute({
-        conversationId: "conv-1",
-        mimeType: "image/png",
-        sizeBytes: 10,
-        data: pngBytes,
-      }),
-    ).rejects.toThrow("archived")
   })
 
   it("rejects oversized files", async () => {

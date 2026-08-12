@@ -28,29 +28,6 @@ const activeConv = Conversation.create({
   versionId: "ver-1",
   title: null,
   titleSource: null,
-  status: "active",
-  model: null,
-  provider: null,
-  providerInstanceId: null,
-  recentMessageCount: 10,
-  summaryFrequency: 20,
-  temperature: 0.7,
-  maxTokens: 2048,
-  topP: 0.9,
-  frequencyPenalty: 0,
-  presencePenalty: 0,
-  stopSequences: [],
-  memoryProposalMode: "auto",
-  createdAt: now,
-  updatedAt: now,
-})
-
-const archivedConv = Conversation.create({
-  id: "conv-2",
-  versionId: "ver-1",
-  title: null,
-  titleSource: null,
-  status: "archived",
   model: null,
   provider: null,
   providerInstanceId: null,
@@ -231,10 +208,5 @@ describe("GetPromptContextUseCase", () => {
   it("lanza ConversationNotFoundError si no existe", async () => {
     const useCase = buildUseCase({ nonexistentIds: ["nonexistent"] })
     await expect(useCase.execute("nonexistent")).rejects.toThrow("Conversation with id 'nonexistent' not found.")
-  })
-
-  it("lanza ConversationArchivedError si está archivada", async () => {
-    const useCase = buildUseCase({ conv: archivedConv })
-    await expect(useCase.execute("conv-2")).rejects.toThrow("is already archived")
   })
 })

@@ -12,7 +12,6 @@ import type { CharacterAssetRepository, CharacterAssetStorage } from "../../../d
 import type { ProviderRegistry } from "../../../domain/ports/provider.port"
 import {
   ConversationNotFoundError,
-  ConversationArchivedError,
   CharacterAssetNotFoundError,
   DomainError,
 } from "../../../domain/errors"
@@ -42,9 +41,6 @@ export class UpdateConversationSettingsUseCase {
     const conv = await this.conversationRepository.findById(conversationId)
     if (!conv) {
       throw new ConversationNotFoundError(conversationId)
-    }
-    if (conv.status === "archived") {
-      throw new ConversationArchivedError(conversationId)
     }
 
     const previousOverride = conv.customProfileImageAssetId
@@ -184,7 +180,6 @@ export class UpdateConversationSettingsUseCase {
       profileImageAssetId,
       title: updated.title,
       titleSource: updated.titleSource,
-      status: updated.status,
       model: updated.model,
       provider: updated.provider,
       providerInstanceId: updated.providerInstanceId,

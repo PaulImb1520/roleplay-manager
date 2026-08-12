@@ -39,7 +39,6 @@ export class GetConversationUseCase {
       profileImageAssetId,
       title: convWithMessages.conversation.title,
       titleSource: convWithMessages.conversation.titleSource,
-      status: convWithMessages.conversation.status,
       model: convWithMessages.conversation.model,
       provider: convWithMessages.conversation.provider,
       providerInstanceId: convWithMessages.conversation.providerInstanceId,
