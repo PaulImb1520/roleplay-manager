@@ -1,7 +1,5 @@
 import type { ProviderStatus } from "./provider"
 
-export type ConversationStatus = "active" | "archived"
-
 export type MemoryProposalMode = "auto" | "manual"
 
 export type MemoryDecayMode = "silent" | "manual" | "off"
@@ -14,7 +12,6 @@ export interface ConversationSummary {
   characterName: string
   profileImageAssetId: string | null
   title: string | null
-  status: ConversationStatus
   messageCount: number
   lastActivityAt: string
   createdAt: string
@@ -28,7 +25,6 @@ export interface ConversationDetail {
   profileImageAssetId: string | null
   title: string | null
   titleSource: TitleSource | null
-  status: ConversationStatus
   model: string | null
   provider: string | null
   providerInstanceId: string | null
