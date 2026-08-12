@@ -11,10 +11,8 @@ import type { SummaryDTO } from "@workspace/shared/types/summary"
 
 import { apiRequest, getBaseUrl } from "./client"
 
-export const listConversations = (status?: string): Promise<ConversationSummary[]> => {
-  const query = status ? `?status=${status}` : ""
-  return apiRequest(`/api/conversations${query}`)
-}
+export const listConversations = (): Promise<ConversationSummary[]> =>
+  apiRequest("/api/conversations")
 
 export const getConversation = (id: string): Promise<ConversationDetail> =>
   apiRequest(`/api/conversations/${id}`)
@@ -27,9 +25,6 @@ export const createConversation = (
     body: JSON.stringify(input),
   })
 
-export const archiveConversation = (id: string): Promise<ConversationDetail> =>
-  apiRequest(`/api/conversations/${id}/archive`, { method: "POST" })
-
 export const setConversationTitle = (
   id: string,
   title?: string,
@@ -38,9 +33,6 @@ export const setConversationTitle = (
     method: "POST",
     body: JSON.stringify(title ? { title } : {}),
   })
-
-export const unarchiveConversation = (id: string): Promise<ConversationDetail> =>
-  apiRequest(`/api/conversations/${id}/unarchive`, { method: "POST" })
 
 export const updateConversationSettings = (
   id: string,

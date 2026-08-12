@@ -1,37 +1,99 @@
-import type { CharacterSummary } from "@workspace/shared/types/character"
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import type {
+  CharacterSummary,
+  CharacterVersionDTO,
+} from "@workspace/shared/types/character"
+import type { ConversationSummary } from "@workspace/shared/types/conversation"
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
+import { UsersIcon } from "lucide-react"
 import { getCharacterAssetUrl } from "@/lib/api/client"
+import { CharacterContextMenu } from "./character-context-menu"
 
-export function CharacterCard({ character }: { character: CharacterSummary }) {
+export interface CharacterCardProps {
+  character: CharacterSummary
+  conversations: ConversationSummary[]
+  lastActivityAt: string | null
+  getVersions: (characterId: string) => Promise<CharacterVersionDTO[]>
+  onImageClick: (character: CharacterSummary) => void
+  onOpenConversation: (conversationId: string) => void
+  onCreateConversation: (characterId: string, versionId: string) => void
+  onEdit: (characterId: string) => void
+  onDelete: (characterId: string) => void
+}
+
+export function CharacterCard({
+  character,
+  conversations,
+  lastActivityAt,
+  getVersions,
+  onImageClick,
+  onOpenConversation,
+  onCreateConversation,
+  onEdit,
+  onDelete,
+}: CharacterCardProps) {
   const imageSrc = character.profileImageAssetId
     ? getCharacterAssetUrl(character.id, character.profileImageAssetId)
     : null
+
   return (
-    <a href={`/characters/${character.id}`} className="block">
-      <Card className="transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <div className="size-12 overflow-hidden rounded-full bg-muted">
-            {imageSrc ? (
+    <CharacterContextMenu
+      character={character}
+      conversations={conversations}
+      getVersions={getVersions}
+      onOpenConversation={onOpenConversation}
+      onCreateConversation={onCreateConversation}
+      onEdit={onEdit}
+      onDelete={onDelete}
+    >
+      <Card className="relative overflow-hidden pt-0 transition-shadow hover:shadow-md">
+        <button
+          type="button"
+          onClick={() => onImageClick(character)}
+          className="block w-full cursor-pointer text-left"
+          aria-label={`Abrir la conversación más reciente con ${character.name}`}
+        >
+          {imageSrc ? (
+            <>
+              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
               <img
                 src={imageSrc}
                 alt={`${character.name} avatar`}
-                className="size-full object-cover"
+                className="relative z-20 aspect-video w-full object-cover "
               />
-            ) : null}
-          </div>
-          <div className="flex flex-col gap-1">
-            <CardTitle className="text-base">{character.name}</CardTitle>
-            {character.subtitle ? (
-              <p className="text-muted-foreground text-xs">{character.subtitle}</p>
-            ) : null}
-          </div>
+            </>
+          ) : (
+            <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-muted">
+              <UsersIcon className="size-10 text-muted-foreground" />
+            </div>
+          )}
+        </button>
+        <CardHeader>
+          <CardAction>
+            <Badge variant="secondary">v{character.versionNumber}</Badge>
+          </CardAction>
+          <CardTitle>{character.name}</CardTitle>
+          {character.subtitle ? (
+            <CardDescription>{character.subtitle}</CardDescription>
+          ) : null}
         </CardHeader>
-        <CardContent className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline">v{character.versionNumber}</Badge>
+        <CardFooter className="flex flex-col items-start gap-1 text-xs text-muted-foreground">
           <span>Creado: {new Date(character.createdAt).toLocaleDateString()}</span>
-        </CardContent>
+          <span>
+            Última actividad:{" "}
+            {lastActivityAt
+              ? new Date(lastActivityAt).toLocaleDateString()
+              : "Sin conversaciones"}
+          </span>
+        </CardFooter>
       </Card>
-    </a>
+    </CharacterContextMenu>
   )
 }

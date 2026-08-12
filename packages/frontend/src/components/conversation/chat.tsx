@@ -285,9 +285,6 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           )}
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             {conv.characterName}
-            <Badge variant={conv.status === "active" ? "default" : "secondary"}>
-              {conv.status === "active" ? "Activa" : "Archivada"}
-            </Badge>
           </p>
         </div>
         <div className="ml-auto">
@@ -371,7 +368,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
           onSend={handleSend}
           onContinue={handleContinue}
           onPreview={handlePreview}
-          disabled={isStreaming || conv.status === "archived"}
+          disabled={isStreaming}
           conversationId={conv.id}
         />
       </footer>

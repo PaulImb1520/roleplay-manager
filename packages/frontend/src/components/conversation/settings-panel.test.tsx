@@ -64,7 +64,6 @@ const baseConversation = (overrides: Partial<ConversationDetail> = {}): Conversa
   profileImageAssetId: null,
   title: null,
   titleSource: null,
-  status: "active",
   model: null,
   provider: "ollama",
   providerInstanceId: null,

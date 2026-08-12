@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react"
 import { PlusIcon, UsersIcon } from "lucide-react"
 
 import type { CharacterSummary } from "@workspace/shared/types/character"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
+import { toast } from "@workspace/ui/components/sonner"
 import {
   Empty,
   EmptyHeader,
@@ -13,23 +13,88 @@ import {
   EmptyMedia,
 } from "@workspace/ui/components/empty"
 
-import { listCharacters } from "@/lib/api/characters"
+import { createConversation } from "@/lib/api/conversations"
+import { deleteCharacter } from "@/lib/api/characters"
+import { ApiClientError } from "@/lib/api/client"
 import { CharacterCard } from "./character-card"
+import { useCharacterList } from "./use-character-list"
 
 export function CharacterList() {
-  const [characters, setCharacters] = useState<CharacterSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    characters,
+    conversationsByCharacter,
+    latestConversationByCharacter,
+    lastActivityByCharacter,
+    loading,
+    refresh,
+    loadVersions,
+  } = useCharacterList()
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const result = await listCharacters()
-        setCharacters(result)
-      } finally {
-        setLoading(false)
+  const openConversation = (conversationId: string) => {
+    location.href = `/conversations/${conversationId}`
+  }
+
+  const handleImageClick = async (character: CharacterSummary) => {
+    const latest = latestConversationByCharacter.get(character.id)
+    if (latest) {
+      openConversation(latest.id)
+      return
+    }
+    try {
+      const conv = await createConversation({ characterId: character.id })
+      if (conv.defaultProviderStatus === "unavailable") {
+        toast.warning(
+          "No hay un proveedor de IA configurado. La conversación se creó, pero no podrá responder hasta que configures uno.",
+        )
       }
-    })()
-  }, [])
+      openConversation(conv.conversation.id)
+    } catch (error) {
+      if (error instanceof ApiClientError && error.status === 409) {
+        toast.error("Ya existe una conversación para este personaje y versión.")
+      } else {
+        toast.error("No se pudo crear la conversación.")
+      }
+    }
+  }
+
+  const handleCreateConversation = async (
+    characterId: string,
+    versionId: string,
+  ) => {
+    try {
+      const conv = await createConversation({ characterId, versionId })
+      if (conv.defaultProviderStatus === "unavailable") {
+        toast.warning(
+          "No hay un proveedor de IA configurado. La conversación se creó, pero no podrá responder hasta que configures uno.",
+        )
+      }
+      openConversation(conv.conversation.id)
+    } catch (error) {
+      if (error instanceof ApiClientError && error.status === 409) {
+        toast.error("Ya existe una conversación para este personaje y versión.")
+        const latest = latestConversationByCharacter.get(characterId)
+        if (latest) {
+          openConversation(latest.id)
+        }
+      } else {
+        toast.error("No se pudo crear la conversación.")
+      }
+    }
+  }
+
+  const handleEdit = (characterId: string) => {
+    location.href = `/characters/${characterId}`
+  }
+
+  const handleDelete = async (characterId: string) => {
+    try {
+      await deleteCharacter(characterId)
+      toast.success("Personaje eliminado.")
+      await refresh()
+    } catch {
+      toast.error("No se pudo eliminar el personaje.")
+    }
+  }
 
   if (loading) {
     return (
@@ -75,7 +140,18 @@ export function CharacterList() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {characters.map((c) => (
-            <CharacterCard key={c.id} character={c} />
+            <CharacterCard
+              key={c.id}
+              character={c}
+              conversations={conversationsByCharacter.get(c.id) ?? []}
+              lastActivityAt={lastActivityByCharacter.get(c.id) ?? null}
+              getVersions={loadVersions}
+              onImageClick={handleImageClick}
+              onOpenConversation={openConversation}
+              onCreateConversation={handleCreateConversation}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

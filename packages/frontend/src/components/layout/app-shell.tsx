@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar"
 import { Toaster } from "@workspace/ui/components/sonner"
-import { UsersIcon, MessageSquareTextIcon, CogIcon } from "lucide-react"
+import { UsersIcon, CogIcon } from "lucide-react"
 import { useSidebar } from "@workspace/ui/components/sidebar"
 import { Logo } from "@workspace/ui/components/logo"
 
@@ -54,19 +54,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton render={<a href="/" />} tooltip="Mis personajes">
                       <UsersIcon />
                       <span>Mis personajes</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>Conversaciones</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton render={<a href="/conversations" />} tooltip="Conversaciones">
-                      <MessageSquareTextIcon />
-                      <span>Conversaciones</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

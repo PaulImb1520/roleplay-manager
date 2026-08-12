@@ -23,8 +23,7 @@ export function ChatView({ conversation }: { conversation: ConversationDetail })
             {conversation.title ?? conversation.characterName}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {conversation.characterName} &middot;{" "}
-            {conversation.status === "active" ? "Activa" : "Archivada"}
+            {conversation.characterName}
           </p>
         </div>
       </header>

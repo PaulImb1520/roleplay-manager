@@ -11,7 +11,6 @@ const buildConversation = (
   versionId: "ver-1",
   title: null,
   titleSource: null,
-  status: "active",
   model: null,
   provider: "ollama",
   providerInstanceId: null,
