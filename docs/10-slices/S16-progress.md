@@ -17,7 +17,8 @@ origen.
 ## Decisions
 
 - **Alcance:** se implementa solo la acción "Crear rama". La interfaz visual
-  de árbol de ramas (parte restante de PM.7) queda fuera de este slice.
+  de árbol de ramas (parte restante de PM.7) queda **diferida** — ver la nota
+  de deferral en `PM-backlog.md`.
 - **Mensajes copiados:** se copian los mensajes `0..position` del mensaje
   elegido (inclusive), conservando `role`, contenido mostrado, `position`,
   `createdAt` y `editedAt`. **No** se copian las alternativas de regeneración:

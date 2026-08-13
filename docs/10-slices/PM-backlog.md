@@ -46,7 +46,7 @@ Last updated: 2026-08-12
 | # | Proposal | Dependencies |
 |---|----------|--------------|
 | PM.6 | Group conversations by character in a single card. Use a ContextMenu for submenus: create a conversation choosing a version, edit the character, pick an associated conversation (sorted by most recent). "Go to most recent" option. <br>*Done as S15 (v1.6.0) — see `S15-progress.md`.* | — |
-| PM.7 | Story branches in a single conversation with a visual interface. <br>*Branching done as S16 (v1.7.0) — see `S16-progress.md`. The visual branch-tree interface is still pending.* | — |
+| PM.7 | Story branches in a single conversation with a visual interface. <br>*Branching done as S16 (v1.7.0) — see `S16-progress.md`. The visual branch-tree interface is **deferred** (see note below).* | — |
 
 > **PM.6 (S15) — done (2026-08-12, v1.6.0):** The separate `/conversations` screen is gone.
 > Characters and their conversations now live in a single card grid on the home screen. Each
@@ -64,7 +64,14 @@ Last updated: 2026-08-12
 > origin's local settings (model, provider, inference params, memory settings, custom profile
 > image), starts untitled, and opens in a new chat. Backend endpoint
 > `POST /api/conversations/:id/branches`. The remaining part of PM.7 — a visual branch-tree
-> interface — is still pending. See `S16-progress.md`.
+> interface — is **deferred** (see note below). See `S16-progress.md`.
+
+> **PM.7 visual interface — deferred (2026-08-12):** The branching action shipped in S16
+> (v1.7.0), but the visual branch-tree interface is deferred. It would require adding
+> `@xyflow/react` (React Flow) as a new frontend dependency and generating a sizable amount of
+> UI code (canvas, layout, edges, node selection, navigation) on top of a feature whose
+> real-world usage is unproven. If picked up later, a lightweight branch navigator (e.g. a
+> list/sidebar of branches) should be evaluated before committing to a full graph canvas.
 
 ## Export / Import
 
