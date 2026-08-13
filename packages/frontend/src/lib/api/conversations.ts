@@ -25,6 +25,15 @@ export const createConversation = (
     body: JSON.stringify(input),
   })
 
+export const branchConversation = (
+  conversationId: string,
+  targetMessageId: string,
+): Promise<ConversationDetail> =>
+  apiRequest(`/api/conversations/${conversationId}/branches`, {
+    method: "POST",
+    body: JSON.stringify({ targetMessageId }),
+  })
+
 export const setConversationTitle = (
   id: string,
   title?: string,

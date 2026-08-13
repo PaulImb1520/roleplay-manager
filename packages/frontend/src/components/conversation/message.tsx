@@ -25,6 +25,7 @@ import {
   History,
   RefreshCcw,
   Copy,
+  Split,
 } from "lucide-react"
 import { TypingIndicator } from "@workspace/ui/components/typing-indicator"
 import { parseMessage } from "../../lib/format-message"
@@ -36,6 +37,7 @@ export function MessageBubble({
   onDelete,
   onRegenerate,
   onRewind,
+  onBranch,
   onCyclePrev,
   onCycleNext,
   onStartEdit,
@@ -51,6 +53,7 @@ export function MessageBubble({
   onDelete?: (messageId: string) => void
   onRegenerate?: (messageId: string) => void
   onRewind?: (messageId: string) => void
+  onBranch?: (messageId: string) => void
   onCyclePrev?: (messageId: string) => void
   onCycleNext?: (messageId: string) => void
   onStartEdit?: (messageId: string, content: string) => void
@@ -162,6 +165,10 @@ export function MessageBubble({
                 </ContextMenuItem>
                 {message.position > 0 && (
                   <>
+                    <ContextMenuItem onClick={() => onBranch?.(message.id)}>
+                      <Split className="size-4" />
+                      Crear rama
+                    </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem variant="destructive" onClick={() => onDelete?.(message.id)}>
                       <Trash2 className="size-4" />

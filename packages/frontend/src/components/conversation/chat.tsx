@@ -26,6 +26,7 @@ import {
   rewindConversation,
   cycleAlternative,
   setConversationTitle,
+  branchConversation,
 } from "../../lib/api/conversations"
 import { useChatStreaming } from "../../lib/hooks/use-chat-streaming"
 import { getCharacterAssetUrl } from "../../lib/api/client"
@@ -188,6 +189,18 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
     [conv.id, replaceMessage, setError],
   )
 
+  const handleBranch = useCallback(
+    async (messageId: string) => {
+      try {
+        const branch = await branchConversation(conv.id, messageId)
+        location.href = `/conversations/${branch.id}`
+      } catch (err) {
+        setError((err as Error).message)
+      }
+    },
+    [conv.id, setError],
+  )
+
   const handleRegenerateTitle = useCallback(async () => {
     try {
       const result = await setConversationTitle(conv.id)
@@ -337,6 +350,7 @@ export function Chat({ conversation }: { conversation: ConversationDetail }) {
                           onDelete={(id) => setConfirmDelete(id)}
                           onRegenerate={handleRegenerate}
                           onRewind={(id) => setConfirmRewind(id)}
+                          onBranch={handleBranch}
                           onCyclePrev={handleCyclePrev}
                           onCycleNext={handleCycleNext}
                         />
