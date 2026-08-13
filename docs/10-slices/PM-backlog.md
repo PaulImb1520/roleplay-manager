@@ -9,19 +9,6 @@ sequence.
 
 Last updated: 2026-08-12
 
-## UI polish
-
-| # | Proposal | Dependencies |
-|---|----------|--------------|
-| PM.17 | Settings panel responsive redesign: Sheet → DropdownMenu of three dialogs (Historia / Modelo / Personalización). <br>*Done as S14 (v1.5.0) — see `S14-progress.md`.* | — |
-
-> **PM.17 (S14) — done (2026-08-12, v1.5.0):** The chat settings panel grew to three tabs and the
-> right-side Sheet breaks text layout on small phone screens. It was reworked into a
-> `DropdownMenu` trigger whose three items (Historia, Modelo, Personalización) each open a
-> dedicated responsive `Dialog` with content-scoped scrolling. PM.5 and PM.3 have been
-> deferred (see note below), so the roadmap resumes with the smaller, independent items
-> (PM.6 → PM.16). See `S14-progress.md`.
-
 ## Images & media
 
 | # | Proposal | Dependencies |
@@ -96,3 +83,17 @@ Last updated: 2026-08-12
 |---|----------|--------------|
 | PM.15 | User-played characters (name and description, no version required). | — |
 | PM.16 | Swipe the message bubble left/right to navigate the regeneration history (mobile). | S9.16 |
+
+## UI polish
+
+| # | Proposal | Dependencies |
+|---|----------|--------------|
+| PM.17 | Settings panel responsive redesign: Sheet → DropdownMenu of three dialogs (Historia / Modelo / Personalización). <br>*Done as S14 (v1.5.0) — see `S14-progress.md`.* | — |
+| PM.18 | Character list toolbar: a search bar and a sort `Select` (by most recent conversation → oldest and vice versa) below the header, plus a masonry grid layout for the character cards. | — |
+
+> **PM.17 (S14) — done (2026-08-12, v1.5.0):** The chat settings panel grew to three tabs and the
+> right-side Sheet breaks text layout on small phone screens. It was reworked into a
+> `DropdownMenu` trigger whose three items (Historia, Modelo, Personalización) each open a
+> dedicated responsive `Dialog` with content-scoped scrolling. PM.5 and PM.3 have been
+> deferred (see note below), so the roadmap resumes with the smaller, independent items
+> (PM.6 → PM.16). See `S14-progress.md`.
