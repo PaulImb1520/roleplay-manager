@@ -53,7 +53,7 @@ export function CharacterCard({
       onEdit={onEdit}
       onDelete={onDelete}
     >
-      <Card className="relative overflow-hidden pt-0 transition-shadow hover:shadow-md">
+      <Card className="relative overflow-hidden pt-0 transition-shadow hover:shadow-md" size="sm">
         <button
           type="button"
           onClick={() => onImageClick(character)}
@@ -62,11 +62,11 @@ export function CharacterCard({
         >
           {imageSrc ? (
             <>
-              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
+              <div className="absolute inset-0 z-30 aspect-video" />
               <img
                 src={imageSrc}
                 alt={`${character.name} avatar`}
-                className="relative z-20 aspect-video w-full object-cover "
+                className="relative z-20 aspect-video w-full object-cover"
               />
             </>
           ) : (
@@ -84,7 +84,7 @@ export function CharacterCard({
             <CardDescription>{character.subtitle}</CardDescription>
           ) : null}
         </CardHeader>
-        <CardFooter className="flex flex-col items-start gap-1 text-xs text-muted-foreground">
+        <CardFooter className="flex flex-col items-start text-xs text-muted-foreground">
           <span>Creado: {new Date(character.createdAt).toLocaleDateString()}</span>
           <span>
             Última actividad:{" "}
