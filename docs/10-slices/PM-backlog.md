@@ -46,7 +46,7 @@ Last updated: 2026-08-12
 | # | Proposal | Dependencies |
 |---|----------|--------------|
 | PM.6 | Group conversations by character in a single card. Use a ContextMenu for submenus: create a conversation choosing a version, edit the character, pick an associated conversation (sorted by most recent). "Go to most recent" option. <br>*Done as S15 (v1.6.0) — see `S15-progress.md`.* | — |
-| PM.7 | Story branches in a single conversation with a visual interface. | — |
+| PM.7 | Story branches in a single conversation with a visual interface. <br>*Branching done as S16 (v1.7.0) — see `S16-progress.md`. The visual branch-tree interface is still pending.* | — |
 
 > **PM.6 (S15) — done (2026-08-12, v1.6.0):** The separate `/conversations` screen is gone.
 > Characters and their conversations now live in a single card grid on the home screen. Each
@@ -57,6 +57,14 @@ Last updated: 2026-08-12
 > where you pick a version (lazy-loaded), "Edit character", and "Delete character" (with
 > confirmation). The archive-conversation feature was removed entirely (front + back). See
 > `S15-progress.md`.
+
+> **PM.7 (S16) — done (2026-08-12, v1.7.0):** A new "Crear rama" action (Split icon) in the
+> message context menu creates a new conversation from any message except the first one. The
+> branch copies messages 0..N (displayed content only, no regeneration history), inherits the
+> origin's local settings (model, provider, inference params, memory settings, custom profile
+> image), starts untitled, and opens in a new chat. Backend endpoint
+> `POST /api/conversations/:id/branches`. The remaining part of PM.7 — a visual branch-tree
+> interface — is still pending. See `S16-progress.md`.
 
 ## Export / Import
 

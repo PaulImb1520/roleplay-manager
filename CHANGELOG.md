@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-08-12
+
+### Added
+
+- Story branches (PM.7): a new "Crear rama" action (Split icon) in the message context menu lets you start a new conversation from any message except the first one. The branch copies the messages up to and including the selected one (keeping only the displayed content, without regeneration history), copies the dynamic memories and the summaries whose range falls inside the branch (summary message references are remapped), inherits the origin's local settings (model, provider, instance, inference parameters, memory settings, custom profile image), and opens as a new untitled conversation.
+- New `POST /api/conversations/:id/branches` endpoint and `BranchConversationUseCase`, which rejects branching from the first message.
+- Tests for `BranchConversationUseCase` (message/memory/summary copy semantics, settings inheritance, summary range filtering, error cases).
+
 ## [1.6.1] - 2026-08-12
 
 ### Fixed
