@@ -2,6 +2,7 @@ import { Router } from "express"
 import { z } from "zod"
 
 import type { CreateConversationUseCase } from "../../../../application/use-cases/conversation/create-conversation.use-case"
+import type { BranchConversationUseCase } from "../../../../application/use-cases/conversation/branch-conversation.use-case"
 import type { GetConversationUseCase } from "../../../../application/use-cases/conversation/get-conversation.use-case"
 import type { ListConversationsUseCase } from "../../../../application/use-cases/conversation/list-conversations.use-case"
 import type { SendMessageUseCase } from "../../../../application/use-cases/conversation/send-message.use-case"
@@ -22,6 +23,10 @@ import { parseMultipartBody } from "../middlewares/multipart"
 const CreateConversationSchema = z.object({
   characterId: z.string().min(1, "characterId is required"),
   versionId: z.string().min(1).optional(),
+})
+
+const BranchConversationSchema = z.object({
+  targetMessageId: z.string().min(1, "targetMessageId is required"),
 })
 
 const SendMessageSchema = z.object({
@@ -60,6 +65,7 @@ const UpdateConversationSettingsSchema = z.object({
 export const buildConversationRouter = (deps: {
   logger: Logger
   createConversation: CreateConversationUseCase
+  branchConversation: BranchConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
   sendMessage: SendMessageUseCase
@@ -81,6 +87,19 @@ export const buildConversationRouter = (deps: {
     try {
       const input = CreateConversationSchema.parse(req.body)
       const result = await deps.createConversation.execute(input)
+      res.status(201).json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.post("/conversations/:id/branches", async (req, res, next) => {
+    try {
+      const { targetMessageId } = BranchConversationSchema.parse(req.body)
+      const result = await deps.branchConversation.execute({
+        conversationId: req.params.id,
+        targetMessageId,
+      })
       res.status(201).json(result)
     } catch (error) {
       next(error)

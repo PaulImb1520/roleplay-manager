@@ -41,6 +41,7 @@ import { ListCharacterVersionsUseCase } from "../application/use-cases/character
 import { UploadCharacterAssetUseCase } from "../application/use-cases/character/upload-character-asset.use-case"
 import { GetCharacterAssetUseCase } from "../application/use-cases/character/get-character-asset.use-case"
 import { CreateConversationUseCase } from "../application/use-cases/conversation/create-conversation.use-case"
+import { BranchConversationUseCase } from "../application/use-cases/conversation/branch-conversation.use-case"
 import { GetConversationUseCase } from "../application/use-cases/conversation/get-conversation.use-case"
 import { ListConversationsUseCase } from "../application/use-cases/conversation/list-conversations.use-case"
 import { SendMessageUseCase } from "../application/use-cases/conversation/send-message.use-case"
@@ -105,6 +106,7 @@ export interface AppContainer {
   getCharacterAsset: GetCharacterAssetUseCase
   maxProfileImageBytes: number
   createConversation: CreateConversationUseCase
+  branchConversation: BranchConversationUseCase
   getConversation: GetConversationUseCase
   listConversations: ListConversationsUseCase
   sendMessage: SendMessageUseCase
@@ -344,6 +346,14 @@ export const buildContainer = ({
       characterRepository,
       getDefaultProvider,
       providerInstanceRepository,
+      characterAssetRepository,
+    ),
+    branchConversation: new BranchConversationUseCase(
+      conversationRepository,
+      messageRepository,
+      memoryRepository,
+      summaryRepository,
+      characterRepository,
       characterAssetRepository,
     ),
     getConversation: new GetConversationUseCase(

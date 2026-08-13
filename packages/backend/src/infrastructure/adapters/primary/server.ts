@@ -68,6 +68,7 @@ export const buildServer = ({
     buildConversationRouter({
       logger: container.logger,
       createConversation: container.createConversation,
+      branchConversation: container.branchConversation,
       getConversation: container.getConversation,
       listConversations: container.listConversations,
       sendMessage: container.sendMessage,
