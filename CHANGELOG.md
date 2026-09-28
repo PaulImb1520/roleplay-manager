@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.10.1] - 2026-08-12
+
+### Fixed
+
+- Character list header broke on small phone screens (≤320px): the title wrapped onto two lines and the "Importar personaje" / "Crear personaje" buttons were squeezed against it. The header now stacks vertically on mobile (title first, full-width buttons below) and returns to the single-row layout from `sm` upwards.
+
 ## [1.10.0] - 2026-08-12
 
 ### Added
