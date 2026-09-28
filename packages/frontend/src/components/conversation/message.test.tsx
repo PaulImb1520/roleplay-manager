@@ -7,13 +7,16 @@ afterEach(() => {
   cleanup()
 })
 
-const buildMessage = (alternativesCursor: number) => ({
+const buildMessage = (
+  alternativesCursor: number,
+  alternatives: string[] = ["Alternativa A"],
+) => ({
   id: "msg-1",
   role: "assistant" as const,
   content: "Hola",
   createdAt: "2026-08-12T10:00:00.000Z",
   position: 1,
-  alternatives: ["Alternativa A"],
+  alternatives,
   alternativesCursor,
 })
 
@@ -41,44 +44,110 @@ const swipe = (from: number, to: number) => {
   })
 }
 
+const swipeLeft = () => swipe(220, 140)
+const swipeRight = () => swipe(140, 220)
+
 describe("MessageBubble swipe navigation", () => {
   it("deslizar a la izquierda avanza a la siguiente alternativa", () => {
     const onCycleNext = vi.fn()
+    const onRegenerate = vi.fn()
     render(
       <MessageBubble
         message={buildMessage(1)}
+        isLastMessage
         onCycleNext={onCycleNext}
         onCyclePrev={vi.fn()}
+        onRegenerate={onRegenerate}
       />,
     )
 
-    swipe(220, 140)
+    swipeLeft()
 
     expect(onCycleNext).toHaveBeenCalledWith("msg-1")
+    expect(onRegenerate).not.toHaveBeenCalled()
   })
 
   it("deslizar a la derecha vuelve a la alternativa anterior", () => {
     const onCyclePrev = vi.fn()
+    const onRegenerate = vi.fn()
     render(
       <MessageBubble
         message={buildMessage(0)}
+        isLastMessage
         onCycleNext={vi.fn()}
         onCyclePrev={onCyclePrev}
+        onRegenerate={onRegenerate}
       />,
     )
 
-    swipe(140, 220)
+    swipeRight()
 
     expect(onCyclePrev).toHaveBeenCalledWith("msg-1")
+    expect(onRegenerate).not.toHaveBeenCalled()
+  })
+
+  it("regenera al avanzar cuando ya está en la alternativa más reciente", () => {
+    const onCycleNext = vi.fn()
+    const onRegenerate = vi.fn()
+    render(
+      <MessageBubble
+        message={buildMessage(0)}
+        isLastMessage
+        onCycleNext={onCycleNext}
+        onCyclePrev={vi.fn()}
+        onRegenerate={onRegenerate}
+      />,
+    )
+
+    swipeLeft()
+
+    expect(onRegenerate).toHaveBeenCalledWith("msg-1")
+    expect(onCycleNext).not.toHaveBeenCalled()
+  })
+
+  it("regenera al avanzar aunque el mensaje no tenga alternativas", () => {
+    const onRegenerate = vi.fn()
+    render(
+      <MessageBubble
+        message={buildMessage(0, [])}
+        isLastMessage
+        onRegenerate={onRegenerate}
+      />,
+    )
+
+    swipeLeft()
+
+    expect(onRegenerate).toHaveBeenCalledWith("msg-1")
+  })
+
+  it("no regenera si el mensaje no es el último", () => {
+    const onCycleNext = vi.fn()
+    const onRegenerate = vi.fn()
+    render(
+      <MessageBubble
+        message={buildMessage(0)}
+        onCycleNext={onCycleNext}
+        onCyclePrev={vi.fn()}
+        onRegenerate={onRegenerate}
+      />,
+    )
+
+    swipeLeft()
+
+    expect(onRegenerate).not.toHaveBeenCalled()
+    expect(onCycleNext).not.toHaveBeenCalled()
   })
 
   it("ignora gestos verticales", () => {
     const onCycleNext = vi.fn()
+    const onRegenerate = vi.fn()
     render(
       <MessageBubble
         message={buildMessage(1)}
+        isLastMessage
         onCycleNext={onCycleNext}
         onCyclePrev={vi.fn()}
+        onRegenerate={onRegenerate}
       />,
     )
 
@@ -102,19 +171,6 @@ describe("MessageBubble swipe navigation", () => {
     })
 
     expect(onCycleNext).not.toHaveBeenCalled()
-  })
-
-  it("no activa el swipe si el mensaje no tiene alternativas", () => {
-    const onCycleNext = vi.fn()
-    render(
-      <MessageBubble
-        message={{ ...buildMessage(0), alternatives: [] }}
-        onCycleNext={onCycleNext}
-      />,
-    )
-
-    swipe(220, 140)
-
-    expect(onCycleNext).not.toHaveBeenCalled()
+    expect(onRegenerate).not.toHaveBeenCalled()
   })
 })
