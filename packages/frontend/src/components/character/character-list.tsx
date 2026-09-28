@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { PlusIcon, UploadIcon, UsersIcon } from "lucide-react"
+import { useMemo, useState } from "react"
+import { PlusIcon, SearchXIcon, UploadIcon, UsersIcon } from "lucide-react"
 
 import type { CharacterSummary } from "@workspace/shared/types/character"
 import type { CharacterExport } from "@workspace/shared/types/export"
@@ -19,13 +19,27 @@ import { createConversation } from "@/lib/api/conversations"
 import { deleteCharacter, importCharacter } from "@/lib/api/characters"
 import { ApiClientError } from "@/lib/api/client"
 import { parseCharacterExport } from "@/lib/parse-character-export"
+import {
+  DEFAULT_CHARACTER_SORT,
+  sortCharacters,
+  type CharacterSortKey,
+} from "@/lib/sort-characters"
 import { CharacterCard } from "./character-card"
 import { CharacterDropOverlay } from "./character-drop-overlay"
+import { CharacterListToolbar } from "./character-list-toolbar"
 import {
   ImportCharacterDialog,
   type ImportCharacterResult,
 } from "./import-character-dialog"
 import { useCharacterList } from "./use-character-list"
+
+function normalizeText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
 
 export function CharacterList() {
   const {
@@ -39,6 +53,20 @@ export function CharacterList() {
   } = useCharacterList()
 
   const [importOpen, setImportOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [sort, setSort] = useState<CharacterSortKey>(DEFAULT_CHARACTER_SORT)
+
+  const visibleCharacters = useMemo(() => {
+    const term = normalizeText(search)
+    const filtered = term
+      ? characters.filter(
+          (character) =>
+            normalizeText(character.name).includes(term) ||
+            normalizeText(character.subtitle ?? "").includes(term),
+        )
+      : characters
+    return sortCharacters(filtered, lastActivityByCharacter, sort)
+  }, [characters, lastActivityByCharacter, search, sort])
 
   const openConversation = (conversationId: string) => {
     location.href = `/conversations/${conversationId}`
@@ -185,22 +213,41 @@ export function CharacterList() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {characters.map((c) => (
-            <CharacterCard
-              key={c.id}
-              character={c}
-              conversations={conversationsByCharacter.get(c.id) ?? []}
-              lastActivityAt={lastActivityByCharacter.get(c.id) ?? null}
-              getVersions={loadVersions}
-              onImageClick={handleImageClick}
-              onOpenConversation={openConversation}
-              onCreateConversation={handleCreateConversation}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <CharacterListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            sort={sort}
+            onSortChange={setSort}
+            resultCount={visibleCharacters.length}
+          />
+          {visibleCharacters.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-12 text-center">
+              <SearchXIcon className="text-muted-foreground size-8" />
+              <p className="text-muted-foreground text-sm">
+                No hay personajes que coincidan con "{search.trim()}".
+              </p>
+            </div>
+          ) : (
+            <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+              {visibleCharacters.map((c) => (
+                <div key={c.id} className="mb-4 break-inside-avoid">
+                  <CharacterCard
+                    character={c}
+                    conversations={conversationsByCharacter.get(c.id) ?? []}
+                    lastActivityAt={lastActivityByCharacter.get(c.id) ?? null}
+                    getVersions={loadVersions}
+                    onImageClick={handleImageClick}
+                    onOpenConversation={openConversation}
+                    onCreateConversation={handleCreateConversation}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
         </div>
       </CharacterDropOverlay>

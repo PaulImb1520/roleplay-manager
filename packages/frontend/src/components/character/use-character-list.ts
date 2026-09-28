@@ -99,15 +99,6 @@ export function useCharacterList(): UseCharacterListResult {
     return map
   }, [latestConversationByCharacter])
 
-  const sortedCharacters = useMemo(() => {
-    const recency = (character: CharacterSummary): number => {
-      const createdAt = new Date(character.createdAt).getTime()
-      const activity = lastActivityByCharacter.get(character.id)
-      return Math.max(createdAt, activity ? new Date(activity).getTime() : 0)
-    }
-    return [...characters].sort((a, b) => recency(b) - recency(a))
-  }, [characters, lastActivityByCharacter])
-
   const loadVersions = useCallback(
     async (characterId: string): Promise<CharacterVersionDTO[]> => {
       const cached = versionsCache.get(characterId)
@@ -126,7 +117,7 @@ export function useCharacterList(): UseCharacterListResult {
   )
 
   return {
-    characters: sortedCharacters,
+    characters,
     conversationsByCharacter,
     latestConversationByCharacter,
     lastActivityByCharacter,
