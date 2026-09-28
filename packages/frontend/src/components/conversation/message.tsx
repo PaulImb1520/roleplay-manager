@@ -72,13 +72,21 @@ export function MessageBubble({
   const canCyclePrev = currentIndex < totalAlternatives - 1
   const canCycleNext = currentIndex > 0
 
+  const advanceAction =
+    canCycleNext && onCycleNext
+      ? () => onCycleNext(message.id)
+      : isLastMessage && !isUser && !isStreaming && !isEditing && onRegenerate
+        ? () => onRegenerate(message.id)
+        : undefined
+  const backAction =
+    canCyclePrev && onCyclePrev ? () => onCyclePrev(message.id) : undefined
   const swipeEnabled =
-    !isStreaming && !isEditing && !isUser && totalAlternatives > 1
+    !isStreaming && !isEditing && Boolean(advanceAction || backAction)
 
   const swipe = useSwipeNavigation({
     enabled: swipeEnabled,
-    onSwipeLeft: canCycleNext ? () => onCycleNext?.(message.id) : undefined,
-    onSwipeRight: canCyclePrev ? () => onCyclePrev?.(message.id) : undefined,
+    onSwipeLeft: advanceAction,
+    onSwipeRight: backAction,
   })
 
   const swipeStyle: CSSProperties | undefined = swipeEnabled
