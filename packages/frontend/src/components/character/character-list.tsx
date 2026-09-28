@@ -1,6 +1,8 @@
-import { PlusIcon, UsersIcon } from "lucide-react"
+import { useState } from "react"
+import { PlusIcon, UploadIcon, UsersIcon } from "lucide-react"
 
 import type { CharacterSummary } from "@workspace/shared/types/character"
+import type { CharacterExport } from "@workspace/shared/types/export"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { toast } from "@workspace/ui/components/sonner"
@@ -14,9 +16,15 @@ import {
 } from "@workspace/ui/components/empty"
 
 import { createConversation } from "@/lib/api/conversations"
-import { deleteCharacter } from "@/lib/api/characters"
+import { deleteCharacter, importCharacter } from "@/lib/api/characters"
 import { ApiClientError } from "@/lib/api/client"
+import { parseCharacterExport } from "@/lib/parse-character-export"
 import { CharacterCard } from "./character-card"
+import { CharacterDropOverlay } from "./character-drop-overlay"
+import {
+  ImportCharacterDialog,
+  type ImportCharacterResult,
+} from "./import-character-dialog"
 import { useCharacterList } from "./use-character-list"
 
 export function CharacterList() {
@@ -29,6 +37,8 @@ export function CharacterList() {
     refresh,
     loadVersions,
   } = useCharacterList()
+
+  const [importOpen, setImportOpen] = useState(false)
 
   const openConversation = (conversationId: string) => {
     location.href = `/conversations/${conversationId}`
@@ -96,6 +106,35 @@ export function CharacterList() {
     }
   }
 
+  const handleImportPayload = async (
+    payload: CharacterExport,
+  ): Promise<ImportCharacterResult> => {
+    try {
+      const imported = await importCharacter(payload)
+      toast.success(`Personaje "${imported.name}" importado.`)
+      await refresh()
+      return { ok: true }
+    } catch (error) {
+      const message =
+        error instanceof ApiClientError
+          ? error.message
+          : "No se pudo importar el personaje."
+      return { ok: false, error: message }
+    }
+  }
+
+  const handleImportFile = async (file: File) => {
+    const parsed = parseCharacterExport(await file.text())
+    if (!parsed.ok) {
+      toast.error(parsed.error)
+      return
+    }
+    const result = await handleImportPayload(parsed.payload)
+    if (!result.ok) {
+      toast.error(result.error ?? "No se pudo importar el personaje.")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -105,7 +144,9 @@ export function CharacterList() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
+      <CharacterDropOverlay onFile={handleImportFile}>
+        <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Mis personajes</h1>
@@ -113,10 +154,16 @@ export function CharacterList() {
             {characters.length} personaje{characters.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button render={<a href="/characters/new" />} nativeButton={false}>
-          <PlusIcon />
-          Crear personaje
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <UploadIcon />
+            Importar personaje
+          </Button>
+          <Button render={<a href="/characters/new" />} nativeButton={false}>
+            <PlusIcon />
+            Crear personaje
+          </Button>
+        </div>
       </header>
 
       {characters.length === 0 ? (
@@ -155,6 +202,13 @@ export function CharacterList() {
           ))}
         </div>
       )}
-    </div>
+        </div>
+      </CharacterDropOverlay>
+      <ImportCharacterDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImportPayload}
+      />
+    </>
   )
 }

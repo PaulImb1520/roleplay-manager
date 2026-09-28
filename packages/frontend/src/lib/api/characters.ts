@@ -56,3 +56,9 @@ export const exportCharacter = (
     method: "POST",
     body: JSON.stringify({ sections, includeProfileImageBase64 }),
   })
+
+export const importCharacter = (payload: CharacterExport): Promise<CharacterSummary> =>
+  apiRequest("/api/characters/imports", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
