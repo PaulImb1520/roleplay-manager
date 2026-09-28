@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] - 2026-08-12
+
+### Added
+
+- Swipe-to-regenerate (PM.16 follow-up): swiping an assistant bubble in the advance direction (left) when there is no newer alternative left now regenerates the message, as a shortcut to the context menu's "Regenerar". It only applies to the last assistant message and reuses the existing regenerate flow.
+
 ## [1.11.0] - 2026-08-12
 
 ### Added

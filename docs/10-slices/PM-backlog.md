@@ -103,7 +103,7 @@ Last updated: 2026-08-12
 | # | Proposal | Dependencies |
 |---|----------|--------------|
 | PM.15 | User-played characters (name and description, no version required). | — |
-| PM.16 | Swipe the message bubble left/right to navigate the regeneration history (mobile). <br>*Done as S20 (v1.11.0) — see `S20-progress.md`.* | S9.16 |
+| PM.16 | Swipe the message bubble left/right to navigate the regeneration history (mobile). <br>*Done as S20 (v1.11.0); swipe-to-regenerate added in S21 (v1.12.0) — see `S21-progress.md`.* | S9.16 |
 
 ## UI polish
 
