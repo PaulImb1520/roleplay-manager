@@ -65,8 +65,18 @@ Last updated: 2026-08-12
 | # | Proposal | Dependencies |
 |---|----------|--------------|
 | PM.8 | Import a character from a file (drag & drop or file picker). | — |
-| PM.9 | Export conversations. | — |
-| PM.10 | Export manager: export character definition, specific versions, associated conversations, dynamic memory, summaries, settings. Accessible from the ContextMenu of the character list. | PM.8, PM.9 |
+| PM.9 | Export conversations. <br>*Done as part of S17 (v1.8.0) — see `S17-progress.md`.* | — |
+| PM.10 | Export manager: export character definition, specific versions, associated conversations, dynamic memory, summaries, settings. Accessible from the ContextMenu of the character list. <br>*Done as S17 (v1.8.0) — see `S17-progress.md`. PM.8 (import) remains pending.* | PM.8, PM.9 |
+
+> **PM.9 + PM.10 (S17) — done (2026-08-12, v1.8.0):** The character card context menu now has an
+> "Exportar…" action that opens an export manager dialog with a hierarchical checkbox tree:
+> definition (current version, cards included), profile image (base64), version history,
+> conversations and branches (messages, dynamic memories, summaries and settings), and a
+> standalone settings template meant to be applied to another character. The backend assembles a
+> versioned JSON (`schemaVersion: 1`, `kind: "character-export"`) and enforces the same parent →
+> child hierarchy a future import module will validate. PM.9 (export conversations) is covered by
+> the "Conversaciones y ramas" section. PM.8 (import) is still pending and is the remaining half
+> of the round-trip. See `S17-progress.md`.
 
 ## Multi-language & themes
 
