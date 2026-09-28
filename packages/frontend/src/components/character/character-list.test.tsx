@@ -43,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   listCharacters: vi.fn(),
   listCharacterVersions: vi.fn(),
   deleteCharacter: vi.fn(),
+  importCharacter: vi.fn(),
   listConversations: vi.fn(),
   createConversation: vi.fn(),
 }))
@@ -51,6 +52,7 @@ vi.mock("@/lib/api/characters", () => ({
   listCharacters: mocks.listCharacters,
   listCharacterVersions: mocks.listCharacterVersions,
   deleteCharacter: mocks.deleteCharacter,
+  importCharacter: mocks.importCharacter,
 }))
 
 vi.mock("@/lib/api/conversations", () => ({
@@ -62,6 +64,7 @@ beforeEach(() => {
   mocks.listCharacters.mockReset()
   mocks.listCharacterVersions.mockReset()
   mocks.deleteCharacter.mockReset()
+  mocks.importCharacter.mockReset()
   mocks.listConversations.mockReset()
   mocks.createConversation.mockReset()
 
@@ -127,5 +130,44 @@ describe("CharacterList", () => {
     await waitFor(() =>
       expect(window.location.href).toBe("/conversations/conv-new"),
     )
+  })
+
+  it("ordena por recencia: creación más reciente primero", async () => {
+    mocks.listCharacters.mockResolvedValue(characters)
+    mocks.listConversations.mockResolvedValue([])
+
+    render(<CharacterList />)
+
+    await screen.findByText("Lyra")
+    const names = screen
+      .getAllByText(/^(Lyra|Kael)$/)
+      .map((element) => element.textContent)
+    expect(names).toEqual(["Kael", "Lyra"])
+  })
+
+  it("ordena por recencia: la última actividad sube al personaje al principio", async () => {
+    mocks.listCharacters.mockResolvedValue(characters)
+    mocks.listConversations.mockResolvedValue([conversation])
+
+    render(<CharacterList />)
+
+    await screen.findByText("Lyra")
+    const names = screen
+      .getAllByText(/^(Lyra|Kael)$/)
+      .map((element) => element.textContent)
+    expect(names).toEqual(["Lyra", "Kael"])
+  })
+
+  it("abre el diálogo de importación al pulsar Importar personaje", async () => {
+    mocks.listCharacters.mockResolvedValue([])
+    mocks.listConversations.mockResolvedValue([])
+
+    render(<CharacterList />)
+
+    fireEvent.click(await screen.findByText("Importar personaje"))
+
+    expect(
+      await screen.findByText(/Suelta un archivo JSON exportado/),
+    ).toBeInTheDocument()
   })
 })
