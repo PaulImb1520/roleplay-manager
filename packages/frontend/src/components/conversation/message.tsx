@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react"
 import type { MessageDTO } from "@workspace/shared/types/message"
 import {
   Message,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react"
 import { TypingIndicator } from "@workspace/ui/components/typing-indicator"
 import { parseMessage } from "../../lib/format-message"
+import { useSwipeNavigation } from "../../lib/hooks/use-swipe-navigation"
 
 export function MessageBubble({
   message,
@@ -70,6 +72,24 @@ export function MessageBubble({
   const canCyclePrev = currentIndex < totalAlternatives - 1
   const canCycleNext = currentIndex > 0
 
+  const swipeEnabled =
+    !isStreaming && !isEditing && !isUser && totalAlternatives > 1
+
+  const swipe = useSwipeNavigation({
+    enabled: swipeEnabled,
+    onSwipeLeft: canCycleNext ? () => onCycleNext?.(message.id) : undefined,
+    onSwipeRight: canCyclePrev ? () => onCyclePrev?.(message.id) : undefined,
+  })
+
+  const swipeStyle: CSSProperties | undefined = swipeEnabled
+    ? {
+        touchAction: "pan-y",
+        transform:
+          swipe.offsetX !== 0 ? `translateX(${swipe.offsetX}px)` : undefined,
+        transition: swipe.dragging ? "none" : "transform 150ms ease",
+      }
+    : undefined
+
   const handleSaveEdit = () => {
     if (editContent?.trim() && onSaveEdit) {
       onSaveEdit(message.id, editContent)
@@ -108,7 +128,13 @@ export function MessageBubble({
         ) : (
           <ContextMenu>
             <ContextMenuTrigger className="select-text">
-              <Bubble variant={isUser ? "default" : "muted"} align={isUser ? "end" : "start"} className={isUser ? "ml-auto" : ""}>
+              <Bubble
+                variant={isUser ? "default" : "muted"}
+                align={isUser ? "end" : "start"}
+                className={isUser ? "ml-auto" : ""}
+                style={swipeStyle}
+                {...swipe.handlers}
+              >
                 <BubbleContent>
                   {segments.length > 0 ? (
                     segments.map((segment, i) => {
