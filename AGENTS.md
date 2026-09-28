@@ -15,7 +15,7 @@ A roleplay conversation manager with a Node/Express backend, an Astro+React fron
 | `packages/shared` | Pure TypeScript types and framework-agnostic helpers (`ooc-parser`). |
 | `packages/ui` | Reusable shadcn/ui components (button, dialog, etc.). |
 
-**Node**: ≥ 22.12.0. **Package manager**: pnpm 11.15.1. **Build orchestrator**: turbo 2.x.
+**Node**: ≥ 22.12.0. **Package manager**: pnpm 11.21.0. **Build orchestrator**: turbo 2.x.
 
 ---
 
@@ -204,3 +204,37 @@ When adding a new resource (e.g. `Bookmark`):
 8. **Frontend components** — `components/bookmark/`.
 9. **Tests** — one `*.test.ts` next to each use case, mocking ports.
 10. **Run** `pnpm check` to verify everything passes.
+
+---
+
+## 9. Slice workflow (plan → implement → release)
+
+Every non-trivial task is delivered as a **slice** (`SX`) with the same lifecycle. Follow it unless the user explicitly says otherwise.
+
+### Plan first
+
+- **Ask when in doubt.** If scope, UX or architecture choices are ambiguous, use the `ask`/question tool before planning — do not guess.
+- Present a plan for approval. It must include the scope, the areas touched, a **version bump**, a **CHANGELOG entry**, and a **new slice doc**. Call out anything deferred or out of scope.
+
+### Slice doc
+
+- Create `docs/10-slices/SX-progress.md` (`SX` = next slice number) documenting:
+  - **Descripción** — what the slice delivers and why.
+  - **Decisions** — the choices taken and their rationale (including what is out of scope).
+  - **Criterios de aceptación** — the checklist that defines "done".
+  - **Commits** — the list of commits for the slice.
+- Use the most recent `S*-progress.md` as the template.
+
+### Backlog
+
+- `docs/10-slices/PM-backlog.md` is the source of deferred work. When a slice completes a PM, mark its row and add a `> **PM.X (SX) — done (date, vX.Y.Z)**` note pointing to the slice doc. When deferring a PM, add a note with the rationale and what would be needed to pick it up.
+
+### Version bump + CHANGELOG
+
+- Bump the root `package.json` version following semver: **minor** for features, **patch** for fixes, **major** for breaking changes.
+- Add the entry to `CHANGELOG.md` under the new version in [Keep a Changelog](https://keepachangelog.com/) format (`Added` / `Changed` / `Fixed` / `Removed`).
+
+### Commits
+
+- When asked to commit, keep commits **small and descriptive**, in conventional-commit style (`feat(scope): …`, `fix(scope): …`, `test(scope): …`, `docs(scope): …`, `release: …`).
+- Typical sequence: shared types → backend → ui → frontend → tests → docs/backlog → release (bump + changelog).
