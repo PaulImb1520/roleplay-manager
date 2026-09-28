@@ -108,6 +108,7 @@ describe("CharacterCard", () => {
     expect(screen.getByText("Nueva conversación")).toBeInTheDocument()
     expect(screen.getByText("Conversaciones")).toBeInTheDocument()
     expect(screen.getByText("Editar personaje")).toBeInTheDocument()
+    expect(screen.getByText("Exportar…")).toBeInTheDocument()
     expect(screen.getByText("Eliminar personaje")).toBeInTheDocument()
   })
 
