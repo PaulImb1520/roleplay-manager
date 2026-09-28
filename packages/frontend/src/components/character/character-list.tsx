@@ -175,14 +175,14 @@ export function CharacterList() {
     <>
       <CharacterDropOverlay onFile={handleImportFile}>
         <div className="flex flex-col gap-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Mis personajes</h1>
           <p className="text-muted-foreground text-sm">
             {characters.length} personaje{characters.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             <UploadIcon />
             Importar personaje
