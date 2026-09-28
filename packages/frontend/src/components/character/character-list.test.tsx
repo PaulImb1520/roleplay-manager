@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 import type { CharacterSummary } from "@workspace/shared/types/character"
@@ -75,6 +76,11 @@ afterEach(() => {
   vi.unstubAllGlobals()
   cleanup()
 })
+
+const visibleNames = () =>
+  screen
+    .getAllByText(/^(Lyra|Kael)$/)
+    .map((element) => element.textContent)
 
 describe("CharacterList", () => {
   it("renderiza una card por personaje con nombre, versión y fechas", async () => {
@@ -169,5 +175,54 @@ describe("CharacterList", () => {
     expect(
       await screen.findByText(/Suelta un archivo JSON exportado/),
     ).toBeInTheDocument()
+  })
+
+  it("filtra por nombre con la búsqueda", async () => {
+    mocks.listCharacters.mockResolvedValue(characters)
+    mocks.listConversations.mockResolvedValue([])
+
+    render(<CharacterList />)
+    await screen.findByText("Lyra")
+
+    fireEvent.change(screen.getByLabelText("Buscar personaje"), {
+      target: { value: "lyr" },
+    })
+
+    expect(screen.getByText("Lyra")).toBeInTheDocument()
+    expect(screen.queryByText("Kael")).not.toBeInTheDocument()
+    expect(screen.getByText(/1 resultado/)).toBeInTheDocument()
+  })
+
+  it("muestra un estado sin resultados cuando la búsqueda no coincide", async () => {
+    mocks.listCharacters.mockResolvedValue(characters)
+    mocks.listConversations.mockResolvedValue([])
+
+    render(<CharacterList />)
+    await screen.findByText("Lyra")
+
+    fireEvent.change(screen.getByLabelText("Buscar personaje"), {
+      target: { value: "zzz" },
+    })
+
+    expect(
+      screen.getByText(/No hay personajes que coincidan/),
+    ).toBeInTheDocument()
+  })
+
+  it("cambia el orden con el Select", async () => {
+    mocks.listCharacters.mockResolvedValue(characters)
+    mocks.listConversations.mockResolvedValue([])
+
+    render(<CharacterList />)
+    await screen.findByText("Lyra")
+
+    expect(visibleNames()).toEqual(["Kael", "Lyra"])
+
+    const user = userEvent.setup()
+    await user.click(screen.getByLabelText("Ordenar por"))
+    const option = await screen.findByRole("option", { name: "Más antiguos" })
+    await user.click(option)
+
+    await waitFor(() => expect(visibleNames()).toEqual(["Lyra", "Kael"]))
   })
 })
