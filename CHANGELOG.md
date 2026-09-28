@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] - 2026-08-12
+
+### Added
+
+- Character list toolbar (PM.18): a search bar (name and subtitle, case- and accent-insensitive, with result count and a "no matches" state) and a sort `Select` with four options — recency (newest/oldest) and last activity (newest/oldest, falling back to creation date when a character has no conversations). The default keeps the S18 recency order.
+- The character cards are now laid out in a responsive CSS-columns masonry grid, so cards of different heights fit without gaps.
+- New pure helper `lib/sort-characters.ts` (`sortCharacters` + `CharacterSortKey`) and tests for the search, the sort options and the no-results state.
+
+### Changed
+
+- `use-character-list` no longer sorts internally; sorting is applied by the list through the new helper and the toolbar state.
+
 ## [1.9.0] - 2026-08-12
 
 ### Added
