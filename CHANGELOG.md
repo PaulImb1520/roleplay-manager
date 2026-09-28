@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-08-12
+
+### Added
+
+- Character export manager (PM.10 + PM.9): a new "Exportar…" action in the character card context menu opens a dialog with a hierarchical checkbox tree to pick what to export — definition (current version, cards included), profile image, version history, conversations and branches (with messages, dynamic memories, summaries and conversation settings), or a standalone settings template meant to be applied to another character. The backend assembles the selection and the frontend downloads it as a versioned JSON file (`schemaVersion: 1`, `kind: "character-export"`).
+- New `POST /api/characters/:id/exports` endpoint and `ExportCharacterUseCase`, with backend-side hierarchy validation: a child section (e.g. `conversations.memories`) requires its parent (`conversations`), so a future import module can validate the file the same way.
+- New `Checkbox` primitive in `@workspace/ui` (Base UI `Checkbox`).
+- Tests for `ExportCharacterUseCase` (section combinations, hierarchy, base64 toggle, standalone fallback) and for the export dialog (tree defaults, strict hierarchy, select/deselect all, download).
+
 ## [1.7.1] - 2026-08-12
 
 ### Changed
