@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] - 2026-08-12
+
+### Added
+
+- Character import (PM.8): a JSON exported through the S17 export manager can be imported in two ways — dropping it anywhere over the character list (an overlay invites you to drop the file) or via a new "Importar personaje" button next to "Crear personaje", which opens a dialog with a drop area and a file picker.
+- New `POST /api/characters/imports` endpoint and `ImportCharacterUseCase`, which rebuilds the full round-trip: character + versions (with cards) + profile image (base64, re-created as a fresh asset) + conversations with messages, dynamic memories and summaries (all ids regenerated, `versionId`/message references remapped). It validates `kind`/`schemaVersion` and requires the character definition to be present.
+- The character list is now sorted by recency (`max(createdAt, lastActivityAt)`, newest first), so the most recently created or most recently active character appears first and a freshly imported character lands at the top.
+- Tests for `ImportCharacterUseCase`, for the JSON parser, the import dialog, the drag & drop overlay and the list sorting.
+
+### Changed
+
+- The JSON body parser limit is raised to 25 MB **only** for `POST /api/characters/imports` (global limit stays at 1 MB) so exports carrying a base64 image or long conversations can be imported.
+
 ## [1.8.0] - 2026-08-12
 
 ### Added
