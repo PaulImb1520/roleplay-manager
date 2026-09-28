@@ -64,9 +64,20 @@ Last updated: 2026-08-12
 
 | # | Proposal | Dependencies |
 |---|----------|--------------|
-| PM.8 | Import a character from a file (drag & drop or file picker). | — |
+| PM.8 | Import a character from a file (drag & drop or file picker). <br>*Done as S18 (v1.9.0) — see `S18-progress.md`.* | — |
 | PM.9 | Export conversations. <br>*Done as part of S17 (v1.8.0) — see `S17-progress.md`.* | — |
-| PM.10 | Export manager: export character definition, specific versions, associated conversations, dynamic memory, summaries, settings. Accessible from the ContextMenu of the character list. <br>*Done as S17 (v1.8.0) — see `S17-progress.md`. PM.8 (import) remains pending.* | PM.8, PM.9 |
+| PM.10 | Export manager: export character definition, specific versions, associated conversations, dynamic memory, summaries, settings. Accessible from the ContextMenu of the character list. <br>*Done as S17 (v1.8.0) — see `S17-progress.md`.* | PM.8, PM.9 |
+
+> **PM.8 (S18) — done (2026-08-12, v1.9.0):** A JSON exported from the S17 export manager can be
+> imported by dropping it over the character list (an overlay invites you to drop the file) or
+> through a new "Importar personaje" button that opens a dialog with a drop area and a file
+> picker. `POST /api/characters/imports` rebuilds the full round-trip — character, versions
+> (cards included), profile image (base64 → new asset) and conversations with messages,
+> memories and summaries — regenerating ids and remapping references, validating
+> `kind`/`schemaVersion` and requiring the character definition. The character list is now
+> sorted by recency (`max(createdAt, lastActivityAt)`, newest first) so the imported character
+> lands first. Importing settings into an existing character (`standaloneSettings`) is out of
+> scope for this slice. See `S18-progress.md`.
 
 > **PM.9 + PM.10 (S17) — done (2026-08-12, v1.8.0):** The character card context menu now has an
 > "Exportar…" action that opens an export manager dialog with a hierarchical checkbox tree:
