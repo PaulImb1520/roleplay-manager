@@ -7,11 +7,14 @@ import type { ListCharactersUseCase } from "../../../../application/use-cases/ch
 import type { UpdateCharacterUseCase } from "../../../../application/use-cases/character/update-character.use-case"
 import type { UpdateCharacterProfileImageUseCase } from "../../../../application/use-cases/character/update-character-profile-image.use-case"
 import type { ExportCharacterUseCase } from "../../../../application/use-cases/character/export-character.use-case"
+import type { ImportCharacterUseCase } from "../../../../application/use-cases/character/import-character.use-case"
 import type { DeleteCharacterUseCase } from "../../../../application/use-cases/character/delete-character.use-case"
 import type { ListCharacterVersionsUseCase } from "../../../../application/use-cases/character/list-character-versions.use-case"
 import type { UploadCharacterAssetUseCase } from "../../../../application/use-cases/character/upload-character-asset.use-case"
 import type { GetCharacterAssetUseCase } from "../../../../application/use-cases/character/get-character-asset.use-case"
 import { parseMultipartBody } from "../middlewares/multipart"
+
+import type { CharacterExport } from "@workspace/shared/types/export"
 
 const CardSchema = z.object({
   title: z.string().min(1, "Card title is required"),
@@ -70,6 +73,16 @@ const ExportCharacterSchema = z.object({
   includeProfileImageBase64: z.boolean().optional(),
 })
 
+const ImportCharacterSchema = z
+  .object({
+    kind: z.string(),
+    schemaVersion: z.number(),
+    character: z
+      .object({ name: z.string().min(1, "Character name is required") })
+      .passthrough(),
+  })
+  .passthrough()
+
 export const buildCharacterRouter = (deps: {
   createCharacter: CreateCharacterUseCase
   getCharacter: GetCharacterUseCase
@@ -77,6 +90,7 @@ export const buildCharacterRouter = (deps: {
   updateCharacter: UpdateCharacterUseCase
   updateCharacterProfileImage: UpdateCharacterProfileImageUseCase
   exportCharacter: ExportCharacterUseCase
+  importCharacter: ImportCharacterUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
   uploadCharacterAsset: UploadCharacterAssetUseCase
@@ -145,6 +159,18 @@ export const buildCharacterRouter = (deps: {
         includeProfileImageBase64: input.includeProfileImageBase64,
       })
       res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.post("/characters/imports", async (req, res, next) => {
+    try {
+      const payload = ImportCharacterSchema.parse(req.body)
+      const result = await deps.importCharacter.execute({
+        payload: payload as unknown as CharacterExport,
+      })
+      res.status(201).json(result)
     } catch (error) {
       next(error)
     }

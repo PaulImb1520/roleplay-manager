@@ -26,6 +26,7 @@ export const buildServer = ({
   const { logger, pino } = container
   const app = express()
 
+  app.use("/api/characters/imports", express.json({ limit: "25mb" }))
   app.use(express.json({ limit: "1mb" }))
   app.use(
     cors({

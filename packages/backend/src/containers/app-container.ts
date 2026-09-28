@@ -37,6 +37,7 @@ import { ListCharactersUseCase } from "../application/use-cases/character/list-c
 import { UpdateCharacterUseCase } from "../application/use-cases/character/update-character.use-case"
 import { UpdateCharacterProfileImageUseCase } from "../application/use-cases/character/update-character-profile-image.use-case"
 import { ExportCharacterUseCase } from "../application/use-cases/character/export-character.use-case"
+import { ImportCharacterUseCase } from "../application/use-cases/character/import-character.use-case"
 import { DeleteCharacterUseCase } from "../application/use-cases/character/delete-character.use-case"
 import { ListCharacterVersionsUseCase } from "../application/use-cases/character/list-character-versions.use-case"
 import { UploadCharacterAssetUseCase } from "../application/use-cases/character/upload-character-asset.use-case"
@@ -102,6 +103,7 @@ export interface AppContainer {
   updateCharacter: UpdateCharacterUseCase
   updateCharacterProfileImage: UpdateCharacterProfileImageUseCase
   exportCharacter: ExportCharacterUseCase
+  importCharacter: ImportCharacterUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
   uploadCharacterAsset: UploadCharacterAssetUseCase
@@ -337,6 +339,16 @@ export const buildContainer = ({
       summaryRepository,
       characterAssetRepository,
       characterAssetStorage,
+    ),
+    importCharacter: new ImportCharacterUseCase(
+      characterRepository,
+      conversationRepository,
+      messageRepository,
+      memoryRepository,
+      summaryRepository,
+      characterAssetRepository,
+      characterAssetStorage,
+      maxProfileImageBytes,
     ),
     deleteCharacter: new DeleteCharacterUseCase(characterRepository),
     listCharacterVersions: new ListCharacterVersionsUseCase(characterRepository),
