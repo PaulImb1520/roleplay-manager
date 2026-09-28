@@ -4,6 +4,10 @@ import type {
   CreateCharacterInput,
   UpdateCharacterInput,
 } from "@workspace/shared/types/character"
+import type {
+  CharacterExport,
+  ExportSection,
+} from "@workspace/shared/types/export"
 
 import { apiRequest } from "./client"
 
@@ -42,3 +46,13 @@ export const deleteCharacter = (id: string): Promise<void> =>
 
 export const listCharacterVersions = (id: string): Promise<CharacterDetail["versions"]> =>
   apiRequest(`/api/characters/${id}/versions`)
+
+export const exportCharacter = (
+  id: string,
+  sections: ExportSection[],
+  includeProfileImageBase64 = true,
+): Promise<CharacterExport> =>
+  apiRequest(`/api/characters/${id}/exports`, {
+    method: "POST",
+    body: JSON.stringify({ sections, includeProfileImageBase64 }),
+  })

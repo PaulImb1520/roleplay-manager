@@ -26,11 +26,13 @@ import {
 } from "@workspace/ui/components/dialog"
 import {
   ClockFading,
+  DownloadIcon,
   MessageSquarePlusIcon,
   MessageSquareTextIcon,
   PencilIcon,
   Trash2Icon,
 } from "lucide-react"
+import { ExportDialog } from "./export-dialog"
 
 interface CharacterContextMenuProps {
   character: CharacterSummary
@@ -56,6 +58,7 @@ export function CharacterContextMenu({
   const [versions, setVersions] = useState<CharacterVersionDTO[] | null>(null)
   const [versionsLoading, setVersionsLoading] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const handleVersionsOpenChange = (open: boolean) => {
     if (open && versions === null && !versionsLoading) {
@@ -139,6 +142,10 @@ export function CharacterContextMenu({
           <PencilIcon className="size-4" />
           Editar personaje
         </ContextMenuItem>
+        <ContextMenuItem onClick={() => setExportOpen(true)}>
+          <DownloadIcon className="size-4" />
+          Exportar…
+        </ContextMenuItem>
         <ContextMenuItem
           variant="destructive"
           onClick={() => setDeleteOpen(true)}
@@ -147,6 +154,13 @@ export function CharacterContextMenu({
           Eliminar personaje
         </ContextMenuItem>
       </ContextMenuContent>
+
+      <ExportDialog
+        character={character}
+        conversationCount={conversations.length}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
