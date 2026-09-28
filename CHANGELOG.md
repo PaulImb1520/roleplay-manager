@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] - 2026-08-12
+
+### Added
+
+- Swipe navigation for assistant message bubbles (PM.16): on touch devices, swiping a bubble left/right cycles its regeneration history (next/previous alternative), mirroring the `‹`/`›` footer controls. The gesture respects vertical scrolling (`touch-action: pan-y` + axis lock), only activates for touch pointers, and gives drag feedback before snapping back.
+- New `useSwipeNavigation` hook (Pointer Events) with directional locking (no feedback/action when there is no alternative in that direction).
+- Tests for the hook (8 cases) and for the message bubble wiring.
+
+### Removed
+
+- `chat-view.tsx` and `message-list.tsx`, which were dead code (the conversation page uses `Chat`; nothing imported them).
+
 ## [1.10.1] - 2026-08-12
 
 ### Fixed
