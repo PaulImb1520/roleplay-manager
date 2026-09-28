@@ -13,8 +13,8 @@ Last updated: 2026-08-12
 
 | # | Proposal | Dependencies |
 |---|----------|--------------|
-| PM.1 | Import images and store them in the DB (not just links) for the profile photo. | New column/table, storage |
-| PM.2 | Add an image cropper for the profile photo. | PM.1 |
+| PM.1 | Import images and store them in the DB (not just links) for the profile photo. <br>*Done as S11 (v1.3.0) — see `S11-progress.md`.* | New column/table, storage |
+| PM.2 | Add an image cropper for the profile photo. <br>*Done as S12 (v1.3.2) — see `S12-progress.md`.* | PM.1 |
 | PM.3 | Image compressor for the background image and square-section cropper. <br>*Deferred — revisit with PM.5 (see note below).* | PM.1 |
 | PM.4 | Modify the profile image without creating a new character version. <br>*Done as S13 (v1.4.0) — see `S13-progress.md`.* | PM.1 |
 | PM.5 | Allow choosing a background image for the chat (default: profile photo), with fit modes (fill, crop, etc.). <br>*Deferred — requires a totally new image flow (see note below).* | PM.1 |
