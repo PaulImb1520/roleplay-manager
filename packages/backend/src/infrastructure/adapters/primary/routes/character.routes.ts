@@ -6,6 +6,7 @@ import type { GetCharacterUseCase } from "../../../../application/use-cases/char
 import type { ListCharactersUseCase } from "../../../../application/use-cases/character/list-characters.use-case"
 import type { UpdateCharacterUseCase } from "../../../../application/use-cases/character/update-character.use-case"
 import type { UpdateCharacterProfileImageUseCase } from "../../../../application/use-cases/character/update-character-profile-image.use-case"
+import type { ExportCharacterUseCase } from "../../../../application/use-cases/character/export-character.use-case"
 import type { DeleteCharacterUseCase } from "../../../../application/use-cases/character/delete-character.use-case"
 import type { ListCharacterVersionsUseCase } from "../../../../application/use-cases/character/list-character-versions.use-case"
 import type { UploadCharacterAssetUseCase } from "../../../../application/use-cases/character/upload-character-asset.use-case"
@@ -50,12 +51,32 @@ const UpdateCharacterProfileImageSchema = z.object({
   profileImageAssetId: z.string().nullable(),
 })
 
+const ExportCharacterSchema = z.object({
+  sections: z
+    .array(
+      z.enum([
+        "definition",
+        "profileImage",
+        "versions",
+        "conversations",
+        "conversations.messages",
+        "conversations.memories",
+        "conversations.summaries",
+        "conversations.settings",
+        "standaloneSettings",
+      ]),
+    )
+    .min(1, "At least one section is required"),
+  includeProfileImageBase64: z.boolean().optional(),
+})
+
 export const buildCharacterRouter = (deps: {
   createCharacter: CreateCharacterUseCase
   getCharacter: GetCharacterUseCase
   listCharacters: ListCharactersUseCase
   updateCharacter: UpdateCharacterUseCase
   updateCharacterProfileImage: UpdateCharacterProfileImageUseCase
+  exportCharacter: ExportCharacterUseCase
   deleteCharacter: DeleteCharacterUseCase
   listCharacterVersions: ListCharacterVersionsUseCase
   uploadCharacterAsset: UploadCharacterAssetUseCase
@@ -109,6 +130,20 @@ export const buildCharacterRouter = (deps: {
         req.params.id,
         profileImageAssetId,
       )
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  router.post("/characters/:id/exports", async (req, res, next) => {
+    try {
+      const input = ExportCharacterSchema.parse(req.body)
+      const result = await deps.exportCharacter.execute({
+        characterId: req.params.id,
+        sections: input.sections,
+        includeProfileImageBase64: input.includeProfileImageBase64,
+      })
       res.json(result)
     } catch (error) {
       next(error)
