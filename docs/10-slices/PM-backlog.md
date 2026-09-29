@@ -94,9 +94,18 @@ Last updated: 2026-08-12
 | # | Proposal | Dependencies |
 |---|----------|--------------|
 | PM.11 | Multi-language support, default English. | — |
-| PM.12 | Predefined color themes. | — |
+| PM.12 | Predefined color themes. <br>*Done as S22 (v1.13.0) — see `S22-progress.md`.* | — |
 | PM.13 | Welcome screen that asks for language and theme on first launch. | PM.11, PM.12 |
 | PM.14 | Top menubar to pick language and theme. | PM.11, PM.12 |
+
+> **PM.12 (S22) — done (2026-08-12, v1.13.0):** Three themes ("Predeterminado",
+> "Bosque", "Océano") defined as semantic CSS token blocks under
+> `[data-theme="…"]` / `[data-theme="…"].dark`, plus light/dark/system mode
+> applied via the `.dark` class, persisted in `localStorage`, resolved from the
+> OS preference, and applied before paint by an inline anti-flash script. A
+> minimal theme + mode switcher lives in the app header; PM.14 will move it to
+> the top menubar. `sonner` now follows the resolved mode and the unused
+> `next-themes` dependency was removed. See `S22-progress.md`.
 
 ## New features
 
