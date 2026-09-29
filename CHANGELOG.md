@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] - 2026-08-12
+
+### Added
+
+- Predefined color themes (PM.12): "Predeterminado", "Bosque" (green) and "Océano" (blue), each with composed light and dark variants defined as semantic token blocks under `[data-theme="…"]` / `[data-theme="…"].dark`. Switching a theme remaps the existing roles, so every Tailwind utility keeps working unchanged.
+- Light / dark / system mode: the `.dark` class is now actually applied, follows the OS preference in "system" mode, persists in `localStorage`, and is applied before paint by an inline anti-flash script in `base.astro`.
+- Theme switcher in the app header (palette icon) with "Tema" and "Modo" groups.
+- Browser surfaces themed from the palette: `color-scheme`, `::selection` and `caret-color`.
+- Tests for the theme registry and the theme provider (apply, persist, system preference, stored values, invalid values).
+
+### Changed
+
+- `sonner`'s `Toaster` receives the resolved theme as a prop instead of reading `next-themes` (which was never wired).
+
+### Removed
+
+- The unused `next-themes` dependency from `@workspace/ui`.
+
 ## [1.12.0] - 2026-08-12
 
 ### Added
