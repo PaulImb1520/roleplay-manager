@@ -16,6 +16,9 @@ import { Toaster } from "@workspace/ui/components/sonner"
 import { UsersIcon, CogIcon } from "lucide-react"
 import { useSidebar } from "@workspace/ui/components/sidebar"
 import { Logo } from "@workspace/ui/components/logo"
+import { ThemeProvider } from "@/lib/hooks/theme-provider"
+import { useTheme } from "@/lib/hooks/use-theme"
+import { ThemeSwitcher } from "./theme-switcher"
 
 function SidebarLogo() {
   const { state } = useSidebar()
@@ -41,6 +44,16 @@ function SidebarLogo() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <AppShellContent>{children}</AppShellContent>
+    </ThemeProvider>
+  )
+}
+
+function AppShellContent({ children }: { children: React.ReactNode }) {
+  const { resolvedMode } = useTheme()
+
   return (
     <SidebarProvider>
       <Sidebar variant="sidebar" collapsible="icon" >
@@ -77,10 +90,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <header className="flex h-12 items-center gap-2 border-b px-4">
           <SidebarTrigger />
+          <div className="ml-auto">
+            <ThemeSwitcher />
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </SidebarInset>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" theme={resolvedMode} />
     </SidebarProvider>
   )
 }
