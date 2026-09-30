@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.13.1] - 2026-08-12
+
+### Fixed
+
+- `pnpm build` failed with `[NoAdapterInstalled]`: the dynamic routes (`characters/[id]`, `conversations/[id]`) render on demand but Astro had no adapter configured. Added `@astrojs/node` in `standalone` mode, so the build now emits a runnable Node server (`dist/server/entry.mjs`) alongside the prerendered pages in `dist/client/`. Verified by building and serving `/` from the built server (HTTP 200).
+
+### Added
+
+- `PRODUCT.md` at the repo root: the confirmed product record (users, purpose, positioning, operating context, capabilities, constraints and principles) for future design and product work.
+
 ## [1.13.0] - 2026-08-12
 
 ### Added
