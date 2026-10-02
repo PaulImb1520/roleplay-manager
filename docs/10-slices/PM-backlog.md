@@ -96,7 +96,12 @@ Last updated: 2026-08-12
 | PM.11 | Multi-language support, default English. | — |
 | PM.12 | Predefined color themes. <br>*Done as S22 (v1.13.0) — see `S22-progress.md`.* | — |
 | PM.13 | Welcome screen that asks for language and theme on first launch. | PM.11, PM.12 |
-| PM.14 | Top menubar to pick language and theme. | PM.11, PM.12 |
+| PM.14 | Top menubar to pick language and theme. <br>*Theme picker delivered in S22 (v1.13.0) and lives in the top header; the language picker is pending PM.11.* | PM.11, PM.12 |
+
+> **PM.14 (partial, S22) — theme done; language pending (2026-08-12):** The theme
+> + mode picker already lives in the top header (delivered in S22). The language
+> half of PM.14 cannot ship until PM.11 (multi-language, default English) exists;
+> PM.13 depends on it too. No further PM.14 work is planned until PM.11 is done.
 
 > **PM.12 (S22) — done (2026-08-12, v1.13.0):** Three themes ("Predeterminado",
 > "Bosque", "Océano") defined as semantic CSS token blocks under
