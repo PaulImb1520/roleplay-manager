@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.13.2] - 2026-08-12
+
+### Fixed
+
+- Low-contrast text inside the user's own chat bubbles: italic action segments (`*…*`) and out-of-character segments (`//…//`) used `muted-foreground` and emerald colors meant for muted surfaces, which became unreadable on the `primary` bubble background in dark mode (and in the Bosque/Océano themes). Inside user bubbles they now inherit the bubble's own text color — actions keep the italics, OOC keeps the monospace — while assistant bubbles keep the previous subdued styling. Regression tests added for both roles.
+
 ## [1.13.1] - 2026-08-12
 
 ### Fixed
