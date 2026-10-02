@@ -149,7 +149,14 @@ export function MessageBubble({
                       switch (segment.type) {
                         case "action":
                           return (
-                            <span key={i} className="italic text-muted-foreground/70">
+                            <span
+                              key={i}
+                              className={
+                                isUser
+                                  ? "italic"
+                                  : "italic text-muted-foreground/70"
+                              }
+                            >
                               {segment.content}
                             </span>
                           )
@@ -157,7 +164,11 @@ export function MessageBubble({
                           return (
                             <code
                               key={i}
-                              className="text-xs font-mono text-emerald-600 dark:text-emerald-400"
+                              className={
+                                isUser
+                                  ? "text-xs font-mono"
+                                  : "text-xs font-mono text-emerald-600 dark:text-emerald-400"
+                              }
                             >
                               //{segment.content}//
                             </code>
